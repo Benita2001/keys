@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.32.1",
-    "@solana/spl-token": "0.4.14"
+    "@solana/spl-token": "0.4.14",
+    "@pythnetwork/pyth-lazer-solana-sdk": "0.1.2"
   },
   "devDependencies": {
     "mocha": "11.7.2"

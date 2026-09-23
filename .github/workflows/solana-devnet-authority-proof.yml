@@ -9,6 +9,7 @@ on:
       - "Cargo.toml"
       - "package.json"
       - "tests/anchor-authority-proof.cjs"
+      - "src/pyth-adapter.mjs"
       - ".github/workflows/solana-devnet-authority-proof.yml"
   workflow_dispatch:
 
@@ -78,6 +79,7 @@ jobs:
         shell: bash
         env:
           DEVNET_KEYPAIR_JSON: ${{ secrets.DEVNET_KEYPAIR_JSON }}
+          PYTH_PRO_API_KEY: ${{ secrets.PYTH_PRO_API_KEY }}
         run: |
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$HOME/.avm/bin:$PATH"
           mkdir -p "$HOME/.config/solana"

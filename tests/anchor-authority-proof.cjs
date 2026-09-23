@@ -8,6 +8,7 @@ const {
   PublicKey,
   SystemProgram,
   LAMPORTS_PER_SOL,
+  SYSVAR_INSTRUCTIONS_PUBKEY,
 } = anchor.web3;
 
 const {
@@ -58,6 +59,9 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
   const program = anchor.workspace.Keys;
 
   let authorityTransitionProvider;
+  let fetchPythProSolanaPayload;
+  let pythEquityFeeds;
+  let createEd25519Instruction;
 
   const beneficiary = Keypair.generate();
   const attacker = Keypair.generate();
@@ -90,6 +94,13 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
       program,
       provider,
     });
+
+    const pythAdapter = await import("../src/pyth-adapter.mjs");
+    fetchPythProSolanaPayload = pythAdapter.fetchPythProSolanaPayload;
+    pythEquityFeeds = pythAdapter.PYTH_PRO_EQUITY_FEEDS;
+    ({ createEd25519Instruction } = await import(
+      "@pythnetwork/pyth-lazer-solana-sdk"
+    ));
 
     const signature = await provider.sendAndConfirm(
       new anchor.web3.Transaction().add(
@@ -296,6 +307,7 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
         new anchor.BN(250),
         new anchor.BN(1000),
         new anchor.BN(3600),
+        new anchor.BN(1_000_000_000),
         1435
       )
       .accountsStrict({
@@ -330,6 +342,8 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
     assert.equal(rule.maxActionAmount.toNumber(), 250);
     assert.equal(rule.maxPeriodAmount.toNumber(), 1000);
     assert.equal(rule.pythFeedId, 1435);
+    assert.equal(rule.maxUnitPriceMicroUsd.toNumber(), 1_000_000_000);
+    assert.equal(rule.spentThisPeriodNotional.toNumber(), 0);
     assert.equal(mandateState.version.toNumber(), 3);
     assert.equal(mandateState.nonce.toNumber(), 2);
     assert.equal(Number(vault.amount), 2000);
@@ -409,6 +423,7 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
         new anchor.BN(500),
         new anchor.BN(1000),
         new anchor.BN(3600),
+        new anchor.BN(1_000_000_000),
         1435
       )
       .accountsStrict({
@@ -477,9 +492,174 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
     console.log("PROOF same_action_after_human_widen=ALLOW amount=500 nonce=3");
   });
 
+  it("verifies signed Pyth evidence inside the Solana execution path and enforces USD notional", async function () {
+    if (!process.env.PYTH_PRO_API_KEY) {
+      console.log("PROOF pyth_onchain_execution=SKIP reason=PYTH_PRO_API_KEY_NOT_INJECTED");
+      this.skip();
+    }
+
+    const pythProgram = new PublicKey(
+      "pytd2yyk641x7ak7mkaasSJVXh6YYZnC7wTmtgAyxPt"
+    );
+    const pythStorage = new PublicKey(
+      "3rdJbqfnagQ4yx9HXJViD4zc4xpiSqmFsKpPuSCQVyQL"
+    );
+    const storageInfo = await provider.connection.getAccountInfo(pythStorage);
+    assert(storageInfo, "Pyth Lazer storage must exist on the target cluster");
+    assert.equal(storageInfo.owner.toBase58(), pythProgram.toBase58());
+    assert(
+      storageInfo.data.length >= 72,
+      "Pyth storage is too short to contain treasury"
+    );
+    const pythTreasury = new PublicKey(storageInfo.data.subarray(40, 72));
+
+    async function liveMessage() {
+      const snapshot = await fetchPythProSolanaPayload({
+        apiKey: process.env.PYTH_PRO_API_KEY,
+        feed: pythEquityFeeds.TSLA,
+        maxAgeSeconds: 30,
+        maxConfidenceBps: 100
+      });
+
+      assert.equal(snapshot.status, "FRESH");
+      assert.equal(snapshot.feedId, 1435);
+      assert.equal(snapshot.solanaPayload.status, "AVAILABLE");
+
+      const encoding =
+        snapshot.solanaPayload.encoding === "base64" ? "base64" : "hex";
+      const message = Buffer.from(snapshot.solanaPayload.data, encoding);
+      assert(message.length > 100, "signed Solana payload should be non-trivial");
+      return { snapshot, message };
+    }
+
+    const first = await liveMessage();
+    const oneTokenNotionalMicroUsd = Math.ceil(first.snapshot.price * 1_000_000);
+    const actionLimitMicroUsd = Math.ceil(oneTokenNotionalMicroUsd * 1.5);
+    const periodLimitMicroUsd = actionLimitMicroUsd * 4;
+
+    const beforePolicy = await program.account.mandate.fetch(mandate);
+    const configureTx = await program.methods
+      .configureMandatePolicy(
+        new anchor.BN(beforePolicy.nonce.toNumber()),
+        new anchor.BN(actionLimitMicroUsd),
+        new anchor.BN(periodLimitMicroUsd),
+        new anchor.BN(0),
+        30,
+        100
+      )
+      .accountsStrict({
+        charter,
+        mandate,
+        guardian: provider.wallet.publicKey,
+      })
+      .rpc();
+
+    const afterPolicy = await program.account.mandate.fetch(mandate);
+    const pythNonce = afterPolicy.nonce.toNumber();
+
+    async function executeWithSignedPyth(message, amount, expectedNonce) {
+      const ed25519Ix = createEd25519Instruction(message, 1, 12);
+      return program.methods
+        .executeWithinMandateWithPyth(
+          Array.from(message),
+          new anchor.BN(amount),
+          new anchor.BN(expectedNonce)
+        )
+        .accountsStrict({
+          charter,
+          mandate,
+          assetRule,
+          vaultTokenAccount,
+          mint: mockStockMint,
+          beneficiary: beneficiary.publicKey,
+          delegateTokenAccount: beneficiaryTokenAccount.address,
+          pythProgram,
+          pythStorage,
+          pythTreasury,
+          instructionsSysvar: SYSVAR_INSTRUCTIONS_PUBKEY,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .preInstructions([ed25519Ix])
+        .signers([beneficiary])
+        .rpc();
+    }
+
+    const beforeVault = await getAccount(provider.connection, vaultTokenAccount);
+    const allowTx = await executeWithSignedPyth(first.message, 1, pythNonce);
+    const afterVault = await getAccount(provider.connection, vaultTokenAccount);
+    assert.equal(Number(beforeVault.amount) - Number(afterVault.amount), 1);
+
+    const afterAllowMandate = await program.account.mandate.fetch(mandate);
+    assert.notDeepEqual(
+      Array.from(afterAllowMandate.lastEvidenceHash),
+      Array(32).fill(0)
+    );
+
+    console.log(\`PROOF pyth_policy_tx=\${configureTx}\`);
+    console.log(\`PROOF pyth_verified_execution_tx=\${allowTx}\`);
+    console.log(
+      \`PROOF pyth_onchain_execution=ALLOW feed=1435 price=\${first.snapshot.price} action_limit_micro_usd=\${actionLimitMicroUsd} nonce=\${pythNonce}\`
+    );
+
+    const second = await liveMessage();
+    await expectRefusal(
+      "pyth_notional_boundary",
+      () => executeWithSignedPyth(second.message, 2, pythNonce),
+      ["PythNotionalExceeded", "Pyth notional"]
+    );
+    console.log(
+      \`PROOF pyth_notional_boundary=ENFORCED price=\${second.snapshot.price} amount=2 action_limit_micro_usd=\${actionLimitMicroUsd}\`
+    );
+
+    const beforeCondition = await program.account.mandate.fetch(mandate);
+    const lowPriceCeiling = Math.max(
+      1,
+      Math.floor(oneTokenNotionalMicroUsd / 2)
+    );
+    const conditionTx = await program.methods
+      .updateAssetRule(
+        new anchor.BN(beforeCondition.nonce.toNumber()),
+        true,
+        1,
+        new anchor.BN(500),
+        new anchor.BN(1000),
+        new anchor.BN(3600),
+        new anchor.BN(lowPriceCeiling),
+        1435
+      )
+      .accountsStrict({
+        charter,
+        mandate,
+        assetRule,
+        guardian: provider.wallet.publicKey,
+      })
+      .rpc();
+
+    const conditionMandate = await program.account.mandate.fetch(mandate);
+    const third = await liveMessage();
+    await expectRefusal(
+      "pyth_market_condition",
+      () =>
+        executeWithSignedPyth(
+          third.message,
+          1,
+          conditionMandate.nonce.toNumber()
+        ),
+      ["MarketConditionInvalidated", "market condition"]
+    );
+
+    console.log(\`PROOF pyth_market_condition_policy_tx=\${conditionTx}\`);
+    console.log(
+      \`PROOF pyth_market_condition=REFUSE verified_price=\${third.snapshot.price} max_price_micro_usd=\${lowPriceCeiling} authority_effect=NONE\`
+    );
+  });
+
   it("guardian can pause the mandate and the capital path fails closed", async () => {
+    const beforePause = await program.account.mandate.fetch(mandate);
+    const pauseExpectedNonce = beforePause.nonce.toNumber();
     const pauseTx = await program.methods
-      .setMandateStatus(new anchor.BN(3), 1)
+      .setMandateStatus(new anchor.BN(pauseExpectedNonce), 1)
       .accountsStrict({
         charter,
         mandate,
@@ -493,7 +673,10 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
       "paused_mandate_execution",
       () =>
         program.methods
-          .executeWithinMandate(new anchor.BN(1), new anchor.BN(4))
+          .executeWithinMandate(
+            new anchor.BN(1),
+            new anchor.BN(pauseExpectedNonce + 1)
+          )
           .accountsStrict({
             charter,
             mandate,
@@ -511,9 +694,10 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
 
     const mandateState = await program.account.mandate.fetch(mandate);
     assert.equal(mandateState.status, 1);
-    assert.equal(mandateState.version.toNumber(), 5);
-    assert.equal(mandateState.nonce.toNumber(), 4);
+    assert.equal(mandateState.nonce.toNumber(), pauseExpectedNonce + 1);
 
-    console.log("PROOF downward_authority=PAUSED version=5 nonce=4");
+    console.log(
+      `PROOF downward_authority=PAUSED version=${mandateState.version.toNumber()} nonce=${mandateState.nonce.toNumber()}`
+    );
   });
 });
