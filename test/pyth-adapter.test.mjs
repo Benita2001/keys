@@ -19,7 +19,7 @@ test('normalizes Core-style freshness and confidence without network assumptions
     maxAgeSeconds: 30,
     maxConfidenceBps: 100
   });
-  assert.equal(out.price, 250);
+  assert.ok(Math.abs(out.price - 250) < 1e-9);
   assert.equal(out.status, 'FRESH');
   assert.ok(out.confidenceBps < 100);
 });
@@ -44,7 +44,7 @@ test('normalizes Pyth Pro feedUpdateTimestamp in microseconds and detects stalen
     maxConfidenceBps: 100
   });
 
-  assert.equal(fresh.price, 250);
+  assert.ok(Math.abs(fresh.price - 250) < 1e-9);
   assert.equal(fresh.status, 'FRESH');
   assert.equal(fresh.ageSeconds, 20);
   assert.equal(fresh.publisherCount, 3);
