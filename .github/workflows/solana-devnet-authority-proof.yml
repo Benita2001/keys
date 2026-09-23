@@ -1,0 +1,119 @@
+name: solana-devnet-authority-proof
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/solana-devnet-authority-proof.yml"
+  workflow_dispatch:
+
+jobs:
+  devnet-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Solana CLI 2.3.0
+        shell: bash
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v2.3.0/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+
+      - name: Install Anchor CLI 0.32.1
+        shell: bash
+        run: |
+          cargo install --git https://github.com/otter-sec/anchor avm --force
+          avm install 0.32.1
+          avm use 0.32.1
+          echo "$HOME/.avm/bin" >> "$GITHUB_PATH"
+
+      - name: Create ephemeral devnet payer
+        shell: bash
+        run: |
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          mkdir -p "$HOME/.config/solana"
+          solana-keygen new --no-bip39-passphrase --silent --force -o "$HOME/.config/solana/id.json"
+          solana config set --url https://api.devnet.solana.com --keypair "$HOME/.config/solana/id.json"
+          echo "PROOF devnet_payer=$(solana address)"
+
+      - name: Attempt devnet funding
+        id: fund
+        shell: bash
+        run: |
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          set +e
+          OUT=$(solana airdrop 5 --url https://api.devnet.solana.com 2>&1)
+          RC=$?
+          if [ $RC -ne 0 ]; then
+            OUT2=$(solana airdrop 2 --url https://api.devnet.solana.com 2>&1)
+            RC2=$?
+            OUT="$OUT
+$OUT2"
+            RC=$RC2
+          fi
+          set -e
+          echo "$OUT"
+          BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
+          BALANCE=${BALANCE:-0}
+          echo "PROOF devnet_balance_lamports=$BALANCE"
+          if [ "$BALANCE" -lt 1000000000 ]; then
+            echo "funded=false" >> "$GITHUB_OUTPUT"
+            echo "DEVNET_PROOF=BLOCKED_FUNDING"
+          else
+            echo "funded=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install JS proof dependencies
+        if: steps.fund.outputs.funded == 'true'
+        run: npm install --no-audit --no-fund
+
+      - name: Build ephemeral devnet program
+        if: steps.fund.outputs.funded == 'true'
+        shell: bash
+        run: |
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$HOME/.avm/bin:$PATH"
+          anchor build
+          anchor keys sync
+          anchor build
+          PROGRAM_ID=$(solana address -k target/deploy/keys-keypair.json)
+          echo "PROGRAM_ID=$PROGRAM_ID" >> "$GITHUB_ENV"
+          echo "PROOF devnet_program_id=$PROGRAM_ID"
+
+      - name: Deploy to devnet
+        if: steps.fund.outputs.funded == 'true'
+        shell: bash
+        run: |
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          set +e
+          OUT=$(solana program deploy target/deploy/keys.so             --program-id target/deploy/keys-keypair.json             --url https://api.devnet.solana.com             --keypair "$HOME/.config/solana/id.json" 2>&1)
+          RC=$?
+          set -e
+          echo "$OUT"
+          if [ $RC -ne 0 ]; then
+            if echo "$OUT" | grep -Eqi "insufficient|faucet|airdrop|funds|balance"; then
+              echo "DEVNET_PROOF=BLOCKED_FUNDING_DURING_DEPLOY"
+              exit 0
+            fi
+            echo "DEVNET_PROOF=FAILED_DEPLOY"
+            exit $RC
+          fi
+          echo "DEVNET_DEPLOYED=true" >> "$GITHUB_ENV"
+          echo "PROOF explorer=https://explorer.solana.com/address/$PROGRAM_ID?cluster=devnet"
+
+      - name: Execute authority proof on devnet
+        if: env.DEVNET_DEPLOYED == 'true'
+        env:
+          ANCHOR_PROVIDER_URL: https://api.devnet.solana.com
+          ANCHOR_WALLET: ~/.config/solana/id.json
+        shell: bash
+        run: |
+          npm run test:anchor
+          echo "DEVNET_PROOF=PASS"
