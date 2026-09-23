@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 1
 updated_at: "2026-09-23"
-status: DEVNET_PLAYGROUND_WALLET_SETUP
+status: DEVNET_WALLET_CREATED_NEEDS_FUNDING
 
 mission:
   candidate: B
@@ -62,8 +62,8 @@ current_user_guided_work:
     - "Do not send real SOL."
     - "Do not paste a private key or keypair JSON into ChatGPT."
     - "Only the public address and non-secret command output may be shared in chat."
-  step: 3
-  step_name: CREATE_SOLANA_PLAYGROUND_DEVNET_WALLET
+  step: 4
+  step_name: FUND_DEVNET_WALLET
   observed:
     solana_cli_present: false
     shell: PowerShell
@@ -79,8 +79,13 @@ current_user_guided_work:
     method: SOLANA_PLAYGROUND_BROWSER
     rationale: "Official browser-based Solana environment; sufficient to create/save a devnet-only keypair and fund it without local installation."
     official_reference: "https://solana.com/docs/intro/quick-start"
-  next_user_action: "Open Solana Playground, create a Playground wallet, choose Save keypair, confirm cluster is devnet, and return only the public wallet address and displayed devnet balance. Never paste the saved keypair."
-  completion_condition: "A devnet-only wallet public address exists and its keypair has been saved locally outside Git history."
+  observed:
+    wallet_created: true
+    public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
+    explorer_url: "https://explorer.solana.com/address/Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N?cluster=devnet"
+    balance_verified_in_chat: false
+  next_user_action: "Use the official Solana Foundation devnet faucet to request devnet SOL for this public address, then return the resulting balance or transaction signature. Never share the keypair."
+  completion_condition: "Public devnet address has a non-zero verified devnet SOL balance."
 
 after_wallet_creation:
   sequence:
