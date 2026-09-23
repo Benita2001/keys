@@ -1,0 +1,100 @@
+project: KEYS
+handover_version: 1
+updated_at: "2026-09-23"
+status: DEVNET_WALLET_SETUP_IN_PROGRESS
+
+mission:
+  candidate: B
+  category: progressive_financial_stewardship
+  promise: "Financial independence shouldn't happen all at once."
+  current_gate: DEMO_FIRST_ONCHAIN_SLICE
+  immediate_goal: "Obtain a funded devnet-only Solana wallet, add it as DEVNET_KEYPAIR_JSON GitHub Actions secret, run devnet authority proof, then complete authenticated Pyth proof."
+
+ownership:
+  frontend:
+    owner: Benita
+    scope:
+      - product experience
+      - information architecture
+      - interactions
+      - visual system
+    contract: docs/FRONTEND-BACKEND-CONTRACT.md
+    start_here: docs/FRONTEND-START-HERE.md
+  backend:
+    owner: Faadil
+    scope:
+      - reference engine
+      - HTTP API
+      - Solana authority runtime
+      - Pyth evidence
+      - technical proof
+      - integration
+
+canonical_truth:
+  reference_engine: PASS
+  node_ci: PASS
+  backend_http_api: PASS
+  frontend_backend_contract: PASS
+  rust_anchor_unit_ci: PASS
+  local_solana_authority_runtime: PASS
+  local_authority_canonical_run: "https://github.com/Faadil1/keys/actions/runs/35895608533"
+  local_authority_runtime_result: "4 passing"
+  local_authority_runtime_program_id: "XBjsh428EBwTdjZ4h4PFCm3kBzYrJ98Ro6hV6HbvpYC"
+  local_authority_assertions:
+    - "Charter -> Mandate -> ProposalCommitment -> eligible ReviewReceipt"
+    - "unauthorized transition REFUSE / ConstraintHasOne"
+    - "guardian PROPOSE -> BOUNDED ALLOW / version=2 / nonce=1"
+    - "stale review replay REFUSE / ConstraintSeeds"
+  devnet_build: PASS
+  devnet_deployment: BLOCKED_FUNDING
+  devnet_build_run: "https://github.com/Faadil1/keys/actions/runs/35890663439"
+  devnet_build_program_id_not_deployed: "8XmhNVJqCFRwvpeTF4vNFsGgcoFs64goK2mjSVP9XKUm"
+  live_pyth: BLOCKED_API_KEY
+  pyth_canonical_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35896035083"
+  pyth_adapter_tests: "5 pass"
+  pyth_live_result: "UNAVAILABLE / PYTH_API_KEY_REQUIRED"
+  real_minor_execution: OUT_OF_SCOPE
+
+current_user_guided_work:
+  objective: "Create and fund a devnet-only wallet without real money."
+  safety:
+    - "Do not use a mainnet wallet."
+    - "Do not send real SOL."
+    - "Do not paste a private key or keypair JSON into ChatGPT."
+    - "Only the public address and non-secret command output may be shared in chat."
+  step: 1
+  step_name: CHECK_LOCAL_SOLANA_CLI
+  next_user_action: "Run: solana --version in PowerShell and return only the output."
+  completion_condition: "A Solana/Agave CLI version is visible, or CLI absence is confirmed so installation can be guided."
+
+after_wallet_creation:
+  sequence:
+    - "Generate a dedicated devnet-only keypair locally."
+    - "Record only its public address in canonical state."
+    - "Set Solana CLI URL to devnet."
+    - "Fund with devnet SOL from a legitimate faucet/source."
+    - "Verify non-zero devnet balance."
+    - "Store full local keypair JSON only as GitHub Actions secret DEVNET_KEYPAIR_JSON; never commit or paste into chat."
+    - "Run solana-devnet-authority-proof manually."
+    - "Capture deployment program id, Explorer URL, transaction references, authority assertions, and DEVNET_PROOF=PASS."
+    - "Update docs/SOLANA-AUTHORITY-PROOF.md, evidence, CURRENT.yaml and this HANDOVER."
+    - "Then obtain/store PYTH_PRO_API_KEY and run pyth-live-proof."
+
+truth_boundaries:
+  - no competence score
+  - no automatic real-authority promotion
+  - no brokerage/custody claim
+  - no legal ownership claim from token/SPL balance
+  - no devnet deployment claim until CI proves deployment
+  - no live Pyth price claim until authenticated live retrieval succeeds
+  - never expose private devnet keypair or Pyth API key
+
+key_files:
+  - state/CURRENT.yaml
+  - state/HANDOVER.yaml
+  - docs/SOLANA-AUTHORITY-PROOF.md
+  - evidence/solana/LOCAL-AUTHORITY-RUNTIME-PROOF-2026-09-23.md
+  - docs/PYTH-EVIDENCE-PROOF.md
+  - docs/EXTERNAL-PROOF-CREDENTIALS.md
+  - .github/workflows/solana-devnet-authority-proof.yml
+  - .github/workflows/pyth-live-proof.yml
