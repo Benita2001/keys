@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   PYTH_PRO_EQUITY_FEEDS,
   fetchPythProSnapshot,
+  fetchPythProSolanaPayload,
   normalizePythProSnapshot,
   normalizePythSnapshot
 } from '../src/pyth-adapter.mjs';
@@ -138,4 +139,87 @@ test('parses a successful latest-price response', async () => {
   assert.equal(out.status, 'FRESH');
   assert.ok(Math.abs(out.price - 250) < 1e-9);
   assert.equal(out.ageSeconds, 5);
+});
+
+
+test('requests and returns a signed Solana payload for the on-chain path', async () => {
+  const publishUs = Date.parse('2026-09-23T15:30:15Z') * 1000;
+  const fakeFetch = async (_url, options) => {
+    const request = JSON.parse(options.body);
+    assert.deepEqual(request.formats, ['solana']);
+    assert.ok(request.properties.includes('feedUpdateTimestamp'));
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return {
+          parsed: {
+            timestampUs: String(publishUs),
+            priceFeeds: [
+              {
+                priceFeedId: 922,
+                price: '25000000',
+                confidence: 2500,
+                exponent: -5,
+                publisherCount: 3,
+                marketSession: 'regular',
+                feedUpdateTimestamp: publishUs
+              }
+            ]
+          },
+          solana: {
+            encoding: 'hex',
+            data: 'aabbccdd'
+          }
+        };
+      }
+    };
+  };
+
+  const out = await fetchPythProSolanaPayload({
+    apiKey: 'test-token',
+    feed: PYTH_PRO_EQUITY_FEEDS.AAPL,
+    fetchImpl: fakeFetch,
+    receivedAt: '2026-09-23T15:30:20Z'
+  });
+
+  assert.equal(out.status, 'FRESH');
+  assert.equal(out.solanaPayload.status, 'AVAILABLE');
+  assert.equal(out.solanaPayload.encoding, 'hex');
+  assert.equal(out.solanaPayload.data, 'aabbccdd');
+  assert.equal(out.solanaPayload.byteLength, 4);
+});
+
+test('fails closed for the signed-payload path when the payload is absent', async () => {
+  const publishUs = Date.parse('2026-09-23T15:30:15Z') * 1000;
+  const fakeFetch = async () => ({
+    ok: true,
+    status: 200,
+    async json() {
+      return {
+        parsed: {
+          priceFeeds: [
+            {
+              priceFeedId: 922,
+              price: '25000000',
+              confidence: 2500,
+              exponent: -5,
+              feedUpdateTimestamp: publishUs
+            }
+          ]
+        }
+      };
+    }
+  });
+
+  const out = await fetchPythProSolanaPayload({
+    apiKey: 'test-token',
+    feed: PYTH_PRO_EQUITY_FEEDS.AAPL,
+    fetchImpl: fakeFetch,
+    receivedAt: '2026-09-23T15:30:20Z'
+  });
+
+  assert.equal(out.status, 'FRESH');
+  assert.equal(out.solanaPayload.status, 'UNAVAILABLE');
+  assert.equal(out.solanaPayload.reasonCode, 'PYTH_SOLANA_PAYLOAD_MISSING');
 });
