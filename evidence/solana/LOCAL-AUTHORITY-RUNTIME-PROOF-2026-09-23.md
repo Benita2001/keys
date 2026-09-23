@@ -162,3 +162,36 @@ This local proof does not establish:
 - live Pyth consumption inside the Solana program.
 
 Those remain separate gates.
+
+
+## Revalidation run #17
+
+A later repository state re-ran the complete local authority proof successfully:
+
+https://github.com/Faadil1/keys/actions/runs/35894538107
+
+`solana-authority-proof #17`
+
+Result:
+
+`4 passing`
+
+Ephemeral local runtime program id:
+
+`D4g7DYwiWVJmGewivabsyhxF2NRtpdR741T3XsQUJkGL`
+
+Observed transactions:
+
+- initialize Charter: `SuCHfSDqMidRVaoYtak1aXM5vPACWfB2jiAteoY3nFDrrmGUfMWyH4UE1kjXhTGcnU19QFvhJqAZNqk4W7KhZaj`
+- initialize Mandate: `3znGrRV9LiNv5puXeqNHJFbfwzoYcyBzDJAMW7HgypTQmAzuUbRt1nefkEhhHEE5qkNuY7PATyNQpK56FzZccxQp`
+- commit Proposal: `2DQCNQcFtuYZUmebV3ofDT8vTzTUEd8PrYEpSQUjg8BJ3pEipPRYqRcwo7rLSWuiwvDP5vRvdyd2idKn1ow2fWWU`
+- record ReviewReceipt: `FLE2DqiMkEeSKkiZfkW5RCfdXt8hKQ5qwBKjxX1Ey3UMXgWHSAHyNERJXRrUoEuSujHKFu8uqDrVCY8uWcgRX3B`
+- guardian authority transition: `S8UQyDXwU2AetGQzmP5Gprhu7VzqmkVjPZTRJxFS1F7nquBZ782RQbV8GGte2hCEBUyqZpGfmwiTqZVniWQovvQ`
+
+Observed authority assertions remained unchanged:
+
+- unauthorized transition → `REFUSE / ConstraintHasOne`
+- guardian `PROPOSE -> BOUNDED` → `ALLOW / version=2 / nonce=1`
+- stale review replay → `REFUSE / ConstraintSeeds`
+
+This confirms the authority primitive remained executable after subsequent backend/repository changes that triggered the proof workflow.
