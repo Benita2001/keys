@@ -1,0 +1,15 @@
+{
+  "name": "keys-stocklana",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "KEYS — progressive financial stewardship for young people and families.",
+  "scripts": {
+    "test": "node --test",
+    "demo": "node scripts/demo-run.mjs",
+    "check": "npm test && npm run demo"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
