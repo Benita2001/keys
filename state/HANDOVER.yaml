@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 1
 updated_at: "2026-09-23"
-status: DEVNET_CANONICAL_WALLET_FUNDED_READY_FOR_GITHUB_SECRET
+status: DEVNET_SECRET_ADDED_READY_TO_DEPLOY
 
 mission:
   candidate: B
@@ -62,8 +62,8 @@ current_user_guided_work:
     - "Do not send real SOL."
     - "Do not paste a private key or keypair JSON into ChatGPT."
     - "Only the public address and non-secret command output may be shared in chat."
-  step: 10
-  step_name: ADD_CANONICAL_DEVNET_KEYPAIR_GITHUB_SECRET
+  step: 11
+  step_name: RUN_DEVNET_AUTHORITY_PROOF
   observed:
     solana_cli_present: false
     shell: PowerShell
@@ -107,13 +107,13 @@ current_user_guided_work:
     canonical_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
     keypair_file_confirmed_saved_locally: true
     funded: true
-    github_secret_added: false
+    github_secret_added: true
   superseded_wallet:
     public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
     observed_balance_sol: 5
     reason_superseded: "Complete keypair file unavailable."
-  next_user_action: "Add the complete locally saved keypair JSON to GitHub Actions repository secret DEVNET_KEYPAIR_JSON. Never paste or upload the keypair in chat."
-  completion_condition: "GitHub repository Actions secrets list shows DEVNET_KEYPAIR_JSON."
+  next_user_action: "No user action required while the devnet authority proof runs."
+  completion_condition: "Workflow proves repository-secret wallet source, funded balance, deploys program to devnet, emits Explorer URL, runs authority scenario, and ends DEVNET_PROOF=PASS."
 
 after_wallet_creation:
   sequence:
