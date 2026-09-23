@@ -6,6 +6,12 @@ Status: **LOCAL RUNTIME PASS / DEVNET BUILD PASS / DEVNET DEPLOYMENT BLOCKED BY 
 
 Latest canonical revalidation:
 
+https://github.com/Faadil1/keys/actions/runs/35895608533
+
+`solana-authority-proof #18` completed successfully with the current Anchor authority-provider integration.
+
+Previous passing revalidation:
+
 https://github.com/Faadil1/keys/actions/runs/35894538107
 
 `solana-authority-proof #17` completed successfully.
@@ -32,7 +38,24 @@ Observed proof:
 
 Latest ephemeral local runtime program id:
 
-`D4g7DYwiWVJmGewivabsyhxF2NRtpdR741T3XsQUJkGL`
+`XBjsh428EBwTdjZ4h4PFCm3kBzYrJ98Ro6hV6HbvpYC`
+
+Latest #18 observed runtime transactions:
+
+- beneficiary funding: `2it4kg8Vn4GC99Wd4Rxv5F1MvuWZASuBDXBEnNp9nWP4QrKvUoozMJTDHhuMbCzXHCrTXuiShWS25ixBtKBMStLY`
+- initialize Charter: `2VB6fhkP3VzvpNYNX2aWhfirn156PxZwrwVGp7R337eP2Zrz5M1gLTh81TRFVPta56PRak5mwteuajh2gTPPJYqB`
+- initialize Mandate: `Q79oLBnkppKF4RzfFhs6VqZ2vwLkrWo5kQY5fgQZ6jDGARfrnQvhjqc5nxYaBni9F1WwS6kzEwnnjWzqGx94K2u`
+- commit Proposal: `4v2qCEbEUHMGiXWxJzu4VegBP5qzBD3hfHmhTjUuHw4aXeU4zVRuGFn4Ch7j9bQv2rsnEJKRpewkzjaAkCEkXiRF`
+- record ReviewReceipt: `5j6Mj9VPt2tPFSGztErjmYdvUqxpBYkXUPHu4dj59611sDvDbR8knGenFBV64LVEuguWrXyuB9oeY2HHLXUtfBWJ`
+- guardian authority transition: `4bXUdv2dN19WmLKnUQDduJGdoihkn5d16wDD5wskduzKgnVMVjzcxyR7Et9qRUh1yEUF8MnmnduwS8tCCfL2tt9V`
+
+Latest #18 authority assertions:
+
+- unauthorized transition → `REFUSE / ConstraintHasOne`
+- guardian `PROPOSE -> BOUNDED` → `ALLOW / version=2 / nonce=1`
+- stale review replay → `REFUSE / ConstraintSeeds`
+- Anchor authority provider → `READY`
+- runtime tests → `4 passing`
 
 Initial #16 ephemeral program id:
 
