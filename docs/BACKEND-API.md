@@ -129,7 +129,9 @@ The UI-safe review label is:
 
 Never translate this into a maturity/competence score.
 
-### POST /api/v0.1/mandates/transition
+### POST /api/v0.1/mandates/transition/preview
+
+Deterministic policy preview only.
 
 Body:
 
@@ -152,7 +154,54 @@ Missing authorization must resolve to:
 AUTHORIZED_TRANSITION_REQUIRED
 ```
 
-The local Node facade models product semantics. The stronger nonce/version replay protection is proven in the Anchor authority layer and must remain authoritative for on-chain transitions.
+A preview response always carries:
+
+```json
+{
+  "preview": true,
+  "authorityCommitted": false
+}
+```
+
+### POST /api/v0.1/mandates/transition
+
+Committed authority route.
+
+This route does **not** use the Node preview as proof of authority. It requires a server-side `authorityTransitionProvider`.
+
+Without one, it fails closed with HTTP 503:
+
+```json
+{
+  "type": "MANDATE_TRANSITION_COMMIT",
+  "ok": false,
+  "authorityCommitted": false,
+  "reasonCode": "AUTHORITY_RUNTIME_UNAVAILABLE"
+}
+```
+
+When backed by the Anchor provider and a real signer/runtime, a successful result may include:
+
+```json
+{
+  "ok": true,
+  "authorityCommitted": true,
+  "mandate": {
+    "stage": "BOUNDED",
+    "version": 2,
+    "nonce": 1
+  },
+  "proof": {
+    "signature": "...",
+    "programId": "...",
+    "mandateAddress": "...",
+    "version": 2,
+    "nonce": 1
+  }
+}
+```
+
+The proof envelope is deliberately bounded and never includes signer secrets.
 
 ### POST /api/v0.1/execution/evaluate
 
@@ -187,11 +236,19 @@ Frontend
    ↓
 Local HTTP adapter
    ↓
-src/frontend-api.mjs
+src/frontend-api.mjs  ── policy preview
    ↓
 src/engine.mjs
    ↓
-Pyth evidence boundary / Solana authority proof
+Pyth evidence boundary
+
+Committed mandate transition
+   ↓
+src/authority-runtime.mjs
+   ↓
+src/anchor-authority-provider.mjs
+   ↓
+Anchor / Solana authority runtime
 ```
 
 The frontend is intentionally insulated from the implementation details below the domain facade.
