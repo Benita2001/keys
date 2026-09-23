@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 3
 updated_at: "2026-09-23"
-status: PYTH_EQUITY_ENTITLEMENT_USER_PLAN_CHECK_REQUIRED
+status: PYTH_TRIAL_ENTITLED_EQUITY_SELECTED
 
 mission:
   candidate: B
@@ -73,6 +73,14 @@ wallet_security:
   never_commit_or_share_private_key: true
 
 next_work:
+  trial_entitlement_observed:
+    source: "User screenshot of Pyth Terminal Demo trial"
+    entitled_equities:
+      - Equity.US.VOO/USD
+      - Equity.US.TSLA/USD
+      - Equity.US.QQQ/USD
+    aapl_entitled: false
+    selected_live_proof_equity: Equity.US.TSLA/USD
   entitlement_diagnostic:
     run: "https://github.com/Faadil1/keys/actions/runs/35909454962"
     secret_injection: PASS
@@ -82,9 +90,9 @@ next_work:
   last_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35908878998"
   last_pyth_result: FAILURE_SECRET_INJECTION
   last_pyth_detail: "Adapter tests 5/5 pass; strict check failed with PYTH_SECRET_INJECTION=FAILED name=PYTH_PRO_API_KEY; live request was skipped."
-  step: 20
-  step_name: CHECK_PYTH_TERMINAL_US_EQUITY_PLAN
-  user_action: "Open Pyth Terminal Manage Subscription and inspect plans/packages that include US equities/AAPL. Do not purchase yet; share only a screenshot or non-secret plan details."
+  step: 21
+  step_name: RUN_PYTH_LIVE_PROOF_WITH_ENTITLED_TSLA
+  user_action: "No user action required while the live Pyth proof is rerun with trial-entitled Equity.US.TSLA/USD."
   credential_path:
     secret_name_exact_confirmed_by_user: true
     terminal_url: "https://app.pyth.com/"
