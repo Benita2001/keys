@@ -9,6 +9,11 @@ core_primitive: evidence_backed_progressive_authority
 current_proof:
   reference_engine: PASS
   node_ci: PASS
+  backend_http_api: PASS
+  backend_capabilities_endpoint: PASS
+  server_owned_market_evidence_boundary: PASS
+  authority_runtime_boundary: PASS
+  anchor_authority_provider_contract: PASS
   rust_anchor_unit_ci: PASS
   anchor_program_code: PASS
   demo_first_onchain_slice: LOCAL_RUNTIME_PASS
@@ -46,6 +51,8 @@ verified_evidence:
   frontend_contract_ci_result: SUCCESS
   frontend_facade_ci_run: "https://github.com/Faadil1/keys/actions/runs/35894271377"
   frontend_facade_ci_result: SUCCESS
+  backend_contract_ci_run: "https://github.com/Faadil1/keys/actions/runs/35895732692"
+  backend_contract_ci_result: "36 tests / 36 pass / 0 fail"
 
 next_gate:
   name: DEMO_FIRST_ONCHAIN_SLICE
@@ -75,4 +82,8 @@ collaboration:
   frontend_contract: docs/FRONTEND-BACKEND-CONTRACT.md
   frontend_fixture: fixtures/frontend-maya-contract.json
   frontend_facade: src/frontend-api.mjs
+  backend_http_adapter: src/http-api.mjs
+  authority_runtime: src/authority-runtime.mjs
+  anchor_authority_provider: src/anchor-authority-provider.mjs
+  backend_api_doc: docs/BACKEND-API.md
   contract_status: FROZEN_FOR_MAYA_DEMO
