@@ -10,6 +10,9 @@ skip-lint = false
 [programs.localnet]
 keys = "5bgNPkaU8d6imUiozVdqNPdBfttrpAP2GzW9wpPDrrNQ"
 
+[programs.devnet]
+keys = "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
+
 [provider]
 cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
