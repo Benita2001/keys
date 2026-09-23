@@ -11,6 +11,7 @@ The backend semantics are frozen enough for you to move without waiting for the 
 3. [CONCEPT-LOCK.md](CONCEPT-LOCK.md)
 4. [FRONTEND-BACKEND-CONTRACT.md](FRONTEND-BACKEND-CONTRACT.md)
 5. [../fixtures/frontend-maya-contract.json](../fixtures/frontend-maya-contract.json)
+6. [BACKEND-API.md](BACKEND-API.md)
 
 ## What is fixed
 
@@ -111,4 +112,6 @@ You can use `fixtures/frontend-maya-contract.json` as the local frontend data so
 
 That fixture is covered by backend CI so the core Maya semantics cannot silently drift.
 
-When the frontend is ready for live integration, the backend can expose the same contract through an API/client adapter without changing the product meaning.
+For local integration, the backend now exposes the same contract through `npm run api`.
+
+Start with the fixture if you want zero backend dependency, then switch to the routes in `BACKEND-API.md` without changing the product meaning.
