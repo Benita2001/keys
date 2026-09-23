@@ -1,15 +1,16 @@
 {
   "name": "keys-stocklana",
-  "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "description": "KEYS — progressive financial stewardship for young people and families.",
+  "version": "0.1.0",
+  "description": "KEYS — progressive financial stewardship proof runtime.",
   "scripts": {
-    "test": "node --test",
-    "demo": "node scripts/demo-run.mjs",
-    "check": "npm test && npm run demo"
+    "test": "node --test test/*.test.mjs",
+    "test:anchor": "mocha --timeout 120000 tests/anchor-authority-proof.cjs"
   },
-  "engines": {
-    "node": ">=20"
+  "dependencies": {
+    "@coral-xyz/anchor": "0.32.1"
+  },
+  "devDependencies": {
+    "mocha": "11.7.2"
   }
 }
