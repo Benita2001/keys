@@ -1,100 +1,119 @@
 # KEYS — Pyth Evidence Proof
 
 Date: 2026-09-23  
-Status: **ADAPTER PASS / LIVE RETRIEVAL BLOCKED BY API KEY**
+Status: **PASS — AUTHENTICATED LIVE EQUITY**
 
 ## What is implemented
 
-KEYS now has a Pyth Pro market-evidence boundary in `src/pyth-adapter.mjs`.
+KEYS has a server-owned Pyth Pro market-evidence boundary in `src/pyth-adapter.mjs`.
 
 The adapter:
 
-- identifies the AAPL Pyth Pro feed as `Equity.US.AAPL/USD`, numeric feed id `922`;
+- supports configured US-equity feeds;
 - requests price, confidence, exponent, `feedUpdateTimestamp`, publisher count and market session;
-- normalizes Pyth fixed-point price/confidence values;
-- calculates evidence age from `feedUpdateTimestamp`;
+- normalizes fixed-point price/confidence values;
+- calculates evidence age;
 - classifies stale evidence;
 - preserves confidence width for the KEYS decision engine;
-- fails closed for missing credentials, 401, 403, upstream failure, missing feed data or unavailable price.
+- fails closed for missing credentials, entitlement failure, upstream failure, missing feed data or unavailable price.
 
-Pyth is used only as external market reality. It does not determine financial competence or automatically widen authority.
+Pyth remains external market reality only. It does not determine financial competence and does not widen authority by itself.
 
 ## Load-bearing behavior
 
-The normalized snapshot is passed into the KEYS proposal evaluator.
+Fresh evidence with acceptable confidence can continue to the mandate decision.
 
-- fresh evidence with acceptable confidence can continue to the mandate decision;
-- stale or unavailable evidence causes `REFUSE / MARKET_EVIDENCE_UNAVAILABLE`;
-- an over-wide confidence band causes `REFUSE / MARKET_CONFIDENCE_TOO_WIDE`.
+Stale or unavailable evidence causes a market-evidence refusal. An over-wide confidence band causes `REFUSE / MARKET_CONFIDENCE_TOO_WIDE`.
 
-For Maya at the `PROPOSE` stage, acceptable market evidence still results in:
+For a beneficiary at the `PROPOSE` stage, acceptable fresh evidence still results in:
 
 `ESCALATE / GUARDIAN_REVIEW_REQUIRED`
 
-This preserves the invariant:
+Invariant:
 
 `MARKET EVIDENCE != AUTHORITY`
 
-## Verified CI evidence
+## Canonical live proof
 
-Latest canonical workflow:
+Workflow:
 
-`pyth-live-proof #4`
+`pyth-live-proof #9`
 
 Run:
 
-https://github.com/Faadil1/keys/actions/runs/35896035083
+https://github.com/Faadil1/keys/actions/runs/35910460176
 
-Previous blocker proof:
+Observed:
 
-`pyth-live-proof #3`
+- `PYTH_SECRET_INJECTION=PASS`
+- symbol: `Equity.US.TSLA/USD`
+- feed id: `1435`
+- channel: `fixed_rate@1000ms`
+- status: `FRESH`
+- price: `379.696`
+- confidence: `0.019`
+- confidence bps: `0.500400320256205`
+- publish time: `2026-09-23T19:36:42.000Z`
+- evidence age: `0 seconds`
+- market session: `regular`
+- publisher count: `19`
 
-https://github.com/Faadil1/keys/actions/runs/35883434458
+The KEYS engine then produced:
 
-The latest run passed all 5 deterministic adapter tests.
+`ESCALATE / GUARDIAN_REVIEW_REQUIRED`
 
-The live step completed with the explicit result:
+Terminal marker:
 
-`PYTH_LIVE_PROOF=BLOCKED reason=PYTH_API_KEY_REQUIRED`
+`PYTH_LIVE_PROOF=PASS fresh_market_evidence_reached_guardian_review`
 
-The observed normalized live-attempt state was:
+Full evidence:
 
-- symbol: `Equity.US.AAPL/USD`
-- feed id: `922`
-- status: `UNAVAILABLE`
-- reason: `PYTH_API_KEY_REQUIRED`
-- price: not obtained
-- confidence: not obtained
-- publish time: not obtained
+[evidence/pyth/LIVE-EQUITY-EVIDENCE-PROOF-2026-09-23.md](../evidence/pyth/LIVE-EQUITY-EVIDENCE-PROOF-2026-09-23.md)
 
-Therefore this run is **not** evidence of a live Pyth price retrieval.
+## Why the canonical live feed is TSLA rather than AAPL
 
-The workflow is green because the missing credential is an expected, explicit, fail-closed blocker rather than an unhandled integration failure.
+Earlier authenticated attempts established that the current Pyth demo-trial token does not entitle `Equity.US.AAPL/USD`.
 
-## Current blocker
+Control proof:
 
-Pyth Pro REST latest-price access requires an API key.
+https://github.com/Faadil1/keys/actions/runs/35909454962
 
-Pyth's current developer documentation also states that, after the Pyth Core upgrade on 2026-08-26, Hermes API access requires an API key. Therefore KEYS does not treat unauthenticated Hermes access as a valid bypass for the missing Pyth Pro credential.
+Observed on the same token:
 
-Official references:
-- https://docs.pyth.network/price-feeds/pro/api/rest
-- https://docs.pyth.network/price-feeds/core/getting-started
-- https://docs.pyth.network/price-feeds/pro/acquire-api-key
+- `Equity.US.AAPL/USD` → `PYTH_NOT_ENTITLED`
+- `Crypto.BTC/USD` → `FRESH`
 
-KEYS does not store or expose a raw Pyth Pro API key in browser code. The key belongs server-side / in the CI secret boundary.
+The user's Pyth Terminal trial surface showed entitled equities including:
 
-Until a valid `PYTH_PRO_API_KEY` is available and the workflow is rerun successfully, the canonical status remains:
+- `Equity.US.VOO/USD`
+- `Equity.US.TSLA/USD`
+- `Equity.US.QQQ/USD`
 
-`live_pyth: BLOCKED_API_KEY`
+Rather than paying only to preserve an arbitrary ticker, KEYS made the live proof asset-configurable and used an entitled US-equity feed.
+
+This strengthens the product truth: KEYS is not an AAPL product.
+
+## Credential boundary
+
+The Pyth key is stored only as the GitHub Actions repository secret:
+
+`PYTH_PRO_API_KEY`
+
+It is not committed to the repository and must not be exposed in browser/frontend code.
 
 ## Truth boundary
 
-Do not claim:
+KEYS can now truthfully claim:
 
-- that KEYS currently has a live AAPL price in the repository proof;
-- that a public Pyth Terminal page is the same thing as product-integrated evidence;
-- that Pyth continuously monitors a mandate by itself;
-- that market data implies maturity or authorization.
+- authenticated Pyth Pro access;
+- a verified live US-equity snapshot;
+- price/confidence/freshness normalization;
+- load-bearing use of that evidence in the policy engine.
 
-The next proof is complete only when a real authenticated response provides the feed value, confidence and `feedUpdateTimestamp`, and that snapshot changes a KEYS proposal decision according to the fail-closed rules.
+KEYS must not claim:
+
+- live AAPL access on the current trial token;
+- continuous monitoring without an external scheduler/service;
+- that Pyth assesses maturity or competence;
+- that market data creates authority;
+- brokerage, custody or securities execution.
