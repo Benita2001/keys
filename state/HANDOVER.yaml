@@ -1,7 +1,7 @@
 project: KEYS
-handover_version: 2
+handover_version: 3
 updated_at: "2026-09-23"
-status: DEVNET_AUTHORITY_PROOF_PASS_PYTH_BLOCKED_API_KEY
+status: DEVNET_STABLE_PROGRAM_PASS_PYTH_BLOCKED_API_KEY
 
 mission:
   candidate: B
@@ -9,7 +9,7 @@ mission:
   promise: "Financial independence shouldn't happen all at once."
   core_primitive: evidence_backed_progressive_authority
   current_gate: DEMO_FIRST_ONCHAIN_SLICE
-  immediate_goal: "Stabilize the successful devnet program id and complete authenticated live Pyth evidence."
+  immediate_goal: "Complete authenticated live Pyth evidence after stable Solana devnet proof."
 
 ownership:
   frontend:
@@ -38,23 +38,23 @@ canonical_truth:
   backend_http_api: PASS
   frontend_backend_contract: PASS
   rust_anchor_unit_ci: PASS
+
   local_solana_authority_runtime: PASS
-  local_authority_canonical_run: "https://github.com/Faadil1/keys/actions/runs/35895608533"
+  local_authority_canonical_run: "https://github.com/Faadil1/keys/actions/runs/35905834783"
   local_authority_runtime_result: "4 passing"
+  local_regression_after_devnet_id_pin: PASS
 
   devnet_authority_runtime: PASS
-  devnet_canonical_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
-  devnet_payer_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  devnet_payer_balance_before_deploy_lamports: 5000000000
+  initial_devnet_deploy_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
+  stable_devnet_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
   devnet_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
   devnet_program_explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
-  devnet_deploy_signature: "fEZYkktLV38swATo1pgacZroWqHqw7WTs365MZX4H1QEdUZmuoYUDNaHGS441HWmgm3D1WzM2eZZPgoSwzf5Eey"
+  devnet_upgrade_authority: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+  devnet_upgrade_signature: "67hsECJonPA9N9eBP9jjPkzLNBzHPoXm8NGqLoKzrmZQfYFpUM4PDFLLFg7ZmPwsaogh95gg7LdLLHGW8FYvpQtu"
+  source_program_id_match: PASS
+  upgrade_authority_match_before: PASS
+  upgrade_authority_match_after: PASS
   devnet_runtime_result: "4 passing"
-  devnet_runtime_assertions:
-    - "Charter -> Mandate -> ProposalCommitment -> eligible ReviewReceipt"
-    - "unauthorized transition REFUSE / ConstraintHasOne"
-    - "guardian PROPOSE -> BOUNDED ALLOW / version=2 / nonce=1"
-    - "stale review replay REFUSE / ConstraintSeeds"
   devnet_terminal_marker: DEVNET_PROOF=PASS
 
   live_pyth: BLOCKED_API_KEY
@@ -66,34 +66,30 @@ canonical_truth:
 
 wallet_security:
   canonical_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  keypair_file_saved_locally: true
   github_secret_name: DEVNET_KEYPAIR_JSON
   github_secret_added: true
   assistant_accessed_secret_value: false
+  keypair_file_saved_locally: true
   never_commit_or_share_private_key: true
-  superseded_wallet:
-    public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
-    observed_balance_sol: 5
-    reason_superseded: "Complete keypair file unavailable."
 
 next_work:
-  step: 12
-  step_name: VERIFY_STABLE_DEVNET_PROGRAM_UPGRADE
-  active_devnet_verification_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
-  active_local_regression_run: "https://github.com/Faadil1/keys/actions/runs/35905834783"
-  objective: "Make the successful devnet program address durable for subsequent backend/frontend integration and verify upgrade authority."
-  then:
-    - "Complete authenticated Pyth live proof using PYTH_PRO_API_KEY."
-    - "Update proof docs and state after every successful or blocked step."
+  step: 13
+  step_name: OBTAIN_PYTH_API_KEY
+  user_action: "Obtain a valid Pyth API key, save it as GitHub Actions secret PYTH_PRO_API_KEY, and never paste it into chat."
+  after_secret:
+    - "Trigger pyth-live-proof."
+    - "Require authenticated AAPL price/confidence/publish-time evidence."
+    - "Require Maya PROPOSE decision to remain ESCALATE / GUARDIAN_REVIEW_REQUIRED for acceptable fresh evidence."
+    - "Record proof in CURRENT, HANDOVER and docs."
 
 truth_boundaries:
   - no competence score
   - no automatic real-authority promotion
   - no brokerage/custody claim
   - no legal ownership claim from token/SPL balance
-  - devnet deployment may now be claimed only for program ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk
+  - verified devnet deployment is program ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk
   - no mainnet deployment claim
-  - no live Pyth price claim until authenticated live retrieval succeeds
+  - no live Pyth price claim until authenticated retrieval succeeds
   - never expose private devnet keypair or Pyth API key
 
 key_files:
