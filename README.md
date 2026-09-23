@@ -16,7 +16,7 @@ External market evidence can make the current record eligible for a mandate revi
 
 ## v0.1 vertical slice
 
-This repository currently proves the local deterministic core:
+This repository now proves the deterministic core plus the demo-first live backend slice:
 
 `Charter → Mandate → Proposal → Market Evidence → Refusal / Escalation → Evidence Summary → Mandate Review Eligibility → Explicit Transition → Eligibility Gate`
 
@@ -38,17 +38,18 @@ Real today:
 - deterministic policy engine and evidence summaries;
 - frozen frontend/backend semantic contract;
 - local HTTP backend facade with server-owned evidence boundary;
+- Vercel-ready serverless adapter for the same API contract;
 - explicit simulation vs committed-authority separation;
-- Anchor authority provider contract;
-- executable local Solana authority proof: guardian signer required, mandate version/nonce advance, stale review replay refused;
-- devnet-target SBF/Anchor build pass before the funding gate;
-- fail-closed Pyth Pro adapter and authenticated server-side integration boundary;
-- automated Node/Rust/Anchor tests.
+- executable local Solana authority proof;
+- verified Solana devnet deployment and authority runtime;
+- stable canonical devnet program id and verified upgrade authority;
+- authenticated live Pyth US-equity evidence through the server/CI boundary;
+- load-bearing Pyth evidence reaching `ESCALATE / GUARDIAN_REVIEW_REQUIRED`;
+- automated Node/Rust/Anchor/integration tests.
 
-Not claimed yet:
+Not claimed:
 
-- Solana devnet deployment;
-- live authenticated Pyth price retrieval;
+- mainnet deployment;
 - brokerage/custody integration;
 - real minor securities execution;
 - venue-recognized credentials;
@@ -76,5 +77,8 @@ KEYS has a frozen v0.1 semantic contract so frontend work can proceed independen
 - Frontend-facing backend facade: [src/frontend-api.mjs](src/frontend-api.mjs)
 - Local backend API: [docs/BACKEND-API.md](docs/BACKEND-API.md)
 - Latest Solana authority proof: [docs/SOLANA-AUTHORITY-PROOF.md](docs/SOLANA-AUTHORITY-PROOF.md)
+- Live Pyth proof: [docs/PYTH-EVIDENCE-PROOF.md](docs/PYTH-EVIDENCE-PROOF.md)
+- Benita handoff: [docs/BENITA-FRONTEND-HANDOFF.md](docs/BENITA-FRONTEND-HANDOFF.md)
+- Documentation status: [docs/DOCS-STATUS.md](docs/DOCS-STATUS.md)
 
 The frontend owns interaction and visual language; backend reason codes, authority semantics, truth boundaries, and transition invariants remain canonical.
