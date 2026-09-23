@@ -1,5 +1,5 @@
 project: KEYS
-status: DEVNET_WALLET_FUNDED_KEYPAIR_FILE_INCOMPLETE
+status: DEVNET_REPLACEMENT_WALLET_CREATION_REQUIRED
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -90,6 +90,8 @@ collaboration:
   contract_status: FROZEN_FOR_MAYA_DEMO
 
 guided_execution:
+  original_devnet_wallet_preserve_as_is: true
+  replacement_wallet_required: true
   devnet_keypair_file_status: INCOMPLETE_OR_NOT_FOUND
   devnet_wallet_funded: PASS
   devnet_wallet_verified_balance_sol: 5
@@ -103,6 +105,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: RECOVER_OR_RECREATE_COMPLETE_DEVNET_KEYPAIR
-  next_user_action: "Check browser Downloads for the complete Solana Playground keypair file. Never paste its contents into chat."
+  active_step: CREATE_REPLACEMENT_DEVNET_WALLET_WITH_SAVED_KEYPAIR
+  next_user_action: "Create a replacement Solana Playground devnet-only wallet in a fresh browser context, save its complete keypair file, and return only the new public address."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
