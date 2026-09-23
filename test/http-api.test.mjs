@@ -79,6 +79,12 @@ test('HTTP adapter exposes fail-closed backend capabilities', async () => {
   assert.equal(result.body.authorityCommit.status, 'RUNTIME_UNAVAILABLE');
   assert.equal(result.body.executionEligibility.status, 'UNKNOWN_DEFAULT');
   assert.equal(result.body.simulation.status, 'AVAILABLE');
+  assert.equal(result.body.liveDemoProof.selectedEquity, 'TSLA');
+  assert.equal(result.body.liveDemoProof.route, '/api/v0.1/demo/live-proof');
+  assert.equal(
+    ['BLOCKED_API_KEY', 'LIVE_EVIDENCE_READY'].includes(result.body.liveDemoProof.status),
+    true
+  );
 });
 
 test('HTTP adapter reports injected providers as ready capabilities', async () => {
@@ -98,6 +104,8 @@ test('HTTP adapter reports injected providers as ready capabilities', async () =
   assert.equal(result.body.marketEvidence.status, 'PROVIDER_READY');
   assert.equal(result.body.authorityCommit.status, 'RUNTIME_READY');
   assert.equal(result.body.executionEligibility.status, 'PROVIDER_READY');
+  assert.equal(result.body.liveDemoProof.status, 'PROVIDER_READY');
+  assert.equal(result.body.liveDemoProof.selectedEquity, 'TSLA');
 });
 
 test('HTTP adapter exposes canonical Maya fixture', async () => {
