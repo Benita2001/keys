@@ -52,5 +52,6 @@ KEYS has a frozen v0.1 semantic contract so frontend work can proceed independen
 - Backend / policy engine / Solana / Pyth / proof: Faadil
 - Contract: [docs/FRONTEND-BACKEND-CONTRACT.md](docs/FRONTEND-BACKEND-CONTRACT.md)
 - Maya integration fixture: [fixtures/frontend-maya-contract.json](fixtures/frontend-maya-contract.json)
+- Frontend-facing backend facade: [src/frontend-api.mjs](src/frontend-api.mjs)
 
 The frontend owns interaction and visual language; backend reason codes, authority semantics, truth boundaries, and transition invariants remain canonical.
