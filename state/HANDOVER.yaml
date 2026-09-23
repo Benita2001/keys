@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 1
 updated_at: "2026-09-23"
-status: DEVNET_WALLET_FUNDED_KEYPAIR_FILE_INCOMPLETE
+status: DEVNET_REPLACEMENT_WALLET_CREATION_REQUIRED
 
 mission:
   candidate: B
@@ -62,8 +62,8 @@ current_user_guided_work:
     - "Do not send real SOL."
     - "Do not paste a private key or keypair JSON into ChatGPT."
     - "Only the public address and non-secret command output may be shared in chat."
-  step: 6
-  step_name: RECOVER_OR_RECREATE_COMPLETE_DEVNET_KEYPAIR
+  step: 7
+  step_name: CREATE_REPLACEMENT_DEVNET_WALLET_WITH_SAVED_KEYPAIR
   observed:
     solana_cli_present: false
     shell: PowerShell
@@ -94,8 +94,13 @@ current_user_guided_work:
     funded_wallet_public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
     funded_wallet_balance_sol: 5
     complete_keypair_file_available: false
-  next_user_action: "Check browser Downloads for the Solana Playground keypair file saved during wallet creation. Do not paste its contents into chat."
-  completion_condition: "A complete keypair JSON file is available locally, or a replacement devnet-only wallet is created with a complete saved keypair."
+  observed:
+    original_wallet_public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
+    original_wallet_balance_sol: 5
+    original_wallet_keypair_file_available: false
+    decision: "Do not attempt private-key extraction. Preserve original wallet as-is."
+  next_user_action: "Create a second Solana Playground devnet-only wallet in a fresh browser context and save its complete keypair file immediately. Return only the new public address."
+  completion_condition: "Replacement devnet wallet public address exists and its complete keypair JSON file is confirmed saved locally outside Git history."
 
 after_wallet_creation:
   sequence:
