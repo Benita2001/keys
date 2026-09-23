@@ -1,5 +1,5 @@
 project: KEYS
-status: DEVNET_SECRET_ADDED_READY_TO_DEPLOY
+status: DEVNET_AUTHORITY_PROOF_PASS_PYTH_BLOCKED_API_KEY
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -16,10 +16,10 @@ current_proof:
   anchor_authority_provider_contract: PASS
   rust_anchor_unit_ci: PASS
   anchor_program_code: PASS
-  demo_first_onchain_slice: LOCAL_RUNTIME_PASS
+  demo_first_onchain_slice: DEVNET_RUNTIME_PASS
   local_solana_authority_runtime: PASS
-  solana_devnet: BUILD_PASS_DEPLOY_BLOCKED_FUNDING
-  devnet_funded_wallet_path: READY_VIA_DEVNET_KEYPAIR_JSON_SECRET
+  solana_devnet: PASS
+  devnet_funded_wallet_path: COMPLETE_VIA_DEVNET_KEYPAIR_JSON_SECRET
   live_pyth: BLOCKED_API_KEY
   deterministic_demo: PASS
   frontend_backend_contract: PASS
@@ -27,7 +27,7 @@ current_proof:
   real_minor_execution: OUT_OF_SCOPE
 
 verified_evidence:
-  active_devnet_proof_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
+  devnet_authority_proof_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
   rust_program_check_run: "https://github.com/Faadil1/keys/actions/runs/35880920062"
   rust_program_check_result: SUCCESS
   local_authority_last_failure_run: "https://github.com/Faadil1/keys/actions/runs/35889679979"
@@ -41,10 +41,20 @@ verified_evidence:
     - "unauthorized transition REFUSE / ConstraintHasOne"
     - "guardian PROPOSE -> BOUNDED ALLOW / version=2 / nonce=1"
     - "stale review replay REFUSE / ConstraintSeeds"
-  devnet_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35890663439"
-  devnet_attempt_result: BUILD_PASS_DEPLOY_BLOCKED_FUNDING
-  devnet_build_program_id: "8XmhNVJqCFRwvpeTF4vNFsGgcoFs64goK2mjSVP9XKUm"
-  devnet_attempt_detail: "SBF/Anchor build passed before funding gate. Ephemeral wallet had 0 lamports; 5 SOL and 2 SOL faucet requests were rate-limited; no deployment occurred."
+  devnet_previous_blocked_run: "https://github.com/Faadil1/keys/actions/runs/35890663439"
+  devnet_previous_blocker: BUILD_PASS_DEPLOY_BLOCKED_FUNDING
+  devnet_authority_proof_result: SUCCESS
+  devnet_payer_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+  devnet_balance_before_deploy_lamports: 5000000000
+  devnet_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
+  devnet_program_explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
+  devnet_deploy_signature: "fEZYkktLV38swATo1pgacZroWqHqw7WTs365MZX4H1QEdUZmuoYUDNaHGS441HWmgm3D1WzM2eZZPgoSwzf5Eey"
+  devnet_runtime_result: "4 passing"
+  devnet_runtime_assertions:
+    - "unauthorized transition REFUSE / ConstraintHasOne"
+    - "guardian PROPOSE -> BOUNDED ALLOW / version=2 / nonce=1"
+    - "stale review replay REFUSE / ConstraintSeeds"
+  devnet_terminal_marker: DEVNET_PROOF=PASS
   pyth_live_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35896035083"
   pyth_live_attempt_result: BLOCKED_API_KEY
   pyth_live_attempt_detail: "pyth-live-proof #4: 5 deterministic adapter tests passed; live AAPL feed remained UNAVAILABLE / PYTH_API_KEY_REQUIRED; no price, confidence, or publish time obtained."
@@ -67,7 +77,7 @@ next_gate:
     - PASS: allow guardian PROPOSE -> BOUNDED
     - PASS: advance mandate version and nonce
     - PASS: refuse replay of old review material
-    - devnet deployment and transaction references when funding is available
+    - PASS: devnet deployment and transaction references
     - live Pyth snapshot with freshness/confidence or explicit credential blocker
 
 truth_boundary:
@@ -75,7 +85,7 @@ truth_boundary:
   - no automatic real-authority promotion
   - no claim of brokerage/custody
   - no claim of legal ownership from SPL balance
-  - no claim of devnet deployment while faucet funding is blocked
+  - devnet deployment claim is limited to verified program ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk
   - no claim of live Pyth price while API credential is unavailable
 
 collaboration:
@@ -101,7 +111,7 @@ guided_execution:
   replacement_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
   replacement_keypair_file_confirmed: true
   original_devnet_wallet_preserve_as_is: true
-  replacement_wallet_required: true
+  replacement_wallet_required: false
   devnet_keypair_file_status: INCOMPLETE_OR_NOT_FOUND
   devnet_wallet_funded: PASS
   devnet_wallet_verified_balance_sol: 5
@@ -115,6 +125,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: RUN_DEVNET_AUTHORITY_PROOF
-  next_user_action: "None while devnet authority proof runs."
+  active_step: STABILIZE_DEVNET_PROGRAM_ID
+  next_user_action: "None while backend stabilizes the verified devnet program id and upgrade path."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
