@@ -1,5 +1,5 @@
 project: KEYS
-status: DEVNET_PLAYGROUND_WALLET_SETUP
+status: DEVNET_WALLET_CREATED_NEEDS_FUNDING
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -90,12 +90,14 @@ collaboration:
   contract_status: FROZEN_FOR_MAYA_DEMO
 
 guided_execution:
+  devnet_wallet_public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
+  devnet_wallet_balance_status: UNVERIFIED
   selected_devnet_wallet_path: SOLANA_PLAYGROUND_BROWSER
   wsl_installation_required_for_selected_path: false
   wsl_local: ABSENT_CONFIRMED
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: CREATE_SOLANA_PLAYGROUND_DEVNET_WALLET
-  next_user_action: "Use official Solana Playground to create/save a devnet-only wallet; return only its public address and balance."
+  active_step: FUND_DEVNET_WALLET
+  next_user_action: "Fund public address Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N with devnet SOL via the official Solana faucet; return only balance or transaction signature."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
