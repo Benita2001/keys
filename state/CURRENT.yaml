@@ -1,26 +1,49 @@
 project: KEYS
-status: TECHNICAL_REALITY_CHECK_STARTED
+status: TECHNICAL_REALITY_CHECK_IN_PROGRESS
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
 promise: "Financial independence shouldn't happen all at once."
 core_primitive: evidence_backed_progressive_authority
+
 current_proof:
   reference_engine: PASS
-  automated_tests: 5_PASS
+  node_ci: PASS
+  rust_anchor_unit_ci: PASS
+  anchor_program_code: PASS
+  local_solana_authority_runtime: BUILD_FIX_IN_PROGRESS
+  solana_devnet: BLOCKED_FUNDING
+  live_pyth: BLOCKED_API_KEY
   deterministic_demo: PASS
-  solana_devnet: NOT_STARTED
-  live_pyth: NOT_STARTED
   real_minor_execution: OUT_OF_SCOPE
+
+verified_evidence:
+  rust_program_check_run: "https://github.com/Faadil1/keys/actions/runs/35880920062"
+  rust_program_check_result: SUCCESS
+  devnet_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35885934591"
+  devnet_attempt_result: BLOCKED_FUNDING
+  devnet_attempt_detail: "5 SOL and 2 SOL faucet requests rate-limited; final balance 0 lamports; no deployment occurred."
+  pyth_live_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35883434458"
+  pyth_live_attempt_result: BLOCKED_API_KEY
+
 next_gate:
   name: DEMO_FIRST_ONCHAIN_SLICE
   requires:
-    - minimal Solana charter/mandate/proposal accounts
-    - explicit-authorized mandate transition
-    - fail-closed stale/unknown market evidence
-    - live Pyth snapshot or documented entitlement blocker
+    - green local Solana authority runtime proof
+    - create Charter and Mandate
+    - commit Proposal
+    - create eligible ReviewReceipt
+    - refuse unauthorized transition
+    - allow guardian PROPOSE -> BOUNDED
+    - advance mandate version and nonce
+    - refuse replay of old review material
+    - devnet deployment and transaction references when funding is available
+    - live Pyth snapshot with freshness/confidence or explicit credential blocker
+
 truth_boundary:
   - no competence score
   - no automatic real-authority promotion
   - no claim of brokerage/custody
   - no claim of legal ownership from SPL balance
+  - no claim of devnet deployment while faucet funding is blocked
+  - no claim of live Pyth price while API credential is unavailable
