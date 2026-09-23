@@ -31,6 +31,7 @@ ownership:
       - integration
 
 canonical_truth:
+  active_devnet_proof_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
   reference_engine: PASS
   node_ci: PASS
   backend_http_api: PASS
