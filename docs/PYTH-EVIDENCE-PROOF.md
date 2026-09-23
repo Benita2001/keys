@@ -37,15 +37,21 @@ This preserves the invariant:
 
 ## Verified CI evidence
 
-Workflow:
+Latest canonical workflow:
 
-`pyth-live-proof #3`
+`pyth-live-proof #4`
 
 Run:
 
+https://github.com/Faadil1/keys/actions/runs/35896035083
+
+Previous blocker proof:
+
+`pyth-live-proof #3`
+
 https://github.com/Faadil1/keys/actions/runs/35883434458
 
-The deterministic adapter tests passed.
+The latest run passed all 5 deterministic adapter tests.
 
 The live step completed with the explicit result:
 
