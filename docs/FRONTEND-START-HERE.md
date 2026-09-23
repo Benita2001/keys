@@ -1,150 +1,86 @@
-# Benita — Frontend Start Here
+# Benita — Frontend Start Here (v0.2 transition)
 
-You own the KEYS frontend and product experience.
+Date: 2026-09-24  
+Status: **PRODUCT RELOCKED; V0.2 BACKEND CONTRACT NOT YET FROZEN**
 
-The backend semantics are frozen and the demo-first Solana/Pyth backend proof is complete. You can integrate against the deterministic fixture or the live-proof contract without waiting on further backend proof.
+You still own the KEYS frontend and product experience.
 
-## Read first
+However, the product strategy has changed after hostile review + Stocklana re-scoring. Do **not** lock the new experience to the old v0.1 proposal-per-action contract.
 
-1. [../README.md](../README.md)
-2. [../product/PRD-0.1.md](../product/PRD-0.1.md)
-3. [CONCEPT-LOCK.md](CONCEPT-LOCK.md)
-4. [FRONTEND-BACKEND-CONTRACT.md](FRONTEND-BACKEND-CONTRACT.md)
-5. [../fixtures/frontend-maya-contract.json](../fixtures/frontend-maya-contract.json)
-6. [BACKEND-API.md](BACKEND-API.md)
+## New product direction
 
-## What is fixed
+KEYS Family is now **bounded autonomy**:
 
-Do not redesign the meaning of:
-- mandate stages,
-- ALLOW / ESCALATE / REFUSE,
-- reason codes,
-- explicit guardian transition,
-- review eligibility wording,
-- UNKNOWN failing closed,
-- stale authorization/review refusal,
-- truth boundaries around custody, brokerage and minor execution.
+> Learn in context. Act freely inside bounds. Ask for more freedom only at the boundary.
 
-## What you own
+The guardian sets the boundary.
 
-You have freedom over:
-- information architecture,
-- navigation,
-- screen composition,
-- component system,
-- typography,
-- motion,
-- visual identity,
-- how Maya and the guardian understand the relationship,
-- how the longitudinal evidence/history becomes legible,
-- how the transition moment feels,
-- responsive behavior.
+Maya acts freely inside it.
 
-The current static demo is a placeholder, not a design constraint.
+## What remains fixed
 
-## Canonical demo story
+- ALLOW / ESCALATE / REFUSE semantics;
+- explicit human authority changes;
+- version/nonce stale-authorization refusal;
+- UNKNOWN fails closed;
+- market evidence does not create authority;
+- no competence score;
+- no brokerage/custody claim;
+- no real minor securities execution claim;
+- private minor reasoning stays off public chain.
 
-Maya is 16 and currently has a **PROPOSE** mandate.
+## What changed
 
-She proposes a $25 AAPL position and commits her reasoning before the outcome is known:
-- rationale,
-- counterargument,
-- horizon,
-- reconsideration condition.
+Old v0.1 happy path:
 
-The backend returns:
+`Proposal → Guardian Review → Transition`
 
-```
-ESCALATE
-GUARDIAN_REVIEW_REQUIRED
-```
+New v0.2 happy path:
 
-The product should make the distinction memorable:
+`In-bounds Action → ALLOW immediately`
 
-**Proposal is not authority.**
+Boundary path:
 
-Later, longitudinal evidence makes the mandate **Eligible for Mandate Review**.
+`Out-of-bounds Action → REFUSE or Boundary Request → Guardian decision → optional explicit Mandate transition`
 
-An authority increase without an authorized guardian is refused.
+The five-stage Family progression may remain visible as a narrative, but the Mandate permission envelope is the technical truth.
 
-The guardian explicitly authorizes:
+## Learning / Practice
 
-```
-PROPOSE → BOUNDED
-```
+Do not remove learning.
 
-The mandate version/nonce advances.
+Learning should be:
 
-Old review/authorization material is then stale and cannot be reused.
+- short and contextual;
+- tied to first-use, unfamiliar asset/action, boundary refusal, market change or review;
+- available in Practice;
+- age-respectful;
+- never a score that automatically widens authority.
 
-A final real-execution attempt with eligibility `UNKNOWN` is refused.
-
-End promise:
-
-**Financial independence shouldn't happen all at once.**
+See `FAMILY-LEARNING-LAYER.md`.
 
 ## Experience target
 
-KEYS should feel like something a teenager and parent could sit down and use together without either person feeling patronized.
+Primary surfaces should now communicate:
 
-Aim for:
-- calm,
-- trustworthy,
-- serious,
-- age-respectful,
-- family-native,
-- autonomous without being reckless.
+1. **My Key / Current Mandate** — what Maya can do right now.
+2. **Practice / Learn** — contextual market understanding without making every action homework.
+3. **Action** — instant if inside bounds.
+4. **Boundary** — why an action cannot execute.
+5. **Ask for more room** — short boundary request.
+6. **Guardian decision** — allow once / widen / refuse.
+7. **Market evidence** — what changed, in human language.
+8. **History / receipts** — transitions and meaningful reviews, not a surveillance feed.
 
-Avoid:
-- generic fintech dashboard,
-- kids banking clone,
-- crypto wallet / DeFi aesthetic,
-- LMS/course UI,
-- cartoon treatment,
-- AI-dashboard visual language,
-- dark-blue SaaS default,
-- gratuitous glassmorphism/gradients,
-- P&L leaderboard framing.
+## Backend coordination
 
-## Development assumption
+The old v0.1 fixture/API remains useful as historical proof, but it is no longer the frozen target for the new experience.
 
-You can use `fixtures/frontend-maya-contract.json` as the local frontend data source first.
+Faadil owns the v0.2 backend build and will freeze a new semantic contract after:
 
-That fixture is covered by backend CI so the core Maya semantics cannot silently drift.
+- permission-matrix Mandate;
+- program-controlled vault execution;
+- signed on-chain Pyth verification;
+- boundary request / explicit widen semantics.
 
-For local integration, the backend now exposes the same contract through `npm run api`.
-
-Start with the fixture if you want zero backend dependency, then switch to the routes in `BACKEND-API.md` without changing the product meaning.
-
-## Transition UI rule
-
-For the demo, you may use the preview route to show what would happen under the current policy.
-
-Do not label a preview as a completed authority change.
-
-Only show a transition as committed when the backend commit route returns:
-
-`authorityCommitted: true`
-
-with runtime proof metadata.
-
-This keeps the frontend visually ambitious without weakening the KEYS truth boundary.
-
-
-## Live backend integration
-
-The deterministic fixture remains the default frontend bootstrap path.
-
-When you want to connect the verified backend proof, use:
-
-`docs/LIVE-DEMO-INTEGRATION.md`
-
-The frontend-facing live endpoint is:
-
-`GET /api/v0.1/demo/live-proof`
-
-It returns display-safe Pyth market evidence and public Solana devnet proof metadata.
-
-Do not embed either backend secret in frontend code.
-
-The current authenticated live proof uses a trial-entitled US equity (`TSLA`). The product mechanism is asset-independent; the existing AAPL fixture does not need to be redesigned merely because the current Pyth trial entitles a different ticker.
+Do not redesign around TSLA or AAPL availability. The mechanism remains asset-independent and actual live assets must always be labeled truthfully.
