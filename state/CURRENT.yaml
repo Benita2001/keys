@@ -1,5 +1,5 @@
 project: KEYS
-status: PYTH_EQUITY_ENTITLEMENT_REQUIRED
+status: PYTH_EQUITY_ENTITLEMENT_USER_PLAN_CHECK_REQUIRED
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -27,6 +27,11 @@ current_proof:
   real_minor_execution: OUT_OF_SCOPE
 
 verified_evidence:
+  pyth_equity_entitlement_control_proof: "https://github.com/Faadil1/keys/actions/runs/35909454962"
+  pyth_control_token_valid: true
+  pyth_control_crypto_btc_status: FRESH
+  pyth_control_equity_aapl_status: PYTH_NOT_ENTITLED
+  pyth_final_entitlement_blocker: "Current token lacks US-equity/AAPL entitlement."
   pyth_asset_class_diagnostic_run: "https://github.com/Faadil1/keys/actions/runs/35909454962"
   pyth_secret_injection: PASS
   pyth_aapl_1000ms: PYTH_NOT_ENTITLED
@@ -159,6 +164,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: OBTAIN_PYTH_EQUITY_ENTITLEMENT
-  next_user_action: "Enable/request Pyth Pro US-equity entitlement for the existing API key or obtain a key/package entitled to Equity.US.AAPL/USD."
+  active_step: CHECK_PYTH_TERMINAL_US_EQUITY_PLAN
+  next_user_action: "Open Pyth Terminal Manage Subscription and inspect options that include US equities/AAPL. Do not purchase yet; return a screenshot or plan names/prices."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
