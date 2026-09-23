@@ -38,6 +38,17 @@ jobs:
       - name: Install JS proof dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Resolve SBF-compatible dependency lock
+        shell: bash
+        run: |
+          cargo generate-lockfile --manifest-path programs/keys/Cargo.toml
+          cargo update --manifest-path programs/keys/Cargo.toml -p blake3 --precise 1.8.2
+          cargo update --manifest-path programs/keys/Cargo.toml -p constant_time_eq --precise 0.3.1
+          cargo update --manifest-path programs/keys/Cargo.toml -p indexmap --precise 2.12.0
+          sed -i 's/^version = 4$/version = 3/' programs/keys/Cargo.lock
+          grep -A2 'name = "blake3"' programs/keys/Cargo.lock
+          grep -A2 'name = "indexmap"' programs/keys/Cargo.lock
+
       - name: Attempt full devnet authority proof
         shell: bash
         run: |
