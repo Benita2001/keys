@@ -13,6 +13,10 @@ import {
   fetchPythProSnapshot
 } from './pyth-adapter.mjs';
 
+import {
+  commitMandateTransitionForFrontend
+} from './authority-runtime.mjs';
+
 const mayaFixture = JSON.parse(
   await readFile(new URL('../fixtures/frontend-maya-contract.json', import.meta.url), 'utf8')
 );
@@ -151,11 +155,37 @@ export async function routeKeysHttp({
     };
   }
 
-  if (method === 'POST' && path === '/api/v0.1/mandates/transition') {
+  if (
+    method === 'POST' &&
+    path === '/api/v0.1/mandates/transition/preview'
+  ) {
     return {
       status: 200,
       headers: JSON_HEADERS,
-      body: transitionMandateForFrontend(body ?? {})
+      body: {
+        ...transitionMandateForFrontend(body ?? {}),
+        type: 'MANDATE_TRANSITION_PREVIEW',
+        preview: true,
+        authorityCommitted: false
+      }
+    };
+  }
+
+  if (method === 'POST' && path === '/api/v0.1/mandates/transition') {
+    const result = await commitMandateTransitionForFrontend({
+      request: body ?? {},
+      authorityTransitionProvider: services?.authorityTransitionProvider
+    });
+
+    const unavailable = [
+      'AUTHORITY_RUNTIME_UNAVAILABLE',
+      'AUTHORITY_RUNTIME_ERROR'
+    ].includes(result.reasonCode);
+
+    return {
+      status: unavailable ? 503 : 200,
+      headers: JSON_HEADERS,
+      body: result
     };
   }
 
