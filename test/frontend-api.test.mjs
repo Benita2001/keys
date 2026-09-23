@@ -62,6 +62,8 @@ test('frontend facade matches the canonical Maya proposal response', () => {
   assert.equal(response.type, 'PROPOSAL_EVALUATION');
   assert.equal(response.decision, snapshot.evaluation.decision);
   assert.equal(response.reasonCode, snapshot.evaluation.reasonCode);
+  assert.equal(response.marketEvidence.status, 'FRESH');
+  assert.equal(response.eligibility.status, 'UNKNOWN');
   assert.equal(response.mandate.stage, Stage.PROPOSE);
   assert.equal(response.proposal.asset, 'AAPL');
   assert.equal(response.proposal.amount, 25);
@@ -156,4 +158,5 @@ test('frontend facade preserves UNKNOWN fail-closed execution behavior', () => {
   assert.equal(response.type, 'EXECUTION_ELIGIBILITY');
   assert.equal(response.decision, snapshot.executionEligibility.decision);
   assert.equal(response.reasonCode, snapshot.executionEligibility.reasonCode);
+  assert.equal(response.eligibility.status, 'UNKNOWN');
 });
