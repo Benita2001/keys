@@ -1,38 +1,90 @@
 # Build Plan
 
+Date: 2026-09-24
+
 ## Gate 1 — local deterministic core — PASS
 
 Reference state machine, refusals, evidence summary, explicit transition requirement, tests and static demo.
 
 ## Gate 2 — Solana authority proof — PASS
 
-Build the smallest inspectable program that proves:
+Proved:
 
-- Charter account exists;
-- Mandate account has a current stage and caps;
-- Proposal commitment is bound to an asset/amount/hash;
-- unsigned mandate transition is refused;
-- authorized transition advances version/nonce;
-- replay of old transition material is refused.
+- Charter;
+- Mandate stage/caps;
+- Proposal commitment;
+- unauthorized transition refusal;
+- authorized transition;
+- version/nonce advance;
+- stale replay refusal.
 
-No swap is required for this gate.
+This is now classified as the **v0.1 authority-transition proof**.
 
 ## Gate 3 — Pyth evidence proof — PASS
 
-Consume a verified Pyth snapshot with freshness/confidence checks. If entitlement blocks the desired feed, record the blocker and use an entitled equity feed without pretending it is Apple.
+Authenticated Pyth Pro equity evidence with freshness/confidence normalization reaches the KEYS evaluator.
 
-## Gate 4 — consumer vertical slice — FRONTEND INTEGRATION / BENITA
+Current proof is off-chain/server-side and uses an entitled live feed.
 
-Teen view → proposal → refusal/escalation → evidence history → mandate review → explicit transition → eligibility refusal.
+## Gate 4 — strategy re-open + hostile review — PASS
 
-Backend proof status entering Gate 4:
+Result:
 
-- local Solana authority runtime: PASS;
-- devnet authority runtime: PASS;
-- stable devnet program identity: PASS;
-- authenticated live Pyth equity: PASS;
-- live demo backend contract: PASS.
+- keep Family as the Stocklana wedge;
+- reject proposal-per-action UX;
+- adopt bounded autonomy;
+- stages become Family policy/UX rather than universal protocol architecture;
+- learning/practice stays, but never auto-promotes authority;
+- Solana must enforce capital/action boundaries;
+- Pyth must become load-bearing condition/notional evidence.
 
-## Gate 5 — winner-to-winner collision
+## Gate 5 — technical reality gate v0.2 — PASS WITH ARCHITECTURE DELTA
 
-Compare the functioning KEYS demo against the functioning COVENANT demo on Stocklana fit, user clarity, technical proof, Pyth usefulness, native Solana value, regulatory truthfulness and post-hackathon durability.
+Canonical target:
+
+`program-controlled vault + permission-matrix Mandate + AssetRule + signed Pyth verification`
+
+See:
+- `docs/TECHNICAL-REALITY-GATE-BOUNDED-AUTONOMY.md`
+- `docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md`
+
+## Gate 6 — backend v0.2 bounded-autonomy build — ACTIVE / FAADIL
+
+Build in this order:
+
+1. Mandate permission envelope + AssetRule.
+2. Program-controlled vault.
+3. `execute_within_mandate` deterministic success/refusal proof.
+4. Signed Pyth Pro Solana payload verification.
+5. Boundary request + explicit human widen + stale replay proof.
+6. Pause/revoke/downward authority.
+7. Frontend/backend semantic contract v0.2.
+
+## Gate 7 — Family experience integration — BENITA AFTER V0.2 CONTRACT
+
+Product experience:
+
+- current-key / bounds view;
+- contextual learning + Practice;
+- instant in-bounds action;
+- clear boundary refusal;
+- boundary request;
+- guardian allow-once / widen / refuse;
+- market-condition explanation;
+- stale-authorization proof.
+
+Benita retains frontend ownership.
+
+## Gate 8 — judge-facing proof
+
+Target demo spine:
+
+`in-bounds SUCCESS → out-of-bounds REFUSE → market condition invalid/stale → human widen → same action SUCCESS → stale replay REFUSE`
+
+Close:
+
+**Financial independence shouldn't happen all at once.**
+
+## Gate 9 — winner-to-winner collision
+
+Compare functioning KEYS Family v0.2 against COVENANT on Stocklana fit, user clarity, technical proof, Pyth usefulness, native Solana value, regulatory truthfulness and post-hackathon durability.
