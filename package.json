@@ -5,7 +5,8 @@
   "description": "KEYS — progressive financial stewardship proof runtime.",
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "test:anchor": "mocha --timeout 120000 tests/anchor-authority-proof.cjs"
+    "test:anchor": "mocha --timeout 120000 tests/anchor-authority-proof.cjs",
+    "demo": "node scripts/demo-run.mjs"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.32.1"
