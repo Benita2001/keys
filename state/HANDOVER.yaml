@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 1
 updated_at: "2026-09-23"
-status: DEVNET_REPLACEMENT_WALLET_ADDRESS_RECEIVED_KEYPAIR_CONFIRM_PENDING
+status: DEVNET_CANONICAL_WALLET_READY_NEEDS_FUNDING
 
 mission:
   candidate: B
@@ -62,8 +62,8 @@ current_user_guided_work:
     - "Do not send real SOL."
     - "Do not paste a private key or keypair JSON into ChatGPT."
     - "Only the public address and non-secret command output may be shared in chat."
-  step: 8
-  step_name: CONFIRM_REPLACEMENT_KEYPAIR_FILE
+  step: 9
+  step_name: FUND_CANONICAL_DEVNET_WALLET
   observed:
     solana_cli_present: false
     shell: PowerShell
@@ -102,9 +102,18 @@ current_user_guided_work:
   observed:
     replacement_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
     replacement_wallet_explorer_url: "https://explorer.solana.com/address/FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk?cluster=devnet"
-    replacement_wallet_keypair_file_confirmed: false
-  next_user_action: "Confirm only whether the complete replacement wallet keypair JSON file was successfully saved locally. Do not paste or upload the file."
-  completion_condition: "Replacement wallet keypair file is confirmed saved locally outside Git history."
+    replacement_wallet_keypair_file_confirmed: true
+  canonical_wallet:
+    canonical_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+    keypair_file_confirmed_saved_locally: true
+    funded: false
+    github_secret_added: false
+  superseded_wallet:
+    public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
+    observed_balance_sol: 5
+    reason_superseded: "Complete keypair file unavailable."
+  next_user_action: "Fund FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk with devnet SOL using the official Solana faucet. Return only the resulting balance or public transaction signature."
+  completion_condition: "Canonical devnet wallet has a verified non-zero devnet SOL balance."
 
 after_wallet_creation:
   sequence:
