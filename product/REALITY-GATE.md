@@ -5,7 +5,7 @@
 - Multi-LLM research independently converged on progressive/graduated financial authority rather than generic financial education.
 - Existing youth-finance patterns provide supervision, custody or teen access but do not make progressive authority the central product primitive.
 - The product can deliver Learn / Practice / Propose without claiming real minor securities execution.
-- Pyth can be load-bearing as external market context if it affects evaluation/refusal rather than merely displaying a chart.
+- Pyth is now proven load-bearing as external market context: authenticated fresh equity evidence reaches the evaluator and preserves `ESCALATE / GUARDIAN_REVIEW_REQUIRED` rather than merely displaying a chart.
 
 ## Not validated yet
 
