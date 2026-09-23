@@ -23,15 +23,36 @@ This repository currently proves the local deterministic core:
 Run:
 
 ```bash
+npm install
 npm test
 npm run demo
+npm run api
 ```
+
+`npm run api` starts the local frontend-integration backend on `127.0.0.1:8787` by default.
 
 ## Truth boundary
 
-Real today: deterministic policy engine, fail-closed market evidence interface, evidence summaries, explicit transition requirement, static user demo, automated tests.
+Real today:
 
-Not claimed yet: Solana devnet deployment, live Pyth retrieval, brokerage/custody integration, real minor securities execution, venue-recognized credentials, or a financial-competence score.
+- deterministic policy engine and evidence summaries;
+- frozen frontend/backend semantic contract;
+- local HTTP backend facade with server-owned evidence boundary;
+- explicit simulation vs committed-authority separation;
+- Anchor authority provider contract;
+- executable local Solana authority proof: guardian signer required, mandate version/nonce advance, stale review replay refused;
+- devnet-target SBF/Anchor build pass before the funding gate;
+- fail-closed Pyth Pro adapter and authenticated server-side integration boundary;
+- automated Node/Rust/Anchor tests.
+
+Not claimed yet:
+
+- Solana devnet deployment;
+- live authenticated Pyth price retrieval;
+- brokerage/custody integration;
+- real minor securities execution;
+- venue-recognized credentials;
+- a financial-competence score.
 
 See `docs/TRUTH-BOUNDARY.md`.
 
@@ -53,5 +74,7 @@ KEYS has a frozen v0.1 semantic contract so frontend work can proceed independen
 - Contract: [docs/FRONTEND-BACKEND-CONTRACT.md](docs/FRONTEND-BACKEND-CONTRACT.md)
 - Maya integration fixture: [fixtures/frontend-maya-contract.json](fixtures/frontend-maya-contract.json)
 - Frontend-facing backend facade: [src/frontend-api.mjs](src/frontend-api.mjs)
+- Local backend API: [docs/BACKEND-API.md](docs/BACKEND-API.md)
+- Latest Solana authority proof: [docs/SOLANA-AUTHORITY-PROOF.md](docs/SOLANA-AUTHORITY-PROOF.md)
 
 The frontend owns interaction and visual language; backend reason codes, authority semantics, truth boundaries, and transition invariants remain canonical.
