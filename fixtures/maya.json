@@ -1,0 +1,14 @@
+{
+  "familyId": "keys-demo-family",
+  "beneficiary": "Maya",
+  "age": 16,
+  "jurisdiction": "CA-QC",
+  "stake": {
+    "purpose": "Learn long-term ownership through companies I can explain",
+    "fundingProvenance": [
+      { "source": "birthday gift", "amount": 50, "currency": "CAD" }
+    ],
+    "legalControl": "guardian-controlled practice mode",
+    "mandate": "PROPOSE"
+  }
+}
