@@ -49,6 +49,33 @@ async function defaultEligibilityProvider() {
   return { status: 'UNKNOWN' };
 }
 
+function capabilitiesForServices(services = {}) {
+  return {
+    contractVersion: FRONTEND_CONTRACT_VERSION,
+    mode: 'LOCAL_DEMO',
+    marketEvidence: {
+      status: services.marketEvidenceProvider
+        ? 'PROVIDER_READY'
+        : process.env.PYTH_PRO_API_KEY
+          ? 'PYTH_CONFIGURED'
+          : 'BLOCKED_API_KEY'
+    },
+    authorityCommit: {
+      status: services.authorityTransitionProvider
+        ? 'RUNTIME_READY'
+        : 'RUNTIME_UNAVAILABLE'
+    },
+    executionEligibility: {
+      status: services.eligibilityProvider
+        ? 'PROVIDER_READY'
+        : 'UNKNOWN_DEFAULT'
+    },
+    simulation: {
+      status: 'AVAILABLE'
+    }
+  };
+}
+
 async function resolveBackendEvidence({ body, services }) {
   const now = body?.now ?? new Date().toISOString();
   const marketEvidenceProvider =
@@ -97,6 +124,14 @@ export async function routeKeysHttp({
         service: 'keys-backend',
         contractVersion: FRONTEND_CONTRACT_VERSION
       }
+    };
+  }
+
+  if (method === 'GET' && path === '/api/v0.1/capabilities') {
+    return {
+      status: 200,
+      headers: JSON_HEADERS,
+      body: capabilitiesForServices(services)
     };
   }
 
