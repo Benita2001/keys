@@ -4,11 +4,17 @@ Status: **LOCAL RUNTIME PASS / DEVNET BUILD PASS / DEVNET DEPLOYMENT BLOCKED BY 
 
 ## Verified local runtime proof
 
-Canonical run:
+Latest canonical revalidation:
+
+https://github.com/Faadil1/keys/actions/runs/35894538107
+
+`solana-authority-proof #17` completed successfully.
+
+Initial passing runtime proof:
 
 https://github.com/Faadil1/keys/actions/runs/35890368959
 
-`solana-authority-proof #16` completed successfully.
+`solana-authority-proof #16`
 
 The program was built with the Solana SBF toolchain and executed through Anchor on a local validator.
 
@@ -24,7 +30,11 @@ Observed proof:
 - replay of the old nonce-0 review material refused with `ConstraintSeeds`;
 - 4 Anchor runtime tests passed.
 
-Ephemeral local runtime program id:
+Latest ephemeral local runtime program id:
+
+`D4g7DYwiWVJmGewivabsyhxF2NRtpdR741T3XsQUJkGL`
+
+Initial #16 ephemeral program id:
 
 `DbvkVxnYro1S4tVFD9SbGUYSVPvspt2S7yiAfx2wfokH`
 
