@@ -27,6 +27,9 @@ current_proof:
   real_minor_execution: OUT_OF_SCOPE
 
 verified_evidence:
+  pyth_live_run_6: "https://github.com/Faadil1/keys/actions/runs/35908878998"
+  pyth_live_run_6_result: FAILURE_SECRET_INJECTION
+  pyth_live_run_6_marker: "PYTH_SECRET_INJECTION=FAILED name=PYTH_PRO_API_KEY"
   pyth_live_run_5: "https://github.com/Faadil1/keys/actions/runs/35908769121"
   pyth_live_run_5_result: BLOCKED_SECRET_NOT_INJECTED
   pyth_live_run_5_detail: "5 adapter tests passed; process.env.PYTH_PRO_API_KEY was empty, yielding PYTH_API_KEY_REQUIRED."
