@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 1
 updated_at: "2026-09-23"
-status: DEVNET_CLI_INSTALL_IN_PROGRESS
+status: DEVNET_WSL_INSTALL_REQUIRED
 
 mission:
   candidate: B
@@ -62,8 +62,8 @@ current_user_guided_work:
     - "Do not send real SOL."
     - "Do not paste a private key or keypair JSON into ChatGPT."
     - "Only the public address and non-secret command output may be shared in chat."
-  step: 2
-  step_name: CHECK_WSL_FOR_OFFICIAL_SOLANA_INSTALL
+  step: 3
+  step_name: INSTALL_WSL
   observed:
     solana_cli_present: false
     shell: PowerShell
@@ -71,8 +71,11 @@ current_user_guided_work:
   install_path:
     official_windows_requirement: WSL
     source: "https://solana.com/docs/intro/installation"
-  next_user_action: "Run: wsl --status in PowerShell and return only the output."
-  completion_condition: "WSL availability is known; if absent, install WSL; if present, continue inside Ubuntu/WSL."
+  observed:
+    wsl_present: false
+    output: "The Windows Subsystem for Linux is not installed."
+  next_user_action: "Run in an elevated PowerShell: wsl --install"
+  completion_condition: "WSL installation completes; restart Windows if requested; then run wsl --status."
 
 after_wallet_creation:
   sequence:
