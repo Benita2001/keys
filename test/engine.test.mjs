@@ -65,3 +65,56 @@ test('evidence can make a mandate eligible for human review, not auto-promote it
   assert.equal(approved.ok, true);
   assert.equal(approved.mandate.stage, Stage.BOUNDED);
 });
+
+
+test('mandate transition preview refuses backward or same-stage transitions', () => {
+  const mandate = makeMandate({
+    stage: Stage.BOUNDED,
+    effectiveAt: '2026-09-23T14:00:00Z'
+  });
+
+  const common = {
+    mandate,
+    authorizedBy: 'guardian-1',
+    at: '2026-09-24T14:00:00Z',
+    evidenceSummary: {},
+    reviewEligibility: { eligibleForReview: true }
+  };
+
+  const backward = transitionMandate({
+    ...common,
+    toStage: Stage.PROPOSE
+  });
+
+  const sameStage = transitionMandate({
+    ...common,
+    toStage: Stage.BOUNDED
+  });
+
+  assert.equal(backward.ok, false);
+  assert.equal(backward.reasonCode, 'INVALID_TRANSITION');
+  assert.equal(backward.mandate.stage, Stage.BOUNDED);
+
+  assert.equal(sameStage.ok, false);
+  assert.equal(sameStage.reasonCode, 'INVALID_TRANSITION');
+  assert.equal(sameStage.mandate.stage, Stage.BOUNDED);
+});
+
+test('mandate transition preview allows forward transitions up to INDEPENDENT', () => {
+  const mandate = makeMandate({
+    stage: Stage.PROPOSE,
+    effectiveAt: '2026-09-23T14:00:00Z'
+  });
+
+  const approved = transitionMandate({
+    mandate,
+    toStage: Stage.INDEPENDENT,
+    authorizedBy: 'guardian-1',
+    at: '2026-09-24T14:00:00Z',
+    evidenceSummary: {},
+    reviewEligibility: { eligibleForReview: true }
+  });
+
+  assert.equal(approved.ok, true);
+  assert.equal(approved.mandate.stage, Stage.INDEPENDENT);
+});
