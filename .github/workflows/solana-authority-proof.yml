@@ -45,7 +45,10 @@ jobs:
           if grep -q 'name = "blake3"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p blake3 --precise 1.8.2; fi
           if grep -q 'name = "constant_time_eq"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p constant_time_eq --precise 0.3.1; fi
           if grep -q 'name = "base64ct"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p base64ct --precise 1.7.3; fi
-          if grep -q 'name = "indexmap"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p indexmap --precise 2.11.4; fi
+          INDEXMAP_V2=$(awk '/name = "indexmap"/ {getline; gsub(/[" ]/, "", $3); if ($3 ~ /^2\./) {print $3; exit}}' Cargo.lock)
+          if [ -n "$INDEXMAP_V2" ] && [ "$INDEXMAP_V2" != "2.11.4" ]; then
+            cargo update --manifest-path Cargo.toml -p "indexmap@$INDEXMAP_V2" --precise 2.11.4
+          fi
           if grep -q 'name = "zeroize"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p zeroize --precise 1.8.1; fi
           if grep -q 'name = "zeroize_derive"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p zeroize_derive --precise 1.4.2; fi
           if grep -q 'version = "0.23.10+spec-1.0.0"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p 'toml_edit@0.23.10+spec-1.0.0' --precise 0.23.7; fi
