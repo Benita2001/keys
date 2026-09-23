@@ -1,0 +1,21 @@
+name: rust-program-check
+on:
+  push:
+    paths:
+      - "programs/keys/**"
+      - ".github/workflows/rust-program-check.yml"
+  pull_request:
+    paths:
+      - "programs/keys/**"
+      - ".github/workflows/rust-program-check.yml"
+
+jobs:
+  program:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: programs/keys
+      - run: cargo test --manifest-path programs/keys/Cargo.toml
