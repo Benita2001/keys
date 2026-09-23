@@ -114,6 +114,71 @@ test('HTTP adapter exposes canonical Maya fixture', async () => {
   assert.equal(result.body.authorizedTransition.authorityCommitted, false);
 });
 
+
+test('live demo proof surface exposes live evidence plus public devnet proof without secrets', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.1/demo/live-proof',
+    services: {
+      marketEvidenceProvider: async ({ asset }) => ({
+        source: 'PYTH_PRO',
+        symbol: `Equity.US.${asset}/USD`,
+        feedId: 1435,
+        status: 'FRESH',
+        price: 379.696,
+        confidence: 0.019,
+        confidenceBps: 0.5004,
+        maxConfidenceBps: 100,
+        publishTime: '2026-09-23T19:36:42.000Z',
+        receivedAt: '2026-09-23T19:36:42.000Z',
+        ageSeconds: 0,
+        marketSession: 'regular',
+        publisherCount: 19
+      })
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.type, 'LIVE_DEMO_PROOF');
+  assert.equal(result.body.mode, 'LIVE_BACKEND_EVIDENCE');
+  assert.equal(result.body.beneficiary.displayName, 'Maya');
+  assert.equal(result.body.scenario.asset, 'TSLA');
+  assert.equal(result.body.evaluation.marketEvidence.status, 'FRESH');
+  assert.equal(result.body.evaluation.decision, 'ESCALATE');
+  assert.equal(result.body.evaluation.reasonCode, 'GUARDIAN_REVIEW_REQUIRED');
+  assert.equal(result.body.proofs.solana.network, 'devnet');
+  assert.equal(
+    result.body.proofs.solana.programId,
+    'ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk'
+  );
+  assert.equal(result.body.proofs.pyth.secretExposedToFrontend, false);
+  assert.equal(result.body.truthBoundary.marketEvidenceCreatesAuthority, false);
+  assert.equal(result.body.truthBoundary.realSecuritiesExecution, false);
+});
+
+test('live demo proof fails closed when live market evidence is unavailable', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.1/demo/live-proof',
+    services: {
+      marketEvidenceProvider: async () => ({
+        source: 'PYTH_PRO',
+        symbol: 'Equity.US.TSLA/USD',
+        status: 'UNAVAILABLE',
+        reasonCode: 'PYTH_NOT_ENTITLED'
+      })
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.evaluation.decision, 'REFUSE');
+  assert.equal(
+    result.body.evaluation.reasonCode,
+    'MARKET_EVIDENCE_UNAVAILABLE'
+  );
+  assert.equal(result.body.evaluation.marketEvidence.status, 'UNAVAILABLE');
+});
+
 test('normal proposal endpoint uses backend-owned evidence', async () => {
   const result = await routeKeysHttp({
     method: 'POST',
