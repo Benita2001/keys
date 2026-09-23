@@ -115,3 +115,17 @@ That fixture is covered by backend CI so the core Maya semantics cannot silently
 For local integration, the backend now exposes the same contract through `npm run api`.
 
 Start with the fixture if you want zero backend dependency, then switch to the routes in `BACKEND-API.md` without changing the product meaning.
+
+## Transition UI rule
+
+For the demo, you may use the preview route to show what would happen under the current policy.
+
+Do not label a preview as a completed authority change.
+
+Only show a transition as committed when the backend commit route returns:
+
+`authorityCommitted: true`
+
+with runtime proof metadata.
+
+This keeps the frontend visually ambitious without weakening the KEYS truth boundary.
