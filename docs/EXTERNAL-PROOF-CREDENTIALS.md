@@ -2,12 +2,14 @@
 
 Status: **DEVNET COMPLETE / PYTH LIVE EQUITY COMPLETE**
 
-The backend proof is locally executable. Two remaining external proofs require credentials or funded infrastructure that cannot be manufactured safely inside the repository:
+The external proof gates are now complete. This document records the secure credential/funding paths that were used so the proof remains reproducible without exposing secret material.
 
-1. Solana devnet deployment requires a funded devnet payer.
-2. Live Pyth evidence requires an authenticated Pyth API key.
+Completed:
 
-This document defines the supported secure paths.
+1. Solana devnet deployment/runtime — PASS.
+2. Authenticated live Pyth equity evidence — PASS.
+
+The credential rules below remain canonical for any future rerun.
 
 ## 1. Solana devnet funding — COMPLETE
 
