@@ -66,17 +66,20 @@ describe("KEYS Solana authority proof", () => {
   );
 
   before(async () => {
-    for (const key of [beneficiary.publicKey, attacker.publicKey]) {
-      const signature = await provider.connection.requestAirdrop(
-        key,
-        2 * LAMPORTS_PER_SOL
-      );
-      await provider.connection.confirmTransaction(signature, "confirmed");
-    }
+    const signature = await provider.sendAndConfirm(
+      new anchor.web3.Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: provider.wallet.publicKey,
+          toPubkey: beneficiary.publicKey,
+          lamports: Math.floor(0.2 * LAMPORTS_PER_SOL),
+        })
+      )
+    );
+    console.log(`PROOF fund_beneficiary_tx=${signature}`);
   });
 
   it("creates Charter -> Mandate -> Proposal -> eligible ReviewReceipt", async () => {
-    await program.methods
+    const charterTx = await program.methods
       .initializeCharter(hash32("CA-QC"), new anchor.BN(10000), new anchor.BN(5000))
       .accountsStrict({
         charter,
@@ -86,8 +89,9 @@ describe("KEYS Solana authority proof", () => {
       })
       .signers([beneficiary])
       .rpc();
+    console.log(`PROOF initialize_charter_tx=${charterTx}`);
 
-    await program.methods
+    const mandateTx = await program.methods
       .initializeMandate()
       .accountsStrict({
         charter,
@@ -96,8 +100,9 @@ describe("KEYS Solana authority proof", () => {
         systemProgram: SystemProgram.programId,
       })
       .rpc();
+    console.log(`PROOF initialize_mandate_tx=${mandateTx}`);
 
-    await program.methods
+    const proposalTx = await program.methods
       .commitProposal(
         hash32("maya:aapl:25:reasoning-v1"),
         hash32("AAPL"),
@@ -113,8 +118,9 @@ describe("KEYS Solana authority proof", () => {
       })
       .signers([beneficiary, proposal])
       .rpc();
+    console.log(`PROOF commit_proposal_tx=${proposalTx}`);
 
-    await program.methods
+    const reviewTx = await program.methods
       .recordReview(hash32("evidence:review-0"), true)
       .accountsStrict({
         charter,
@@ -124,6 +130,7 @@ describe("KEYS Solana authority proof", () => {
         systemProgram: SystemProgram.programId,
       })
       .rpc();
+    console.log(`PROOF record_review_tx=${reviewTx}`);
 
     const mandateState = await program.account.mandate.fetch(mandate);
     const receipt = await program.account.reviewReceipt.fetch(reviewReceipt0);
@@ -162,7 +169,7 @@ describe("KEYS Solana authority proof", () => {
   });
 
   it("accepts guardian PROPOSE -> BOUNDED and advances version/nonce", async () => {
-    await program.methods
+    const transitionTx = await program.methods
       .transitionMandate(3, new anchor.BN(0))
       .accountsStrict({
         charter,
@@ -171,6 +178,7 @@ describe("KEYS Solana authority proof", () => {
         guardian: provider.wallet.publicKey,
       })
       .rpc();
+    console.log(`PROOF authorized_transition_tx=${transitionTx}`);
 
     const mandateState = await program.account.mandate.fetch(mandate);
     assert.equal(mandateState.stage, 3);
