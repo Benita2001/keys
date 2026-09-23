@@ -1,5 +1,5 @@
 project: KEYS
-status: DEVNET_REPLACEMENT_WALLET_ADDRESS_RECEIVED_KEYPAIR_CONFIRM_PENDING
+status: DEVNET_CANONICAL_WALLET_READY_NEEDS_FUNDING
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -90,8 +90,11 @@ collaboration:
   contract_status: FROZEN_FOR_MAYA_DEMO
 
 guided_execution:
+  canonical_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+  canonical_devnet_wallet_keypair_saved: true
+  canonical_devnet_wallet_funded: false
   replacement_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  replacement_keypair_file_confirmed: false
+  replacement_keypair_file_confirmed: true
   original_devnet_wallet_preserve_as_is: true
   replacement_wallet_required: true
   devnet_keypair_file_status: INCOMPLETE_OR_NOT_FOUND
@@ -107,6 +110,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: CONFIRM_REPLACEMENT_KEYPAIR_FILE
-  next_user_action: "Confirm that the complete replacement wallet keypair JSON file was saved locally. Do not paste or upload it."
+  active_step: FUND_CANONICAL_DEVNET_WALLET
+  next_user_action: "Fund canonical devnet wallet FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk with devnet SOL; return only balance or public transaction signature."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
