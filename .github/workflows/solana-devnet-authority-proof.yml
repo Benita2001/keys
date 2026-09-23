@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
     paths:
+      - "programs/keys/**"
+      - "Anchor.toml"
+      - "Cargo.toml"
+      - "package.json"
+      - "tests/anchor-authority-proof.cjs"
       - ".github/workflows/solana-devnet-authority-proof.yml"
   workflow_dispatch:
 
@@ -44,6 +49,7 @@ jobs:
           if grep -q 'name = "base64ct"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p base64ct --precise 1.7.3; fi
           if grep -q 'name = "indexmap"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p indexmap --precise 2.11.4; fi
           if grep -q 'name = "zeroize"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p zeroize --precise 1.8.1; fi
+          if grep -q 'name = "zeroize_derive"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p zeroize_derive --precise 1.4.2; fi
           if grep -q 'version = "0.23.10+spec-1.0.0"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p 'toml_edit@0.23.10+spec-1.0.0' --precise 0.23.7; fi
           if grep -q 'name = "toml_parser"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p toml_parser --precise 1.0.4; fi
           if grep -q 'name = "unicode-segmentation"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p unicode-segmentation --precise 1.12.0; fi
