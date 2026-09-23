@@ -1,4 +1,3 @@
-# proof-trigger: funded-canonical-wallet-2026-09-23
 name: solana-devnet-authority-proof
 
 on:
@@ -11,6 +10,8 @@ on:
 jobs:
   devnet-proof:
     runs-on: ubuntu-24.04
+    env:
+      DEVNET_PROGRAM_ID: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
     timeout-minutes: 40
 
     steps:
@@ -87,12 +88,30 @@ jobs:
           solana config set --url https://api.devnet.solana.com --keypair "$HOME/.config/solana/id.json"
           echo "PROOF devnet_payer=$(solana address)"
 
+          PROGRAM_ID="$DEVNET_PROGRAM_ID"
           anchor build
-          anchor keys sync
-          anchor build
-          PROGRAM_ID=$(solana address -k target/deploy/keys-keypair.json)
           echo "PROOF devnet_build=PASS"
           echo "PROOF devnet_program_id=$PROGRAM_ID"
+          grep -Fq "declare_id!(\"$PROGRAM_ID\")" programs/keys/src/lib.rs
+          echo "PROOF source_program_id_match=PASS"
+
+          set +e
+          PROGRAM_SHOW_BEFORE=$(solana program show "$PROGRAM_ID" --url https://api.devnet.solana.com 2>&1)
+          PROGRAM_SHOW_RC=$?
+          set -e
+          echo "$PROGRAM_SHOW_BEFORE"
+          if [ $PROGRAM_SHOW_RC -ne 0 ]; then
+            echo "DEVNET_PROOF=FAILED_CANONICAL_PROGRAM_LOOKUP"
+            exit $PROGRAM_SHOW_RC
+          fi
+          UPGRADE_AUTHORITY_BEFORE=$(printf '%s\n' "$PROGRAM_SHOW_BEFORE" | awk -F': ' '/^Authority:/ {print $2; exit}')
+          PAYER_ADDRESS=$(solana address)
+          echo "PROOF devnet_upgrade_authority_before=$UPGRADE_AUTHORITY_BEFORE"
+          if [ "$UPGRADE_AUTHORITY_BEFORE" != "$PAYER_ADDRESS" ]; then
+            echo "DEVNET_PROOF=FAILED_UPGRADE_AUTHORITY_MISMATCH"
+            exit 1
+          fi
+          echo "PROOF devnet_upgrade_authority_match=PASS"
 
           BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
           BALANCE=${BALANCE:-0}
@@ -120,7 +139,7 @@ jobs:
           fi
 
           set +e
-          DEPLOY_OUT=$(solana program deploy target/deploy/keys.so --program-id target/deploy/keys-keypair.json --url https://api.devnet.solana.com --keypair "$HOME/.config/solana/id.json" 2>&1)
+          DEPLOY_OUT=$(solana program deploy target/deploy/keys.so --program-id "$PROGRAM_ID" --url https://api.devnet.solana.com --keypair "$HOME/.config/solana/id.json" 2>&1)
           DEPLOY_RC=$?
           set -e
           echo "$DEPLOY_OUT"
@@ -134,6 +153,15 @@ jobs:
             exit $DEPLOY_RC
           fi
 
+          PROGRAM_SHOW_AFTER=$(solana program show "$PROGRAM_ID" --url https://api.devnet.solana.com)
+          echo "$PROGRAM_SHOW_AFTER"
+          UPGRADE_AUTHORITY_AFTER=$(printf '%s\n' "$PROGRAM_SHOW_AFTER" | awk -F': ' '/^Authority:/ {print $2; exit}')
+          echo "PROOF devnet_upgrade_authority_after=$UPGRADE_AUTHORITY_AFTER"
+          if [ "$UPGRADE_AUTHORITY_AFTER" != "$PAYER_ADDRESS" ]; then
+            echo "DEVNET_PROOF=FAILED_POST_DEPLOY_AUTHORITY_MISMATCH"
+            exit 1
+          fi
+          echo "PROOF devnet_upgrade_authority_postdeploy_match=PASS"
           echo "PROOF explorer=https://explorer.solana.com/address/$PROGRAM_ID?cluster=devnet"
           export ANCHOR_PROVIDER_URL=https://api.devnet.solana.com
           export ANCHOR_WALLET="$HOME/.config/solana/id.json"
