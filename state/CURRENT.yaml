@@ -26,9 +26,10 @@ verified_evidence:
   rust_program_check_result: SUCCESS
   local_authority_last_failure_run: "https://github.com/Faadil1/keys/actions/runs/35889679979"
   local_authority_last_failure_detail: "SBF rustc 1.84.1-dev rejected unicode-segmentation 1.13.3; workflow now pins 1.12.0."
-  local_authority_active_run: "https://github.com/Faadil1/keys/actions/runs/35890368959"
+  local_authority_previous_pass_run: "https://github.com/Faadil1/keys/actions/runs/35890368959"
+  local_authority_active_run: "https://github.com/Faadil1/keys/actions/runs/35894538107"
   local_authority_result: SUCCESS
-  local_authority_runtime_program_id: "DbvkVxnYro1S4tVFD9SbGUYSVPvspt2S7yiAfx2wfokH"
+  local_authority_runtime_program_id: "D4g7DYwiWVJmGewivabsyhxF2NRtpdR741T3XsQUJkGL"
   local_authority_runtime_assertions:
     - "Charter -> Mandate -> ProposalCommitment -> eligible ReviewReceipt"
     - "unauthorized transition REFUSE / ConstraintHasOne"
