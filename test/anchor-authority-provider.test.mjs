@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as anchor from '@coral-xyz/anchor';
+import anchor from '@coral-xyz/anchor';
 
 import { Stage } from '../src/model.mjs';
 import { createAnchorAuthorityTransitionProvider } from '../src/anchor-authority-provider.mjs';
