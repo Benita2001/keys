@@ -1,6 +1,6 @@
 # KEYS — External Proof Credentials
 
-Status: **ACTIONABLE / NO SECRET MATERIAL STORED IN REPOSITORY**
+Status: **DEVNET COMPLETE / PYTH CREDENTIAL STILL REQUIRED**
 
 The backend proof is locally executable. Two remaining external proofs require credentials or funded infrastructure that cannot be manufactured safely inside the repository:
 
@@ -9,7 +9,7 @@ The backend proof is locally executable. Two remaining external proofs require c
 
 This document defines the supported secure paths.
 
-## 1. Solana devnet funding
+## 1. Solana devnet funding — COMPLETE
 
 Workflow:
 
@@ -77,6 +77,24 @@ Observed:
 - `DEVNET_PROOF=BLOCKED_FUNDING`
 
 That program id is **not** claimed as deployed.
+
+### Completed devnet proof
+
+Canonical run:
+
+https://github.com/Faadil1/keys/actions/runs/35904484604
+
+Verified:
+
+- repository-secret wallet source;
+- funded payer `FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk`;
+- 5 devnet SOL before deployment;
+- program `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk` deployed;
+- deployment signature recorded;
+- devnet authority tests `4 passing`;
+- `DEVNET_PROOF=PASS`.
+
+No further user action is required for basic devnet funding/deployment proof.
 
 ## 2. Pyth live evidence
 
@@ -157,10 +175,10 @@ toward:
 
 only after both external proofs produce their explicit PASS markers.
 
-Until then, the canonical truth remains:
+Current canonical truth:
 
 - local authority runtime: **PASS**
 - devnet build: **PASS**
-- devnet deployment: **BLOCKED_FUNDING**
+- devnet deployment/runtime: **PASS**
 - deterministic Pyth adapter: **PASS**
 - live Pyth retrieval: **BLOCKED_API_KEY**
