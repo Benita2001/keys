@@ -1,7 +1,7 @@
 project: KEYS
-handover_version: 5
+handover_version: 6
 updated_at: "2026-09-23"
-status: LIVE_DEMO_BACKEND_CONTRACT_PASS_RUNTIME_NOT_HOSTED
+status: VERCEL_READY_MANUAL_IMPORT_REQUIRED
 
 mission:
   candidate: B
@@ -10,7 +10,7 @@ mission:
   core_primitive: evidence_backed_progressive_authority
   completed_gate: DEMO_FIRST_ONCHAIN_SLICE
   current_gate: LIVE_DEMO_INTEGRATION
-  immediate_goal: "Host the verified live demo HTTP runtime so Benita can consume /api/v0.1/demo/live-proof remotely."
+  immediate_goal: "Import the Vercel-ready KEYS repo, inject PYTH_PRO_API_KEY server-side, deploy, and smoke-test the public HTTPS API."
 
 ownership:
   frontend:
@@ -97,19 +97,28 @@ security:
   browser_exposure_of_pyth_key: false
 
 next_work:
-  step: 23
-  step_name: HOST_LIVE_DEMO_HTTP_RUNTIME
+  step: 24
+  step_name: IMPORT_KEYS_INTO_VERCEL
   completed:
     - "GET /api/v0.1/demo/live-proof implemented."
     - "GET /api/v0.1/capabilities advertises liveDemoProof."
     - "Live route tested with fresh evidence and fail-closed evidence."
     - "Frontend handoff documented in docs/LIVE-DEMO-INTEGRATION.md."
+  completed:
+    - "Vercel request adapter implemented."
+    - "Vercel catch-all preserves /api/v0.1/* routes."
+    - "vercel.json committed."
+    - "Vercel adapter CI PASS: https://github.com/Faadil1/keys/actions/runs/35912763697"
   remaining:
-    - "Choose hosted runtime."
-    - "Configure PYTH_PRO_API_KEY server-side on that runtime."
-    - "Expose a stable HTTPS base URL to Benita."
+    - "Import Faadil1/keys into Vercel."
+    - "Add PYTH_PRO_API_KEY to Vercel environment variables."
+    - "Deploy."
+    - "Return production URL."
     - "Smoke-test /health, /api/v0.1/capabilities and /api/v0.1/demo/live-proof remotely."
-  user_action: "None until runtime choice requires account/deployment access."
+  blocker:
+    connector_read_access: true
+    connector_deploy_action: unavailable_in_session
+  user_action: "Use Vercel import UI for Faadil1/keys, add PYTH_PRO_API_KEY, deploy, then share only the production URL."
 
 truth_boundaries:
   - no competence score
