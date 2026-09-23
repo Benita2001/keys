@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 3
 updated_at: "2026-09-23"
-status: PYTH_EQUITY_ENTITLEMENT_REQUIRED
+status: PYTH_EQUITY_ENTITLEMENT_USER_PLAN_CHECK_REQUIRED
 
 mission:
   candidate: B
@@ -82,9 +82,9 @@ next_work:
   last_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35908878998"
   last_pyth_result: FAILURE_SECRET_INJECTION
   last_pyth_detail: "Adapter tests 5/5 pass; strict check failed with PYTH_SECRET_INJECTION=FAILED name=PYTH_PRO_API_KEY; live request was skipped."
-  step: 19
-  step_name: OBTAIN_PYTH_EQUITY_ENTITLEMENT
-  user_action: "Enable/request Pyth Pro US-equity access for the existing API key, or obtain a Pyth token/package entitled to Equity.US.AAPL/USD. Do not share the token."
+  step: 20
+  step_name: CHECK_PYTH_TERMINAL_US_EQUITY_PLAN
+  user_action: "Open Pyth Terminal Manage Subscription and inspect plans/packages that include US equities/AAPL. Do not purchase yet; share only a screenshot or non-secret plan details."
   credential_path:
     secret_name_exact_confirmed_by_user: true
     terminal_url: "https://app.pyth.com/"
