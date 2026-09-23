@@ -64,6 +64,42 @@ test('HTTP adapter exposes health and contract version', async () => {
   assert.equal(result.body.contractVersion, '0.1');
 });
 
+test('HTTP adapter exposes fail-closed backend capabilities', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.1/capabilities'
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.mode, 'LOCAL_DEMO');
+  assert.equal(
+    ['BLOCKED_API_KEY', 'PYTH_CONFIGURED'].includes(result.body.marketEvidence.status),
+    true
+  );
+  assert.equal(result.body.authorityCommit.status, 'RUNTIME_UNAVAILABLE');
+  assert.equal(result.body.executionEligibility.status, 'UNKNOWN_DEFAULT');
+  assert.equal(result.body.simulation.status, 'AVAILABLE');
+});
+
+test('HTTP adapter reports injected providers as ready capabilities', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.1/capabilities',
+    services: {
+      marketEvidenceProvider: async () => freshMarket,
+      eligibilityProvider: async () => ({ status: 'UNKNOWN' }),
+      authorityTransitionProvider: {
+        commitTransition: async () => ({ ok: false, reasonCode: 'TEST_ONLY' })
+      }
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.marketEvidence.status, 'PROVIDER_READY');
+  assert.equal(result.body.authorityCommit.status, 'RUNTIME_READY');
+  assert.equal(result.body.executionEligibility.status, 'PROVIDER_READY');
+});
+
 test('HTTP adapter exposes canonical Maya fixture', async () => {
   const result = await routeKeysHttp({
     method: 'GET',
