@@ -1,8 +1,8 @@
 {
   "name": "keys-stocklana",
   "private": true,
-  "version": "0.1.0",
-  "description": "KEYS — progressive financial stewardship proof runtime.",
+  "version": "0.2.0",
+  "description": "KEYS — bounded autonomy for tokenized-stock family capital.",
   "scripts": {
     "test": "node --test test/*.test.mjs && node --check scripts/dev-api.mjs",
     "test:anchor": "mocha --timeout 120000 tests/anchor-authority-proof.cjs",
@@ -10,7 +10,8 @@
     "api": "node scripts/dev-api.mjs"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "0.32.1"
+    "@coral-xyz/anchor": "0.32.1",
+    "@solana/spl-token": "0.4.14"
   },
   "devDependencies": {
     "mocha": "11.7.2"

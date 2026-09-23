@@ -1,4 +1,5 @@
 const anchor = require("@coral-xyz/anchor");
+const spl = require("@solana/spl-token");
 const { strict: assert } = require("node:assert");
 const { createHash } = require("node:crypto");
 
@@ -8,6 +9,14 @@ const {
   SystemProgram,
   LAMPORTS_PER_SOL,
 } = anchor.web3;
+
+const {
+  TOKEN_PROGRAM_ID,
+  createMint,
+  getOrCreateAssociatedTokenAccount,
+  getAccount,
+  mintTo,
+} = spl;
 
 function hash32(value) {
   return Array.from(createHash("sha256").update(value).digest());
@@ -43,7 +52,7 @@ async function expectRefusal(label, action, acceptedCodes = []) {
   console.log(`PROOF ${label}=REFUSE code=${String(code).split("\n")[0]}`);
 }
 
-describe("KEYS Solana authority proof", () => {
+describe("KEYS Solana authority + bounded-capital proof", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
   const provider = anchor.getProvider();
   const program = anchor.workspace.Keys;
@@ -53,6 +62,11 @@ describe("KEYS Solana authority proof", () => {
   const beneficiary = Keypair.generate();
   const attacker = Keypair.generate();
   const proposal = Keypair.generate();
+
+  let mockStockMint;
+  let assetRule;
+  let vaultTokenAccount;
+  let beneficiaryTokenAccount;
 
   const [charter] = PublicKey.findProgramAddressSync(
     [Buffer.from("charter"), beneficiary.publicKey.toBuffer()],
@@ -88,6 +102,47 @@ describe("KEYS Solana authority proof", () => {
     );
     console.log(`PROOF fund_beneficiary_tx=${signature}`);
     console.log("PROOF anchor_authority_provider=READY");
+
+    const payer = provider.wallet.payer;
+    assert(payer, "Anchor NodeWallet payer is required for the token runtime proof");
+
+    mockStockMint = await createMint(
+      provider.connection,
+      payer,
+      payer.publicKey,
+      null,
+      0
+    );
+
+    beneficiaryTokenAccount = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      payer,
+      mockStockMint,
+      beneficiary.publicKey
+    );
+
+    [assetRule] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("asset-rule"),
+        mandate.toBuffer(),
+        mockStockMint.toBuffer(),
+      ],
+      program.programId
+    );
+
+    [vaultTokenAccount] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("vault"),
+        mandate.toBuffer(),
+        mockStockMint.toBuffer(),
+      ],
+      program.programId
+    );
+
+    console.log(`PROOF mock_stock_mint=${mockStockMint.toBase58()}`);
+    console.log(`PROOF beneficiary_token_account=${beneficiaryTokenAccount.address.toBase58()}`);
+    console.log(`PROOF asset_rule=${assetRule.toBase58()}`);
+    console.log(`PROOF vault_token_account=${vaultTokenAccount.toBase58()}`);
   });
 
   it("creates Charter -> Mandate -> Proposal -> eligible ReviewReceipt", async () => {
@@ -147,6 +202,7 @@ describe("KEYS Solana authority proof", () => {
     const mandateState = await program.account.mandate.fetch(mandate);
     const receipt = await program.account.reviewReceipt.fetch(reviewReceipt0);
     assert.equal(mandateState.stage, 2);
+    assert.equal(mandateState.status, 0);
     assert.equal(mandateState.version.toNumber(), 1);
     assert.equal(mandateState.nonce.toNumber(), 0);
     assert.equal(receipt.eligibleForReview, true);
@@ -230,5 +286,234 @@ describe("KEYS Solana authority proof", () => {
     assert.equal(mandateState.stage, 3);
     assert.equal(mandateState.version.toNumber(), 2);
     assert.equal(mandateState.nonce.toNumber(), 1);
+  });
+
+  it("creates a program-controlled mock-stock vault and explicit asset rule", async () => {
+    const tx = await program.methods
+      .initializeAssetRule(
+        new anchor.BN(1),
+        1,
+        new anchor.BN(250),
+        new anchor.BN(1000),
+        new anchor.BN(3600),
+        1435
+      )
+      .accountsStrict({
+        charter,
+        mandate,
+        assetRule,
+        vaultTokenAccount,
+        mint: mockStockMint,
+        guardian: provider.wallet.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log(`PROOF initialize_asset_rule_tx=${tx}`);
+
+    const payer = provider.wallet.payer;
+    await mintTo(
+      provider.connection,
+      payer,
+      mockStockMint,
+      vaultTokenAccount,
+      payer,
+      2000
+    );
+
+    const rule = await program.account.assetRule.fetch(assetRule);
+    const mandateState = await program.account.mandate.fetch(mandate);
+    const vault = await getAccount(provider.connection, vaultTokenAccount);
+
+    assert.equal(rule.enabled, true);
+    assert.equal(rule.maxActionAmount.toNumber(), 250);
+    assert.equal(rule.maxPeriodAmount.toNumber(), 1000);
+    assert.equal(rule.pythFeedId, 1435);
+    assert.equal(mandateState.version.toNumber(), 3);
+    assert.equal(mandateState.nonce.toNumber(), 2);
+    assert.equal(Number(vault.amount), 2000);
+
+    console.log("PROOF bounded_vault=READY max_action_amount=250 max_period_amount=1000 nonce=2");
+  });
+
+  it("allows an in-bounds capital action without guardian approval", async () => {
+    const beforeVault = await getAccount(provider.connection, vaultTokenAccount);
+    const beforeDelegate = await getAccount(
+      provider.connection,
+      beneficiaryTokenAccount.address
+    );
+
+    const tx = await program.methods
+      .executeWithinMandate(new anchor.BN(100), new anchor.BN(2))
+      .accountsStrict({
+        charter,
+        mandate,
+        assetRule,
+        vaultTokenAccount,
+        mint: mockStockMint,
+        beneficiary: beneficiary.publicKey,
+        delegateTokenAccount: beneficiaryTokenAccount.address,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([beneficiary])
+      .rpc();
+
+    const afterVault = await getAccount(provider.connection, vaultTokenAccount);
+    const afterDelegate = await getAccount(
+      provider.connection,
+      beneficiaryTokenAccount.address
+    );
+
+    assert.equal(Number(beforeVault.amount) - Number(afterVault.amount), 100);
+    assert.equal(Number(afterDelegate.amount) - Number(beforeDelegate.amount), 100);
+
+    console.log(`PROOF in_bounds_execution_tx=${tx}`);
+    console.log("PROOF in_bounds_execution=ALLOW amount=100 guardian_approval=false");
+  });
+
+  it("refuses the same delegate when the capital action exceeds the standing boundary", async () => {
+    const beforeVault = await getAccount(provider.connection, vaultTokenAccount);
+
+    await expectRefusal(
+      "out_of_bounds_execution",
+      () =>
+        program.methods
+          .executeWithinMandate(new anchor.BN(500), new anchor.BN(2))
+          .accountsStrict({
+            charter,
+            mandate,
+            assetRule,
+            vaultTokenAccount,
+            mint: mockStockMint,
+            beneficiary: beneficiary.publicKey,
+            delegateTokenAccount: beneficiaryTokenAccount.address,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .signers([beneficiary])
+          .rpc(),
+      ["ActionAmountExceeded", "per-action asset boundary"]
+    );
+
+    const afterVault = await getAccount(provider.connection, vaultTokenAccount);
+    assert.equal(Number(afterVault.amount), Number(beforeVault.amount));
+    console.log("PROOF capital_boundary=ENFORCED_BY_PROGRAM requested=500 standing_max=250");
+  });
+
+  it("guardian widens the asset boundary through an explicit nonce-bound transition", async () => {
+    const tx = await program.methods
+      .updateAssetRule(
+        new anchor.BN(2),
+        true,
+        1,
+        new anchor.BN(500),
+        new anchor.BN(1000),
+        new anchor.BN(3600),
+        1435
+      )
+      .accountsStrict({
+        charter,
+        mandate,
+        assetRule,
+        guardian: provider.wallet.publicKey,
+      })
+      .rpc();
+
+    const rule = await program.account.assetRule.fetch(assetRule);
+    const mandateState = await program.account.mandate.fetch(mandate);
+
+    assert.equal(rule.maxActionAmount.toNumber(), 500);
+    assert.equal(mandateState.version.toNumber(), 4);
+    assert.equal(mandateState.nonce.toNumber(), 3);
+
+    console.log(`PROOF widen_asset_rule_tx=${tx}`);
+    console.log("PROOF human_widen=ALLOW max_action_amount=250->500 version=4 nonce=3");
+  });
+
+  it("refuses stale execution material after the guardian widens the mandate", async () => {
+    await expectRefusal(
+      "stale_execution_nonce",
+      () =>
+        program.methods
+          .executeWithinMandate(new anchor.BN(100), new anchor.BN(2))
+          .accountsStrict({
+            charter,
+            mandate,
+            assetRule,
+            vaultTokenAccount,
+            mint: mockStockMint,
+            beneficiary: beneficiary.publicKey,
+            delegateTokenAccount: beneficiaryTokenAccount.address,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .signers([beneficiary])
+          .rpc(),
+      ["StaleNonce", "nonce"]
+    );
+  });
+
+  it("allows the previously refused amount after the explicit human widen", async () => {
+    const beforeVault = await getAccount(provider.connection, vaultTokenAccount);
+
+    const tx = await program.methods
+      .executeWithinMandate(new anchor.BN(500), new anchor.BN(3))
+      .accountsStrict({
+        charter,
+        mandate,
+        assetRule,
+        vaultTokenAccount,
+        mint: mockStockMint,
+        beneficiary: beneficiary.publicKey,
+        delegateTokenAccount: beneficiaryTokenAccount.address,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([beneficiary])
+      .rpc();
+
+    const afterVault = await getAccount(provider.connection, vaultTokenAccount);
+    assert.equal(Number(beforeVault.amount) - Number(afterVault.amount), 500);
+
+    console.log(`PROOF widened_execution_tx=${tx}`);
+    console.log("PROOF same_action_after_human_widen=ALLOW amount=500 nonce=3");
+  });
+
+  it("guardian can pause the mandate and the capital path fails closed", async () => {
+    const pauseTx = await program.methods
+      .setMandateStatus(new anchor.BN(3), 1)
+      .accountsStrict({
+        charter,
+        mandate,
+        guardian: provider.wallet.publicKey,
+      })
+      .rpc();
+
+    console.log(`PROOF pause_mandate_tx=${pauseTx}`);
+
+    await expectRefusal(
+      "paused_mandate_execution",
+      () =>
+        program.methods
+          .executeWithinMandate(new anchor.BN(1), new anchor.BN(4))
+          .accountsStrict({
+            charter,
+            mandate,
+            assetRule,
+            vaultTokenAccount,
+            mint: mockStockMint,
+            beneficiary: beneficiary.publicKey,
+            delegateTokenAccount: beneficiaryTokenAccount.address,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .signers([beneficiary])
+          .rpc(),
+      ["MandateNotActive", "not active"]
+    );
+
+    const mandateState = await program.account.mandate.fetch(mandate);
+    assert.equal(mandateState.status, 1);
+    assert.equal(mandateState.version.toNumber(), 5);
+    assert.equal(mandateState.nonce.toNumber(), 4);
+
+    console.log("PROOF downward_authority=PAUSED version=5 nonce=4");
   });
 });
