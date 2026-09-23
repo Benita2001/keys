@@ -2,7 +2,7 @@
 
 You own the KEYS frontend and product experience.
 
-The backend semantics are frozen enough for you to move without waiting for the remaining Solana/Pyth runtime proof.
+The backend semantics are frozen and the demo-first Solana/Pyth backend proof is complete. You can integrate against the deterministic fixture or the live-proof contract without waiting on further backend proof.
 
 ## Read first
 
