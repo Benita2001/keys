@@ -13,6 +13,11 @@ test('frontend Maya contract uses canonical stage and decision enums', () => {
   assert.equal(snapshot.mandate.stage, Stage.PROPOSE);
   assert.equal(snapshot.evaluation.decision, Decision.ESCALATE);
   assert.equal(snapshot.evaluation.reasonCode, 'GUARDIAN_REVIEW_REQUIRED');
+  assert.equal(snapshot.marketEvidence.mode, 'SIMULATION');
+  assert.equal(snapshot.marketEvidence.status, 'FRESH');
+  assert.equal(snapshot.marketEvidence.live.status, 'UNAVAILABLE');
+  assert.equal(snapshot.marketEvidence.live.reasonCode, 'PYTH_API_KEY_REQUIRED');
+  assert.equal(snapshot.authorizedTransition.authorityCommitted, false);
 });
 
 test('Maya PROPOSE scenario resolves to guardian review required', () => {
