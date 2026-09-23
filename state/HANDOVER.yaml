@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 3
 updated_at: "2026-09-23"
-status: PYTH_ENTITLEMENT_CHANNEL_DIAGNOSTIC_IN_PROGRESS
+status: PYTH_ASSET_CLASS_ENTITLEMENT_DIAGNOSTIC_IN_PROGRESS
 
 mission:
   candidate: B
@@ -76,9 +76,9 @@ next_work:
   last_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35908878998"
   last_pyth_result: FAILURE_SECRET_INJECTION
   last_pyth_detail: "Adapter tests 5/5 pass; strict check failed with PYTH_SECRET_INJECTION=FAILED name=PYTH_PRO_API_KEY; live request was skipped."
-  step: 17
-  step_name: TEST_PYTH_AAPL_1000MS_ENTITLEMENT
-  user_action: "No user action required while AAPL entitlement is tested on fixed_rate@1000ms."
+  step: 18
+  step_name: TEST_PYTH_CRYPTO_CONTROL_FEED
+  user_action: "No user action required while BTC/USD is used only as an entitlement control feed."
   credential_path:
     secret_name_exact_confirmed_by_user: true
     terminal_url: "https://app.pyth.com/"
