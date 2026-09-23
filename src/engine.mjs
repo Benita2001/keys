@@ -1,5 +1,13 @@
 import { Decision, Stage } from './model.mjs';
 
+const STAGE_ORDER = Object.freeze({
+  [Stage.LEARN]: 0,
+  [Stage.PRACTICE]: 1,
+  [Stage.PROPOSE]: 2,
+  [Stage.BOUNDED]: 3,
+  [Stage.INDEPENDENT]: 4
+});
+
 function nowMs(ts) {
   return typeof ts === 'number' ? ts : Date.parse(ts);
 }
@@ -136,6 +144,19 @@ export function transitionMandate({ mandate, toStage, authorizedBy, at, evidence
   if (!authorizedBy) {
     return { ok: false, reasonCode: 'AUTHORIZED_TRANSITION_REQUIRED', mandate };
   }
+
+  const fromOrder = STAGE_ORDER[mandate?.stage];
+  const toOrder = STAGE_ORDER[toStage];
+
+  if (
+    fromOrder == null ||
+    toOrder == null ||
+    toOrder <= fromOrder ||
+    toOrder > STAGE_ORDER[Stage.INDEPENDENT]
+  ) {
+    return { ok: false, reasonCode: 'INVALID_TRANSITION', mandate };
+  }
+
   const next = {
     ...mandate,
     stage: toStage,
