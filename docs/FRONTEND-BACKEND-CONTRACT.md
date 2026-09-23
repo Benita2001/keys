@@ -290,7 +290,17 @@ Avoid treating implementation placeholders as design requirements.
 
 ## 14. Integration boundary
 
-Until an HTTP/API layer is introduced, the Node engine is the reference backend behavior:
+The frontend-facing domain facade is now:
+
+- `src/frontend-api.mjs`
+
+It exposes stable v0.1 response envelopes for:
+- proposal evaluation;
+- mandate-review status;
+- mandate transition;
+- execution eligibility.
+
+The underlying reference backend remains:
 
 - `src/model.mjs`
 - `src/engine.mjs`
@@ -300,4 +310,4 @@ Solana is the authority-transition proof layer:
 
 - `programs/keys/src/lib.rs`
 
-The frontend should bind to the semantic contract in this document rather than directly depending on current demo HTML structure.
+The frontend should bind to `src/frontend-api.mjs` or an HTTP adapter above it, not directly to the current demo HTML or to Anchor internals.
