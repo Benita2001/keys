@@ -1,5 +1,5 @@
 project: KEYS
-status: DEVNET_WSL_CHECK_IN_PROGRESS
+status: DEVNET_WSL_INSTALL_REQUIRED
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -90,9 +90,10 @@ collaboration:
   contract_status: FROZEN_FOR_MAYA_DEMO
 
 guided_execution:
+  wsl_local: ABSENT_CONFIRMED
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: CHECK_WSL_FOR_OFFICIAL_SOLANA_INSTALL
-  next_user_action: "Run wsl --status in PowerShell."
+  active_step: INSTALL_WSL
+  next_user_action: "Run wsl --install in Administrator PowerShell; restart if requested; then run wsl --status."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
