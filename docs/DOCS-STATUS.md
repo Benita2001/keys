@@ -1,23 +1,23 @@
 # KEYS — Documentation Status
 
-Date: 2026-09-23  
-Status: **CANONICAL DOCS SYNCHRONIZED**
-
-This index exists to prevent old blocker language from becoming the apparent current state.
+Date: 2026-09-24  
+Status: **CANONICAL DOCS SYNCHRONIZED TO BOUNDED-AUTONOMY RELOCK**
 
 ## Current canonical truth
 
-- backend demo-first proof: **PASS**
-- local Solana authority runtime: **PASS**
-- Solana devnet authority runtime: **PASS**
-- stable devnet program identity: **PASS**
-- authenticated live Pyth US-equity proof: **PASS**
-- live demo backend contract: **PASS**
-- Vercel/serverless adapter: **PASS in CI**
-- public hosted backend URL: **not currently claimed**
+- Stocklana wedge: **KEYS Family**
+- product model: **bounded autonomy**
+- contextual learning / Practice: **retained**
+- stages: **Family UX/policy pack**
+- Mandate: **technical authority truth**
+- v0.1 Solana authority-transition proof: **PASS**
+- v0.1 authenticated Pyth Pro live-equity proof: **PASS**
+- v0.2 program-controlled capital execution: **NOT YET BUILT**
+- v0.2 signed on-chain Pyth verification: **NOT YET BUILT**
+- frontend/backend contract v0.2: **NOT YET FROZEN**
 - real minor securities execution: **OUT OF SCOPE**
-- frontend/integration/deployment owner: **Benita**
-- backend/proof owner: **Faadil**
+- frontend owner: **Benita**
+- backend v0.2 owner: **Faadil**
 
 Canonical devnet program:
 
@@ -27,65 +27,56 @@ Canonical live Pyth proof feed:
 
 `Equity.US.TSLA/USD`
 
-The current Pyth trial does not entitle AAPL. The product is asset-independent.
+## Current canonical documents
 
-## Canonical documents
-
-| Document | Role | Current status |
+| Document | Role | Status |
 | --- | --- | --- |
-| `README.md` | Repository overview / public truth | CURRENT |
-| `product/PRD-0.1.md` | Product requirements | CURRENT |
-| `product/REALITY-GATE.md` | Reality-gate assumptions / unresolved validation | CURRENT |
-| `docs/CONCEPT-LOCK.md` | Locked product thesis | CURRENT |
-| `docs/BUILD-PLAN.md` | Gate progression | CURRENT |
-| `docs/DEMO-FIRST-ARCHITECTURE.md` | Judge/demo narrative architecture | CURRENT |
-| `docs/TECHNICAL-REALITY-CHECK.md` | Technical reality boundary | CURRENT |
-| `docs/TRUTH-BOUNDARY.md` | Claim/no-claim boundary | CURRENT |
-| `docs/SOLANA-AUTHORITY-PROOF.md` | Solana local/devnet proof | CURRENT |
-| `docs/PYTH-EVIDENCE-PROOF.md` | Authenticated Pyth proof | CURRENT |
-| `docs/EXTERNAL-PROOF-CREDENTIALS.md` | Reproducible secret/funding paths | CURRENT |
-| `docs/BACKEND-EXTERNAL-BLOCKERS.md` | Historical blockers + resolved state | CURRENT |
-| `docs/BACKEND-API.md` | Frontend-facing backend API | CURRENT |
-| `docs/FRONTEND-BACKEND-CONTRACT.md` | Frozen semantic contract | CURRENT |
-| `docs/FRONTEND-START-HERE.md` | Benita starting guide | CURRENT |
-| `docs/LIVE-DEMO-INTEGRATION.md` | Live integration contract | CURRENT |
-| `docs/BENITA-FRONTEND-HANDOFF.md` | Ownership/deployment handoff | CURRENT |
-| `state/CURRENT.yaml` | Short canonical machine-readable truth | CURRENT |
-| `state/HANDOVER.yaml` | Cross-conversation/project handoff | CURRENT |
+| `README.md` | Repository overview / public truth | CURRENT v0.2 |
+| `docs/CONCEPT-LOCK.md` | Product concept lock | CURRENT v0.2 |
+| `product/PRD-0.1.md` | PRD (path retained, content v0.2) | CURRENT |
+| `product/REALITY-GATE.md` | Strategy/reality assumptions | CURRENT |
+| `docs/TECHNICAL-REALITY-GATE-BOUNDED-AUTONOMY.md` | v0.2 architecture decision | CURRENT |
+| `docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md` | exact v0.1→v0.2 build delta | CURRENT |
+| `docs/FAMILY-LEARNING-LAYER.md` | learning/practice rules | CURRENT |
+| `docs/TECHNICAL-REALITY-CHECK.md` | short technical boundary | CURRENT v0.2 |
+| `docs/BUILD-PLAN.md` | gate progression | CURRENT |
+| `docs/DEMO-FIRST-ARCHITECTURE.md` | judge/demo narrative | CURRENT v0.2 |
+| `docs/TRUTH-BOUNDARY.md` | claim/no-claim boundary | CURRENT |
+| `docs/SOLANA-AUTHORITY-PROOF.md` | v0.1 Solana evidence | HISTORICAL VALID PROOF |
+| `docs/PYTH-EVIDENCE-PROOF.md` | v0.1 Pyth evidence | HISTORICAL VALID PROOF |
+| `docs/FRONTEND-BACKEND-CONTRACT.md` | original v0.1 semantic contract | HISTORICAL / NOT NEW TARGET |
+| `docs/FRONTEND-START-HERE.md` | Benita transition guide | CURRENT |
+| `docs/BENITA-FRONTEND-HANDOFF.md` | ownership/handoff | CURRENT |
+| `state/CURRENT.yaml` | machine-readable current truth | CURRENT |
+| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v9 |
 
-## Evidence
+## v0.1 evidence remains evidence
 
-Solana:
+Do not rewrite successful historical proof merely because the product target evolved.
 
-- `evidence/solana/LOCAL-AUTHORITY-RUNTIME-PROOF-2026-09-23.md`
-- `evidence/solana/DEVNET-AUTHORITY-RUNTIME-PROOF-2026-09-23.md`
+The v0.1 program still truthfully proves:
 
-Pyth:
+- explicit authority transition;
+- guardian authorization;
+- version/nonce lineage;
+- stale replay refusal.
 
-- `evidence/pyth/LIVE-EQUITY-EVIDENCE-PROOF-2026-09-23.md`
+The Pyth proof still truthfully proves authenticated live equity evidence through the server-side boundary.
 
-Evidence files intentionally preserve exact observed run values and historical progression. They should not be rewritten merely because later proofs supersede earlier blockers.
+Those proofs do **not** yet prove:
 
-## Historical language rule
+- bounded capital execution;
+- permission-matrix Mandate;
+- on-chain signed Pyth verification.
 
-Historical blocker terms such as:
+## Ownership
 
-- `BLOCKED_FUNDING`
-- `BLOCKED_API_KEY`
-- `PYTH_NOT_ENTITLED`
-
-may appear inside explicitly historical evidence or diagnostic sections.
-
-They must not appear as the current project status.
-
-## Ownership rule
-
-Frontend / product experience / integration / deployment:
-
-**Benita**
-
-Backend semantics / Solana / Pyth / proof maintenance / backend support:
+Backend v0.2 build / Solana / Pyth / contract:
 
 **Faadil**
+
+Frontend/product experience:
+
+**Benita**, after/alongside the new v0.2 contract rather than being locked to v0.1 proposal-per-action semantics.
 
 COVENANT remains separate until the final Candidate A vs Candidate B collision.
