@@ -1,14 +1,15 @@
 project: KEYS
-handover_version: 1
+handover_version: 2
 updated_at: "2026-09-23"
-status: DEVNET_SECRET_ADDED_READY_TO_DEPLOY
+status: DEVNET_AUTHORITY_PROOF_PASS_PYTH_BLOCKED_API_KEY
 
 mission:
   candidate: B
   category: progressive_financial_stewardship
   promise: "Financial independence shouldn't happen all at once."
+  core_primitive: evidence_backed_progressive_authority
   current_gate: DEMO_FIRST_ONCHAIN_SLICE
-  immediate_goal: "Obtain a funded devnet-only Solana wallet, add it as DEVNET_KEYPAIR_JSON GitHub Actions secret, run devnet authority proof, then complete authenticated Pyth proof."
+  immediate_goal: "Stabilize the successful devnet program id and complete authenticated live Pyth evidence."
 
 ownership:
   frontend:
@@ -18,8 +19,9 @@ ownership:
       - information architecture
       - interactions
       - visual system
-    contract: docs/FRONTEND-BACKEND-CONTRACT.md
     start_here: docs/FRONTEND-START-HERE.md
+    contract: docs/FRONTEND-BACKEND-CONTRACT.md
+    fixture: fixtures/frontend-maya-contract.json
   backend:
     owner: Faadil
     scope:
@@ -31,7 +33,6 @@ ownership:
       - integration
 
 canonical_truth:
-  active_devnet_proof_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
   reference_engine: PASS
   node_ci: PASS
   backend_http_api: PASS
@@ -40,101 +41,56 @@ canonical_truth:
   local_solana_authority_runtime: PASS
   local_authority_canonical_run: "https://github.com/Faadil1/keys/actions/runs/35895608533"
   local_authority_runtime_result: "4 passing"
-  local_authority_runtime_program_id: "XBjsh428EBwTdjZ4h4PFCm3kBzYrJ98Ro6hV6HbvpYC"
-  local_authority_assertions:
+
+  devnet_authority_runtime: PASS
+  devnet_canonical_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
+  devnet_payer_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+  devnet_payer_balance_before_deploy_lamports: 5000000000
+  devnet_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
+  devnet_program_explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
+  devnet_deploy_signature: "fEZYkktLV38swATo1pgacZroWqHqw7WTs365MZX4H1QEdUZmuoYUDNaHGS441HWmgm3D1WzM2eZZPgoSwzf5Eey"
+  devnet_runtime_result: "4 passing"
+  devnet_runtime_assertions:
     - "Charter -> Mandate -> ProposalCommitment -> eligible ReviewReceipt"
     - "unauthorized transition REFUSE / ConstraintHasOne"
     - "guardian PROPOSE -> BOUNDED ALLOW / version=2 / nonce=1"
     - "stale review replay REFUSE / ConstraintSeeds"
-  devnet_build: PASS
-  devnet_deployment: BLOCKED_FUNDING
-  devnet_build_run: "https://github.com/Faadil1/keys/actions/runs/35890663439"
-  devnet_build_program_id_not_deployed: "8XmhNVJqCFRwvpeTF4vNFsGgcoFs64goK2mjSVP9XKUm"
+  devnet_terminal_marker: DEVNET_PROOF=PASS
+
   live_pyth: BLOCKED_API_KEY
   pyth_canonical_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35896035083"
   pyth_adapter_tests: "5 pass"
   pyth_live_result: "UNAVAILABLE / PYTH_API_KEY_REQUIRED"
+
   real_minor_execution: OUT_OF_SCOPE
 
-current_user_guided_work:
-  objective: "Create and fund a devnet-only wallet without real money."
-  safety:
-    - "Do not use a mainnet wallet."
-    - "Do not send real SOL."
-    - "Do not paste a private key or keypair JSON into ChatGPT."
-    - "Only the public address and non-secret command output may be shared in chat."
-  step: 11
-  step_name: RUN_DEVNET_AUTHORITY_PROOF
-  observed:
-    solana_cli_present: false
-    shell: PowerShell
-    error: "solana command not recognized"
-  install_path:
-    official_windows_requirement: WSL
-    source: "https://solana.com/docs/intro/installation"
-  observed:
-    wsl_present: false
-    output: "The Windows Subsystem for Linux is not installed."
-    decision: "Do not install WSL for this proof path."
-  selected_path:
-    method: SOLANA_PLAYGROUND_BROWSER
-    rationale: "Official browser-based Solana environment; sufficient to create/save a devnet-only keypair and fund it without local installation."
-    official_reference: "https://solana.com/docs/intro/quick-start"
-  observed:
-    wallet_created: true
-    public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
-    explorer_url: "https://explorer.solana.com/address/Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N?cluster=devnet"
-    balance_verified_in_chat: true
-    airdrop_observed_success: true
-    airdrop_requested_amount_sol: 5
-    airdrop_network: devnet
-    verified_balance_sol: 5
-    balance_evidence: "User screenshot of Solana Explorer devnet account page showing Balance (SOL) = 5 and a successful System Program transfer."
-    evidence_source: "User screenshot showing 'Success! Airdrop successful' on faucet.solana.com"
-  observed:
-    funded_wallet_public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
-    funded_wallet_balance_sol: 5
-    complete_keypair_file_available: false
-  observed:
-    original_wallet_public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
-    original_wallet_balance_sol: 5
-    original_wallet_keypair_file_available: false
-    decision: "Do not attempt private-key extraction. Preserve original wallet as-is."
-  observed:
-    replacement_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-    replacement_wallet_explorer_url: "https://explorer.solana.com/address/FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk?cluster=devnet"
-    replacement_wallet_keypair_file_confirmed: true
-  canonical_wallet:
-    canonical_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-    keypair_file_confirmed_saved_locally: true
-    funded: true
-    github_secret_added: true
+wallet_security:
+  canonical_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+  keypair_file_saved_locally: true
+  github_secret_name: DEVNET_KEYPAIR_JSON
+  github_secret_added: true
+  assistant_accessed_secret_value: false
+  never_commit_or_share_private_key: true
   superseded_wallet:
     public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
     observed_balance_sol: 5
     reason_superseded: "Complete keypair file unavailable."
-  next_user_action: "No user action required while the devnet authority proof runs."
-  completion_condition: "Workflow proves repository-secret wallet source, funded balance, deploys program to devnet, emits Explorer URL, runs authority scenario, and ends DEVNET_PROOF=PASS."
 
-after_wallet_creation:
-  sequence:
-    - "Generate a dedicated devnet-only keypair locally."
-    - "Record only its public address in canonical state."
-    - "Set Solana CLI URL to devnet."
-    - "Fund with devnet SOL from a legitimate faucet/source."
-    - "Verify non-zero devnet balance."
-    - "Store full local keypair JSON only as GitHub Actions secret DEVNET_KEYPAIR_JSON; never commit or paste into chat."
-    - "Run solana-devnet-authority-proof manually."
-    - "Capture deployment program id, Explorer URL, transaction references, authority assertions, and DEVNET_PROOF=PASS."
-    - "Update docs/SOLANA-AUTHORITY-PROOF.md, evidence, CURRENT.yaml and this HANDOVER."
-    - "Then obtain/store PYTH_PRO_API_KEY and run pyth-live-proof."
+next_work:
+  step: 12
+  step_name: STABILIZE_DEVNET_PROGRAM_ID
+  objective: "Make the successful devnet program address durable for subsequent backend/frontend integration and verify upgrade authority."
+  then:
+    - "Complete authenticated Pyth live proof using PYTH_PRO_API_KEY."
+    - "Update proof docs and state after every successful or blocked step."
 
 truth_boundaries:
   - no competence score
   - no automatic real-authority promotion
   - no brokerage/custody claim
   - no legal ownership claim from token/SPL balance
-  - no devnet deployment claim until CI proves deployment
+  - devnet deployment may now be claimed only for program ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk
+  - no mainnet deployment claim
   - no live Pyth price claim until authenticated live retrieval succeeds
   - never expose private devnet keypair or Pyth API key
 
@@ -142,6 +98,7 @@ key_files:
   - state/CURRENT.yaml
   - state/HANDOVER.yaml
   - docs/SOLANA-AUTHORITY-PROOF.md
+  - evidence/solana/DEVNET-AUTHORITY-RUNTIME-PROOF-2026-09-23.md
   - evidence/solana/LOCAL-AUTHORITY-RUNTIME-PROOF-2026-09-23.md
   - docs/PYTH-EVIDENCE-PROOF.md
   - docs/EXTERNAL-PROOF-CREDENTIALS.md
