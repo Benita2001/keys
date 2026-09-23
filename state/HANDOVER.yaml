@@ -75,7 +75,13 @@ wallet_security:
 next_work:
   step: 13
   step_name: OBTAIN_PYTH_API_KEY
-  user_action: "Obtain a valid Pyth API key, save it as GitHub Actions secret PYTH_PRO_API_KEY, and never paste it into chat."
+  user_action: "Open https://app.pyth.com/, sign in/create a free Pyth Terminal account, obtain the free Pyth Pro trial API key, save it as GitHub Actions secret PYTH_PRO_API_KEY, and never paste it into chat."
+  credential_path:
+    terminal_url: "https://app.pyth.com/"
+    free_trial_key: true
+    credit_card_required_for_trial: false
+    secret_name: PYTH_PRO_API_KEY
+    secret_boundary: "GitHub Actions/server only; never frontend or chat."
   after_secret:
     - "Trigger pyth-live-proof."
     - "Require authenticated AAPL price/confidence/publish-time evidence."
