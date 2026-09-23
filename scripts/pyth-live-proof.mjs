@@ -35,6 +35,34 @@ console.log(JSON.stringify({
 }));
 
 if (snapshot.status === 'UNAVAILABLE') {
+  if (snapshot.reasonCode === 'PYTH_NOT_ENTITLED') {
+    const diagnosticFeed = {
+      symbol: 'Crypto.BTC/USD',
+      feedId: 1,
+      exponent: -8,
+      minChannel: 'fixed_rate@200ms'
+    };
+    const diagnostic = await fetchPythProSnapshot({
+      apiKey: process.env.PYTH_PRO_API_KEY,
+      feed: diagnosticFeed,
+      channel: 'fixed_rate@1000ms',
+      receivedAt: new Date().toISOString(),
+      maxAgeSeconds: 30,
+      maxConfidenceBps: 100
+    });
+
+    console.log(JSON.stringify({
+      proof: 'PYTH_ENTITLEMENT_DIAGNOSTIC',
+      symbol: diagnosticFeed.symbol,
+      feedId: diagnosticFeed.feedId,
+      channel: 'fixed_rate@1000ms',
+      status: diagnostic.status,
+      reasonCode: diagnostic.reasonCode ?? null,
+      priceAvailable: diagnostic.price != null,
+      publishTimeAvailable: diagnostic.publishTime != null
+    }));
+  }
+
   console.log(`PYTH_LIVE_PROOF=BLOCKED reason=${snapshot.reasonCode}`);
   process.exit(0);
 }
