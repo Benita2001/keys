@@ -130,10 +130,10 @@ test('simulation endpoint accepts explicit simulated evidence and labels the res
   assert.equal(result.body.reasonCode, 'GUARDIAN_REVIEW_REQUIRED');
 });
 
-test('HTTP transition endpoint refuses missing authorization', async () => {
+test('HTTP transition preview refuses missing authorization without committing authority', async () => {
   const result = await routeKeysHttp({
     method: 'POST',
-    path: '/api/v0.1/mandates/transition',
+    path: '/api/v0.1/mandates/transition/preview',
     body: {
       mandate: makeMandate({ stage: Stage.PROPOSE, effectiveAt: createdAt }),
       toStage: Stage.BOUNDED,
@@ -147,6 +147,64 @@ test('HTTP transition endpoint refuses missing authorization', async () => {
   assert.equal(result.status, 200);
   assert.equal(result.body.ok, false);
   assert.equal(result.body.reasonCode, 'AUTHORIZED_TRANSITION_REQUIRED');
+  assert.equal(result.body.preview, true);
+  assert.equal(result.body.authorityCommitted, false);
+});
+
+test('HTTP committed transition fails closed when authority runtime is unavailable', async () => {
+  const result = await routeKeysHttp({
+    method: 'POST',
+    path: '/api/v0.1/mandates/transition',
+    body: {
+      fromStage: Stage.PROPOSE,
+      toStage: Stage.BOUNDED,
+      expectedNonce: 0
+    }
+  });
+
+  assert.equal(result.status, 503);
+  assert.equal(result.body.ok, false);
+  assert.equal(result.body.authorityCommitted, false);
+  assert.equal(result.body.reasonCode, 'AUTHORITY_RUNTIME_UNAVAILABLE');
+});
+
+test('HTTP committed transition returns normalized proof from authority provider', async () => {
+  const result = await routeKeysHttp({
+    method: 'POST',
+    path: '/api/v0.1/mandates/transition',
+    body: {
+      fromStage: Stage.PROPOSE,
+      toStage: Stage.BOUNDED,
+      expectedNonce: 0
+    },
+    services: {
+      authorityTransitionProvider: {
+        commitTransition: async () => ({
+          ok: true,
+          mandate: {
+            stage: Stage.BOUNDED,
+            version: 2,
+            nonce: 1
+          },
+          proof: {
+            signature: 'local-signature',
+            programId: 'local-program',
+            mandateAddress: 'local-mandate',
+            version: 2,
+            nonce: 1
+          }
+        })
+      }
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.ok, true);
+  assert.equal(result.body.authorityCommitted, true);
+  assert.equal(result.body.mandate.stage, Stage.BOUNDED);
+  assert.equal(result.body.proof.signature, 'local-signature');
+  assert.equal(result.body.proof.version, 2);
+  assert.equal(result.body.proof.nonce, 1);
 });
 
 test('HTTP execution endpoint preserves UNKNOWN fail-closed behavior', async () => {
