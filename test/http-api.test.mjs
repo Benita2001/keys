@@ -109,6 +109,9 @@ test('HTTP adapter exposes canonical Maya fixture', async () => {
   assert.equal(result.status, 200);
   assert.equal(result.body.beneficiary.displayName, 'Maya');
   assert.equal(result.body.mandate.stage, Stage.PROPOSE);
+  assert.equal(result.body.marketEvidence.mode, 'SIMULATION');
+  assert.equal(result.body.marketEvidence.live.status, 'UNAVAILABLE');
+  assert.equal(result.body.authorizedTransition.authorityCommitted, false);
 });
 
 test('normal proposal endpoint uses backend-owned evidence', async () => {
