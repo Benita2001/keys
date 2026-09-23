@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 1
 updated_at: "2026-09-23"
-status: DEVNET_WALLET_SETUP_IN_PROGRESS
+status: DEVNET_CLI_INSTALL_IN_PROGRESS
 
 mission:
   candidate: B
@@ -62,10 +62,14 @@ current_user_guided_work:
     - "Do not send real SOL."
     - "Do not paste a private key or keypair JSON into ChatGPT."
     - "Only the public address and non-secret command output may be shared in chat."
-  step: 1
-  step_name: CHECK_LOCAL_SOLANA_CLI
-  next_user_action: "Run: solana --version in PowerShell and return only the output."
-  completion_condition: "A Solana/Agave CLI version is visible, or CLI absence is confirmed so installation can be guided."
+  step: 2
+  step_name: INSTALL_SOLANA_CLI_ON_WINDOWS
+  observed:
+    solana_cli_present: false
+    shell: PowerShell
+    error: "solana command not recognized"
+  next_user_action: "Install the current official Solana/Agave CLI for Windows, then run solana --version."
+  completion_condition: "A Solana/Agave CLI version is visible in PowerShell."
 
 after_wallet_creation:
   sequence:
