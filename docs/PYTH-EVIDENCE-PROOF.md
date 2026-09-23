@@ -69,6 +69,13 @@ The workflow is green because the missing credential is an expected, explicit, f
 
 Pyth Pro REST latest-price access requires an API key.
 
+Pyth's current developer documentation also states that, after the Pyth Core upgrade on 2026-08-26, Hermes API access requires an API key. Therefore KEYS does not treat unauthenticated Hermes access as a valid bypass for the missing Pyth Pro credential.
+
+Official references:
+- https://docs.pyth.network/price-feeds/pro/api/rest
+- https://docs.pyth.network/price-feeds/core/getting-started
+- https://docs.pyth.network/price-feeds/pro/acquire-api-key
+
 KEYS does not store or expose a raw Pyth Pro API key in browser code. The key belongs server-side / in the CI secret boundary.
 
 Until a valid `PYTH_PRO_API_KEY` is available and the workflow is rerun successfully, the canonical status remains:
