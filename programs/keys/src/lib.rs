@@ -1,7 +1,6 @@
 use anchor_lang::{
     prelude::*,
     solana_program::{
-        hash::hash,
         instruction::{AccountMeta, Instruction},
         program::invoke,
         sysvar,
@@ -468,7 +467,6 @@ pub mod keys {
 
         rule.spent_this_period = next_spent_amount;
         rule.spent_this_period_notional = next_spent_notional;
-        mandate.last_evidence_hash = hash(&pyth_message).to_bytes();
 
         msg!(
             "PYTH_VERIFIED feed={} price_mantissa={} exponent={} confidence_bps={} age_seconds={} requested_notional_micro_usd={}",
