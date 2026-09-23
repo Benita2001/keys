@@ -1,5 +1,5 @@
 project: KEYS
-status: DEVNET_AUTHORITY_PROOF_PASS_PYTH_BLOCKED_API_KEY
+status: DEVNET_STABLE_PROGRAM_PASS_PYTH_BLOCKED_API_KEY
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -27,6 +27,16 @@ current_proof:
   real_minor_execution: OUT_OF_SCOPE
 
 verified_evidence:
+  stable_devnet_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
+  stable_devnet_upgrade_result: SUCCESS
+  stable_devnet_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
+  stable_devnet_upgrade_authority_before: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+  stable_devnet_upgrade_authority_after: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+  stable_devnet_upgrade_signature: "67hsECJonPA9N9eBP9jjPkzLNBzHPoXm8NGqLoKzrmZQfYFpUM4PDFLLFg7ZmPwsaogh95gg7LdLLHGW8FYvpQtu"
+  stable_devnet_source_program_id_match: PASS
+  stable_devnet_runtime_result: "4 passing"
+  local_regression_after_program_id_pin_run: "https://github.com/Faadil1/keys/actions/runs/35905834783"
+  local_regression_after_program_id_pin_result: SUCCESS
   devnet_authority_proof_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
   rust_program_check_run: "https://github.com/Faadil1/keys/actions/runs/35880920062"
   rust_program_check_result: SUCCESS
@@ -125,8 +135,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: VERIFY_STABLE_DEVNET_PROGRAM_UPGRADE
-  stable_devnet_verification_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
-  local_regression_check_run: "https://github.com/Faadil1/keys/actions/runs/35905834783"
-  next_user_action: "None while stable devnet upgrade-authority and local regression proofs run."
+  active_step: OBTAIN_PYTH_API_KEY
+  next_user_action: "Obtain a Pyth API key and add it as GitHub Actions secret PYTH_PRO_API_KEY without sharing it in chat."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
