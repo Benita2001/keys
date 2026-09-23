@@ -63,13 +63,16 @@ current_user_guided_work:
     - "Do not paste a private key or keypair JSON into ChatGPT."
     - "Only the public address and non-secret command output may be shared in chat."
   step: 2
-  step_name: INSTALL_SOLANA_CLI_ON_WINDOWS
+  step_name: CHECK_WSL_FOR_OFFICIAL_SOLANA_INSTALL
   observed:
     solana_cli_present: false
     shell: PowerShell
     error: "solana command not recognized"
-  next_user_action: "Install the current official Solana/Agave CLI for Windows, then run solana --version."
-  completion_condition: "A Solana/Agave CLI version is visible in PowerShell."
+  install_path:
+    official_windows_requirement: WSL
+    source: "https://solana.com/docs/intro/installation"
+  next_user_action: "Run: wsl --status in PowerShell and return only the output."
+  completion_condition: "WSL availability is known; if absent, install WSL; if present, continue inside Ubuntu/WSL."
 
 after_wallet_creation:
   sequence:
