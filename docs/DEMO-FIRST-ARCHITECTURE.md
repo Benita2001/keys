@@ -16,6 +16,20 @@
 
 **2:45–3:00** — Attempt real execution with eligibility `UNKNOWN`. KEYS refuses. Close: **Financial independence shouldn't happen all at once.**
 
-## Next proof milestone
+## Backend proof status
 
-Replace the local transition receipt with a Solana devnet instruction and replace fixture market evidence with a verified live Pyth snapshot. Do not add real minor execution.
+The backend proof milestone is complete:
+
+- Solana local authority runtime: PASS;
+- Solana devnet authority runtime: PASS;
+- stable devnet program identity: PASS;
+- authenticated live Pyth US-equity evidence: PASS;
+- market evidence remains separate from authority.
+
+The deterministic Maya/AAPL story can remain the primary product narrative. The current live Pyth proof uses a trial-entitled equity (`TSLA`) and is asset-configurable.
+
+## Next milestone
+
+Benita owns frontend integration, final experience and deployment.
+
+Do not add real minor securities execution.
