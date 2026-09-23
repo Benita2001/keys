@@ -6,7 +6,7 @@ Owner split:
 - **Frontend / product experience:** Benita
 - **Backend / policy engine / Solana / Pyth / proof:** Faadil
 
-This contract exists so the frontend can move independently while the deeper runtime proof continues. It describes product states and UI-safe semantics, not custody or brokerage promises.
+This contract lets the frontend move independently from backend implementation details. The demo-first Solana/Pyth runtime proof is complete; this document remains the stable UI-safe semantic boundary and does not create custody or brokerage promises.
 
 ## 1. Stable stages
 
