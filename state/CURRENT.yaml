@@ -111,6 +111,9 @@ collaboration:
   contract_status: FROZEN_FOR_MAYA_DEMO
 
 guided_execution:
+  pyth_terminal_url: "https://app.pyth.com/"
+  pyth_trial_key_currently_available: true
+  pyth_trial_key_credit_card_required: false
   devnet_keypair_secret_status: ADDED_USER_CONFIRMED
   devnet_keypair_secret_value_accessed_by_assistant: false
   canonical_devnet_wallet_verified_balance_sol: 5
