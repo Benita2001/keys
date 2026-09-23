@@ -78,7 +78,9 @@ wallet_security:
 
 next_work:
   step: 12
-  step_name: STABILIZE_DEVNET_PROGRAM_ID
+  step_name: VERIFY_STABLE_DEVNET_PROGRAM_UPGRADE
+  active_devnet_verification_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
+  active_local_regression_run: "https://github.com/Faadil1/keys/actions/runs/35905834783"
   objective: "Make the successful devnet program address durable for subsequent backend/frontend integration and verify upgrade authority."
   then:
     - "Complete authenticated Pyth live proof using PYTH_PRO_API_KEY."
