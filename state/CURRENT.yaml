@@ -1,5 +1,5 @@
 project: KEYS
-status: DEVNET_STABLE_PROGRAM_PASS_PYTH_BLOCKED_API_KEY
+status: PYTH_SECRET_ADDED_LIVE_PROOF_IN_PROGRESS
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -111,6 +111,8 @@ collaboration:
   contract_status: FROZEN_FOR_MAYA_DEMO
 
 guided_execution:
+  pyth_api_key_secret_status: ADDED_USER_CONFIRMED
+  pyth_api_key_secret_value_accessed_by_assistant: false
   pyth_terminal_url: "https://app.pyth.com/"
   pyth_trial_key_currently_available: true
   pyth_trial_key_credit_card_required: false
@@ -138,6 +140,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: OBTAIN_PYTH_API_KEY
-  next_user_action: "Obtain a Pyth API key and add it as GitHub Actions secret PYTH_PRO_API_KEY without sharing it in chat."
+  active_step: RUN_PYTH_LIVE_PROOF
+  next_user_action: "None while authenticated Pyth live proof runs."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
