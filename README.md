@@ -2,83 +2,102 @@
 
 **Financial independence shouldn't happen all at once.**
 
-KEYS is a progressive financial stewardship system for young people and families. It preserves the relationship around capital while authority changes over time: learn → practice → propose → act within bounds → independent control.
+KEYS Family is a bounded-autonomy experience for young people learning to use tokenized stocks.
 
-## The product primitive
+A guardian defines an explicit **Mandate**. Inside it, the young person can act freely without asking for permission on every action. Outside it, the action is refused or becomes a boundary request. Wider authority requires an explicit authorized human transition.
 
-KEYS separates three things that youth-finance products often collapse together:
+> **Learn in context. Act freely inside bounds. Ask for more freedom only at the boundary.**
 
-- **what this capital relationship is** (`Stake`),
-- **what the young person may do today** (`Mandate`),
-- **what they want to do and why** (`Proposal`).
+## Product primitive
 
-External market evidence can make the current record eligible for a mandate review. It **does not automatically grant real financial authority**. Real authority changes only through an explicit authorized transition.
+The long-term primitive is a versioned, revocable permission envelope over capital:
 
-## v0.1 vertical slice
+- principal / guardian;
+- delegate / beneficiary;
+- asset scope;
+- allowed actions;
+- per-action and per-period limits;
+- expiry;
+- market conditions;
+- escalation / revocation;
+- version / nonce.
 
-This repository now proves the deterministic core plus the demo-first live backend slice:
+**Stages are Family UX. Mandates are technical truth.**
 
-`Charter → Mandate → Proposal → Market Evidence → Refusal / Escalation → Evidence Summary → Mandate Review Eligibility → Explicit Transition → Eligibility Gate`
+The familiar `LEARN → PRACTICE → PROPOSE → BOUNDED → INDEPENDENT` progression remains useful as a Family policy pack, but it is not the universal protocol architecture.
 
-Run:
+## Learning stays
 
-```bash
-npm install
-npm test
-npm run demo
-npm run api
-```
+KEYS is not removing financial learning.
 
-`npm run api` starts the local frontend-integration backend on `127.0.0.1:8787` by default.
+Learning becomes contextual:
+
+- first use of a new asset/action;
+- Practice mode;
+- boundary explanations;
+- Pyth-driven market-condition changes;
+- post-action review.
+
+Learning completion, quizzes, P&L or AI scoring never auto-grant authority.
+
+See [docs/FAMILY-LEARNING-LAYER.md](docs/FAMILY-LEARNING-LAYER.md).
+
+## v0.1 proof — complete
+
+This repository already proves:
+
+- Charter / Mandate / Proposal / Review state;
+- explicit guardian-signed authority transition;
+- version/nonce advance;
+- stale replay refusal;
+- local and devnet Solana runtime;
+- authenticated live Pyth Pro US-equity evidence through a server-side boundary.
+
+Canonical devnet program:
+
+`ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
+
+Current verified live Pyth trial feed:
+
+`Equity.US.TSLA/USD`
+
+## v0.2 target — active build
+
+The new Technical Reality Gate passed with an architecture delta.
+
+Target:
+
+`program-controlled vault + permission-matrix Mandate + AssetRule + signed Pyth Pro verification`
+
+The v0.2 proof must show:
+
+1. an in-bounds action can execute without guardian approval;
+2. an out-of-bounds action fails in the Solana execution path;
+3. Pyth market evidence can be load-bearing and fail closed;
+4. an explicit human widen changes the Mandate version/nonce;
+5. the same action can then succeed;
+6. old authorization material cannot replay.
+
+See:
+
+- [Technical Reality Gate](docs/TECHNICAL-REALITY-GATE-BOUNDED-AUTONOMY.md)
+- [Architecture Delta](docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md)
+- [Concept Lock](docs/CONCEPT-LOCK.md)
+- [Truth Boundary](docs/TRUTH-BOUNDARY.md)
 
 ## Truth boundary
 
-Real today:
+Real minor securities execution is **not** currently claimed.
 
-- deterministic policy engine and evidence summaries;
-- frozen frontend/backend semantic contract;
-- local HTTP backend facade with server-owned evidence boundary;
-- Vercel-ready serverless adapter for the same API contract;
-- explicit simulation vs committed-authority separation;
-- executable local Solana authority proof;
-- verified Solana devnet deployment and authority runtime;
-- stable canonical devnet program id and verified upgrade authority;
-- authenticated live Pyth US-equity evidence through the server/CI boundary;
-- load-bearing Pyth evidence reaching `ESCALATE / GUARDIAN_REVIEW_REQUIRED`;
-- automated Node/Rust/Anchor/integration tests.
+KEYS is not claiming to be a broker or custodian.
 
-Not claimed:
+The current live Pyth proof is off-chain/server-side; signed on-chain Pyth verification is a v0.2 target and must not be presented as completed before runtime proof exists.
 
-- mainnet deployment;
-- brokerage/custody integration;
-- real minor securities execution;
-- venue-recognized credentials;
-- a financial-competence score.
-
-See `docs/TRUTH-BOUNDARY.md`.
-
-## Candidate B vs COVENANT
-
-KEYS is intentionally independent from COVENANT.
-
-- **COVENANT:** continuity of economic intent while asset representations change.
-- **KEYS:** continuity of stewardship while human authority changes.
-
-They should be evaluated as two separate Stocklana product candidates.
-
-## Frontend collaboration
-
-KEYS has a frozen v0.1 semantic contract so frontend work can proceed independently of the deeper Solana/Pyth proof.
+## Collaboration
 
 - Frontend / product experience: Benita
-- Backend / policy engine / Solana / Pyth / proof: Faadil
-- Contract: [docs/FRONTEND-BACKEND-CONTRACT.md](docs/FRONTEND-BACKEND-CONTRACT.md)
-- Maya integration fixture: [fixtures/frontend-maya-contract.json](fixtures/frontend-maya-contract.json)
-- Frontend-facing backend facade: [src/frontend-api.mjs](src/frontend-api.mjs)
-- Local backend API: [docs/BACKEND-API.md](docs/BACKEND-API.md)
-- Latest Solana authority proof: [docs/SOLANA-AUTHORITY-PROOF.md](docs/SOLANA-AUTHORITY-PROOF.md)
-- Live Pyth proof: [docs/PYTH-EVIDENCE-PROOF.md](docs/PYTH-EVIDENCE-PROOF.md)
-- Benita handoff: [docs/BENITA-FRONTEND-HANDOFF.md](docs/BENITA-FRONTEND-HANDOFF.md)
-- Documentation status: [docs/DOCS-STATUS.md](docs/DOCS-STATUS.md)
+- Backend / Solana / Pyth / proof: Faadil
 
-The frontend owns interaction and visual language; backend reason codes, authority semantics, truth boundaries, and transition invariants remain canonical.
+The old v0.1 frontend contract remains historical proof. A new v0.2 semantic contract will be frozen after the bounded-autonomy backend build.
+
+See [docs/BENITA-FRONTEND-HANDOFF.md](docs/BENITA-FRONTEND-HANDOFF.md).
