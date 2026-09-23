@@ -1,6 +1,6 @@
 project: KEYS
 updated_at: "2026-09-24"
-status: CONCEPT_RELOCKED_BOUNDED_AUTONOMY_TECHNICAL_REALITY_GATE_PASS
+status: V0_2_BOUNDED_CAPITAL_DEVNET_PASS_PYTH_ONCHAIN_ACTIVE
 candidate: B
 concept_lock: true
 concept_lock_version: 2
@@ -26,9 +26,13 @@ current_truth:
   solana_devnet_authority_runtime: PASS
   stable_devnet_program_identity: PASS
   live_pyth_equity_offchain_proof: PASS
-  bounded_capital_execution_v0_2: NOT_BUILT
+  bounded_capital_execution_v0_2: PASS_LOCAL_AND_DEVNET_DEMO_TOKEN
+  program_controlled_vault_v0_2: PASS_LOCAL_AND_DEVNET
+  permission_matrix_mandate_v0_2: PASS_RUNTIME_CORE
+  boundary_human_widen_stale_replay_v0_2: PASS_LOCAL_AND_DEVNET
+  pause_downward_authority_v0_2: PASS_LOCAL_AND_DEVNET
+  pyth_signed_solana_payload_availability_v0_2: PASS
   onchain_pyth_verification_v0_2: NOT_BUILT
-  permission_matrix_mandate_v0_2: NOT_BUILT
   contextual_learning_layer_spec: LOCKED
   real_minor_execution: OUT_OF_SCOPE
 
@@ -36,22 +40,27 @@ canonical_solana:
   network: devnet
   program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
   explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
-  stable_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
+  stable_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35931280449"
+  v0_2_bounded_capital_run: "https://github.com/Faadil1/keys/actions/runs/35931280449"
+  v0_2_deploy_signature: "4DsLWRCmDAAMMkWysv6iuruKxeEuVNUojyihRnZnWAfQ9JHuKP4zo5vGyDeHBYALsiJSWoC3r4R9k4FXM5tBnP2h"
   upgrade_authority_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
   v0_1_runtime_result: "4 passing"
+  v0_2_runtime_result: "11 passing"
   v0_1_assertions:
     - "unauthorized transition -> REFUSE / ConstraintHasOne"
     - "guardian PROPOSE -> BOUNDED -> ALLOW / version=2 / nonce=1"
     - "stale review replay -> REFUSE / ConstraintSeeds"
 
 canonical_pyth:
-  proof_run: "https://github.com/Faadil1/keys/actions/runs/35910460176"
+  proof_run: "https://github.com/Faadil1/keys/actions/runs/35930425544"
   symbol: Equity.US.TSLA/USD
   feed_id: 1435
   channel: fixed_rate@1000ms
   status: FRESH
   proof_mode: OFFCHAIN_AUTHENTICATED_PYTH_PRO
   current_adapter_format: leUnsigned
+  signed_solana_payload_availability: PASS
+  signed_payload_encoding_observed: base64
   onchain_signed_payload_verification: NOT_BUILT
   observed_price_at_proof_time: 379.696
   confidence: 0.019
@@ -87,7 +96,7 @@ collaboration:
   frontend_owner: Benita
   backend_owner: Faadil
   frontend_v0_1_contract_status: HISTORICAL
-  frontend_v0_2_contract_status: NOT_YET_FROZEN
+  frontend_v0_2_contract_status: DRAFT_RUNTIME_PROOF_PENDING
   frontend_guidance: "Do not lock the new experience to the v0.1 proposal-per-action semantics. Wait for / coordinate against the v0.2 bounded-autonomy contract."
   backend_immediate_owner: Faadil
 
@@ -109,16 +118,15 @@ truth_boundary:
   - current trial does not prove live AAPL access
   - market evidence does not create authority
   - learning completion does not create authority
-  - v0.1 proves authority transitions, not bounded capital execution
-  - on-chain Pyth enforcement is a v0.2 target, not a current claim
+  - v0.2 proves bounded demo-token capital execution on local Solana and devnet
+  - current v0.2 on-chain limits are token-unit boundaries, not yet Pyth-derived USD-notional enforcement
+  - signed Pyth Solana payload availability is proven, but on-chain Pyth enforcement is not yet a current claim
 
 active_step:
-  name: BACKEND_V0_2_BOUNDED_AUTONOMY_BUILD
+  name: BACKEND_V0_2_ONCHAIN_PYTH_VERIFICATION
   owner: Faadil
   next:
-    - "Redesign Anchor Mandate around explicit permission envelope + AssetRule."
-    - "Add program-controlled vault and deterministic in-bounds/out-of-bounds execution proof."
-    - "Upgrade Pyth Pro path from off-chain unsigned evidence to signed Solana payload verification."
-    - "Rebuild boundary request / explicit widen / stale authorization path."
-    - "Add pause/revoke/downward authority."
-    - "Freeze frontend/backend contract v0.2 and hand it to Benita."
+    - "Wire the Pyth-signed Solana payload into the Anchor execution path and verify it on-chain."
+    - "Use verified price evidence to enforce USD/notional and user-precommitted market conditions fail-closed."
+    - "Promote the v0.2 frontend/backend contract from DRAFT only after the Pyth-integrated runtime proof passes."
+    - "Hand the frozen v0.2 contract to Benita for final integration."
