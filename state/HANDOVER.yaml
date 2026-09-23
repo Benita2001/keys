@@ -1,15 +1,16 @@
 project: KEYS
-handover_version: 3
+handover_version: 4
 updated_at: "2026-09-23"
-status: PYTH_TRIAL_ENTITLED_EQUITY_SELECTED
+status: DEMO_FIRST_ONCHAIN_SLICE_PASS
 
 mission:
   candidate: B
   category: progressive_financial_stewardship
   promise: "Financial independence shouldn't happen all at once."
   core_primitive: evidence_backed_progressive_authority
-  current_gate: DEMO_FIRST_ONCHAIN_SLICE
-  immediate_goal: "Complete authenticated live Pyth evidence after stable Solana devnet proof."
+  completed_gate: DEMO_FIRST_ONCHAIN_SLICE
+  next_gate: LIVE_DEMO_INTEGRATION
+  immediate_goal: "Connect the verified live backend proofs to the frontend semantic contract without exposing secrets or changing product truth."
 
 ownership:
   frontend:
@@ -40,9 +41,8 @@ canonical_truth:
   rust_anchor_unit_ci: PASS
 
   local_solana_authority_runtime: PASS
-  local_authority_canonical_run: "https://github.com/Faadil1/keys/actions/runs/35905834783"
-  local_authority_runtime_result: "4 passing"
-  local_regression_after_devnet_id_pin: PASS
+  local_authority_run: "https://github.com/Faadil1/keys/actions/runs/35905834783"
+  local_authority_result: "4 passing"
 
   devnet_authority_runtime: PASS
   initial_devnet_deploy_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
@@ -50,64 +50,59 @@ canonical_truth:
   devnet_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
   devnet_program_explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
   devnet_upgrade_authority: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  devnet_upgrade_signature: "67hsECJonPA9N9eBP9jjPkzLNBzHPoXm8NGqLoKzrmZQfYFpUM4PDFLLFg7ZmPwsaogh95gg7LdLLHGW8FYvpQtu"
   source_program_id_match: PASS
   upgrade_authority_match_before: PASS
   upgrade_authority_match_after: PASS
   devnet_runtime_result: "4 passing"
   devnet_terminal_marker: DEVNET_PROOF=PASS
 
-  live_pyth: BLOCKED_API_KEY
-  pyth_canonical_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35896035083"
-  pyth_adapter_tests: "5 pass"
-  pyth_live_result: "UNAVAILABLE / PYTH_API_KEY_REQUIRED"
+  live_pyth: PASS
+  live_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35910460176"
+  live_pyth_feed:
+    symbol: Equity.US.TSLA/USD
+    feed_id: 1435
+    channel: fixed_rate@1000ms
+    status: FRESH
+    price: 379.696
+    confidence: 0.019
+    confidence_bps: 0.500400320256205
+    publish_time: "2026-09-23T19:36:42.000Z"
+    age_seconds: 0
+    market_session: regular
+    publisher_count: 19
+  live_pyth_decision:
+    decision: ESCALATE
+    reason_code: GUARDIAN_REVIEW_REQUIRED
+  live_pyth_terminal_marker: "PYTH_LIVE_PROOF=PASS fresh_market_evidence_reached_guardian_review"
 
-  real_minor_execution: OUT_OF_SCOPE
-
-wallet_security:
-  canonical_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  github_secret_name: DEVNET_KEYPAIR_JSON
-  github_secret_added: true
-  assistant_accessed_secret_value: false
-  keypair_file_saved_locally: true
-  never_commit_or_share_private_key: true
-
-next_work:
-  trial_entitlement_observed:
-    source: "User screenshot of Pyth Terminal Demo trial"
-    entitled_equities:
+  pyth_trial_entitlement:
+    entitled_equities_observed:
       - Equity.US.VOO/USD
       - Equity.US.TSLA/USD
       - Equity.US.QQQ/USD
     aapl_entitled: false
-    selected_live_proof_equity: Equity.US.TSLA/USD
-  entitlement_diagnostic:
-    run: "https://github.com/Faadil1/keys/actions/runs/35909454962"
-    secret_injection: PASS
-    aapl_fixed_rate_1000ms: PYTH_NOT_ENTITLED
-    btc_fixed_rate_1000ms: FRESH
-    conclusion: "Token is valid; equity/AAPL entitlement is missing."
-  last_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35908878998"
-  last_pyth_result: FAILURE_SECRET_INJECTION
-  last_pyth_detail: "Adapter tests 5/5 pass; strict check failed with PYTH_SECRET_INJECTION=FAILED name=PYTH_PRO_API_KEY; live request was skipped."
-  step: 21
-  step_name: RUN_PYTH_LIVE_PROOF_WITH_ENTITLED_TSLA
-  user_action: "No user action required while the live Pyth proof is rerun with trial-entitled Equity.US.TSLA/USD."
-  credential_path:
-    secret_name_exact_confirmed_by_user: true
-    terminal_url: "https://app.pyth.com/"
-    free_trial_key: true
-    credit_card_required_for_trial: false
-    secret_name: PYTH_PRO_API_KEY
-    secret_boundary: "GitHub Actions/server only; never frontend or chat."
-    pyth_secret_added: true
-    confirmation_source: user
-    assistant_accessed_secret_value: false
-  after_secret:
-    - "Trigger pyth-live-proof."
-    - "Require authenticated AAPL price/confidence/publish-time evidence."
-    - "Require Maya PROPOSE decision to remain ESCALATE / GUARDIAN_REVIEW_REQUIRED for acceptable fresh evidence."
-    - "Record proof in CURRENT, HANDOVER and docs."
+    conclusion: "KEYS proof is asset-configurable; TSLA is used for the authenticated live proof because it is entitled on the current demo trial."
+
+  real_minor_execution: OUT_OF_SCOPE
+
+security:
+  devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+  devnet_secret_name: DEVNET_KEYPAIR_JSON
+  pyth_secret_name: PYTH_PRO_API_KEY
+  assistant_accessed_secret_values: false
+  secrets_committed_to_git: false
+  browser_exposure_of_pyth_key: false
+
+next_work:
+  step: 22
+  step_name: LIVE_DEMO_INTEGRATION
+  objectives:
+    - "Expose live market evidence through the existing server-owned backend boundary."
+    - "Keep frontend contract stable enough for Benita to proceed independently."
+    - "Decide whether judge-facing Maya demo remains AAPL deterministic fixture or switches to a trial-entitled live equity such as TSLA."
+    - "Do not make Pyth market evidence an authority oracle."
+    - "Preserve devnet program and transaction proof links in the demo."
+  user_action: "None required for the completed technical proof. Continue backend/frontend integration."
 
 truth_boundaries:
   - no competence score
@@ -116,16 +111,17 @@ truth_boundaries:
   - no legal ownership claim from token/SPL balance
   - verified devnet deployment is program ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk
   - no mainnet deployment claim
-  - no live Pyth price claim until authenticated retrieval succeeds
+  - verified live Pyth evidence is currently Equity.US.TSLA/USD, not AAPL
+  - market evidence does not create authority
   - never expose private devnet keypair or Pyth API key
 
 key_files:
   - state/CURRENT.yaml
   - state/HANDOVER.yaml
   - docs/SOLANA-AUTHORITY-PROOF.md
-  - evidence/solana/DEVNET-AUTHORITY-RUNTIME-PROOF-2026-09-23.md
-  - evidence/solana/LOCAL-AUTHORITY-RUNTIME-PROOF-2026-09-23.md
   - docs/PYTH-EVIDENCE-PROOF.md
+  - evidence/solana/DEVNET-AUTHORITY-RUNTIME-PROOF-2026-09-23.md
+  - evidence/pyth/LIVE-EQUITY-EVIDENCE-PROOF-2026-09-23.md
   - docs/EXTERNAL-PROOF-CREDENTIALS.md
   - .github/workflows/solana-devnet-authority-proof.yml
   - .github/workflows/pyth-live-proof.yml
