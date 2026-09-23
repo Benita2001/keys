@@ -69,11 +69,16 @@ Body:
   "charter": {},
   "mandate": {},
   "proposal": {},
-  "market": {},
-  "eligibility": {},
   "now": "ISO-8601 timestamp"
 }
 ```
+
+The normal route does **not** trust market evidence or execution eligibility supplied by the frontend.
+
+- market evidence is resolved server-side through the Pyth boundary;
+- eligibility defaults fail-closed to `UNKNOWN` until a verified eligibility provider exists.
+
+If `PYTH_PRO_API_KEY` is unavailable, the response includes a safe evidence summary showing the blocker and the policy decision fails closed.
 
 Canonical Maya outcome at `PROPOSE` with acceptable market evidence:
 
@@ -85,6 +90,21 @@ Canonical Maya outcome at `PROPOSE` with acceptable market evidence:
   "reasonCode": "GUARDIAN_REVIEW_REQUIRED"
 }
 ```
+
+### POST /api/v0.1/simulations/proposals/evaluate
+
+This route is explicitly for deterministic demo/simulation work.
+
+It may accept simulated `market` and `eligibility` inputs and always labels the response:
+
+```json
+{
+  "type": "SIMULATION_PROPOSAL_EVALUATION",
+  "simulation": true
+}
+```
+
+Do not use this route as evidence of live Pyth data or real execution eligibility.
 
 ### POST /api/v0.1/mandates/review
 
@@ -136,7 +156,9 @@ The local Node facade models product semantics. The stronger nonce/version repla
 
 ### POST /api/v0.1/execution/evaluate
 
-Uses the same proposal evaluator for an execution-facing decision.
+Uses backend-owned market evidence and backend-owned eligibility state for an execution-facing decision.
+
+Until a verified eligibility provider exists, the backend resolves eligibility to `UNKNOWN`.
 
 For `BOUNDED` with eligibility `UNKNOWN`:
 
@@ -173,3 +195,20 @@ Pyth evidence boundary / Solana authority proof
 ```
 
 The frontend is intentionally insulated from the implementation details below the domain facade.
+
+## Evidence metadata returned to the frontend
+
+Proposal/execution responses include a safe `marketEvidence` object containing only display-safe proof metadata such as:
+
+- source;
+- symbol/feed id;
+- status;
+- blocker reason code;
+- price/confidence when actually available;
+- publish/receive timestamps;
+- evidence age;
+- market session/publisher count when supplied by Pyth.
+
+No API key or secret is included.
+
+Responses also expose the resolved eligibility status, with `UNKNOWN` as the default fail-closed state.
