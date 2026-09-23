@@ -61,22 +61,30 @@ Current verified live Pyth trial feed:
 
 `Equity.US.TSLA/USD`
 
-## v0.2 target — active build
+## v0.2 bounded autonomy — capital path proven
 
-The new Technical Reality Gate passed with an architecture delta.
+The new Technical Reality Gate passed and the first runtime delta is now real.
 
-Target:
+On local Solana and on the canonical devnet program, KEYS now proves:
 
-`program-controlled vault + permission-matrix Mandate + AssetRule + signed Pyth Pro verification`
+1. a program-controlled demo-token vault;
+2. explicit per-asset/per-action and per-period boundaries;
+3. an in-bounds action executes without guardian approval;
+4. an out-of-bounds action fails inside the Solana program;
+5. an explicit guardian widen advances version/nonce;
+6. stale execution material refuses;
+7. the same larger action succeeds after the widen;
+8. pause/downward authority blocks execution.
 
-The v0.2 proof must show:
+Canonical v0.2 devnet proof:
 
-1. an in-bounds action can execute without guardian approval;
-2. an out-of-bounds action fails in the Solana execution path;
-3. Pyth market evidence can be load-bearing and fail closed;
-4. an explicit human widen changes the Mandate version/nonce;
-5. the same action can then succeed;
-6. old authorization material cannot replay.
+https://github.com/Faadil1/keys/actions/runs/35931280449
+
+Pyth also now returns a signed Solana-format payload in the authenticated proof path:
+
+https://github.com/Faadil1/keys/actions/runs/35930425544
+
+**Remaining backend proof:** verify that signed Pyth payload inside the Anchor execution path and use verified prices for USD/notional and user-precommitted market conditions.
 
 See:
 
@@ -91,13 +99,13 @@ Real minor securities execution is **not** currently claimed.
 
 KEYS is not claiming to be a broker or custodian.
 
-The current live Pyth proof is off-chain/server-side; signed on-chain Pyth verification is a v0.2 target and must not be presented as completed before runtime proof exists.
+The current live Pyth path proves authenticated equity evidence and signed Solana-payload availability. The signed payload is **not yet verified inside the KEYS Anchor execution instruction**, so on-chain Pyth enforcement must not be presented as completed yet.
 
 ## Collaboration
 
 - Frontend / product experience: Benita
 - Backend / Solana / Pyth / proof: Faadil
 
-The old v0.1 frontend contract remains historical proof. A new v0.2 semantic contract will be frozen after the bounded-autonomy backend build.
+The old v0.1 frontend contract remains historical proof. A v0.2 draft contract now exists and will be frozen after the Pyth-integrated runtime proof.
 
 See [docs/BENITA-FRONTEND-HANDOFF.md](docs/BENITA-FRONTEND-HANDOFF.md).
