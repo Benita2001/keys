@@ -48,6 +48,8 @@ describe("KEYS Solana authority proof", () => {
   const provider = anchor.getProvider();
   const program = anchor.workspace.Keys;
 
+  let authorityTransitionProvider;
+
   const beneficiary = Keypair.generate();
   const attacker = Keypair.generate();
   const proposal = Keypair.generate();
@@ -66,6 +68,15 @@ describe("KEYS Solana authority proof", () => {
   );
 
   before(async () => {
+    const { createAnchorAuthorityTransitionProvider } = await import(
+      "../src/anchor-authority-provider.mjs"
+    );
+
+    authorityTransitionProvider = createAnchorAuthorityTransitionProvider({
+      program,
+      provider,
+    });
+
     const signature = await provider.sendAndConfirm(
       new anchor.web3.Transaction().add(
         SystemProgram.transfer({
@@ -76,6 +87,7 @@ describe("KEYS Solana authority proof", () => {
       )
     );
     console.log(`PROOF fund_beneficiary_tx=${signature}`);
+    console.log("PROOF anchor_authority_provider=READY");
   });
 
   it("creates Charter -> Mandate -> Proposal -> eligible ReviewReceipt", async () => {
@@ -168,40 +180,50 @@ describe("KEYS Solana authority proof", () => {
     assert.equal(mandateState.nonce.toNumber(), 0);
   });
 
-  it("accepts guardian PROPOSE -> BOUNDED and advances version/nonce", async () => {
-    const transitionTx = await program.methods
-      .transitionMandate(3, new anchor.BN(0))
-      .accountsStrict({
-        charter,
-        mandate,
-        reviewReceipt: reviewReceipt0,
-        guardian: provider.wallet.publicKey,
-      })
-      .rpc();
-    console.log(`PROOF authorized_transition_tx=${transitionTx}`);
+  it("accepts guardian PROPOSE -> BOUNDED through the backend Anchor provider", async () => {
+    const result = await authorityTransitionProvider.commitTransition({
+      charterAddress: charter.toBase58(),
+      mandateAddress: mandate.toBase58(),
+      reviewReceiptAddress: reviewReceipt0.toBase58(),
+      toStage: "BOUNDED",
+      expectedNonce: 0,
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.mandate.stage, "BOUNDED");
+    assert.equal(result.mandate.version, 2);
+    assert.equal(result.mandate.nonce, 1);
+
+    console.log(`PROOF authorized_transition_tx=${result.proof.signature}`);
+    console.log(`PROOF authority_provider_program_id=${result.proof.programId}`);
+    console.log(`PROOF authority_provider_mandate=${result.proof.mandateAddress}`);
+    console.log("PROOF authorized_transition=ALLOW PROPOSE->BOUNDED version=2 nonce=1 provider=anchor-authority-provider");
 
     const mandateState = await program.account.mandate.fetch(mandate);
     assert.equal(mandateState.stage, 3);
     assert.equal(mandateState.version.toNumber(), 2);
     assert.equal(mandateState.nonce.toNumber(), 1);
-
-    console.log("PROOF authorized_transition=ALLOW PROPOSE->BOUNDED version=2 nonce=1");
   });
 
-  it("refuses replay of the old nonce-bound review material", async () => {
-    await expectRefusal(
-      "stale_review_replay",
-      () =>
-        program.methods
-          .transitionMandate(4, new anchor.BN(0))
-          .accountsStrict({
-            charter,
-            mandate,
-            reviewReceipt: reviewReceipt0,
-            guardian: provider.wallet.publicKey,
-          })
-          .rpc(),
-      ["ConstraintSeeds", "StaleNonce", "StaleReviewReceipt", "seeds"]
+  it("refuses replay of the old nonce-bound review material through the backend Anchor provider", async () => {
+    const result = await authorityTransitionProvider.commitTransition({
+      charterAddress: charter.toBase58(),
+      mandateAddress: mandate.toBase58(),
+      reviewReceiptAddress: reviewReceipt0.toBase58(),
+      toStage: "INDEPENDENT",
+      expectedNonce: 0,
+    });
+
+    assert.equal(result.ok, false);
+    assert(
+      ["ConstraintSeeds", "StaleNonce", "StaleReviewReceipt", "seeds"].some(
+        (candidate) => String(result.reasonCode).includes(candidate)
+      ),
+      `stale replay refused with unexpected error: ${result.reasonCode}`
+    );
+
+    console.log(
+      `PROOF stale_review_replay=REFUSE code=${String(result.reasonCode).split("\n")[0]} provider=anchor-authority-provider`
     );
 
     const mandateState = await program.account.mandate.fetch(mandate);
