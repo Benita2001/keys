@@ -52,6 +52,33 @@ Example:
 }
 ```
 
+### GET /api/v0.1/capabilities
+
+Returns the backend's current truth state for frontend routing.
+
+Example while external credentials/runtimes are unavailable:
+
+```json
+{
+  "contractVersion": "0.1",
+  "mode": "LOCAL_DEMO",
+  "marketEvidence": {
+    "status": "BLOCKED_API_KEY"
+  },
+  "authorityCommit": {
+    "status": "RUNTIME_UNAVAILABLE"
+  },
+  "executionEligibility": {
+    "status": "UNKNOWN_DEFAULT"
+  },
+  "simulation": {
+    "status": "AVAILABLE"
+  }
+}
+```
+
+The frontend may use this to decide whether to show a live-backed path or an explicitly simulated/demo path without guessing.
+
 ### GET /api/v0.1/demo/maya
 
 Returns the canonical frontend fixture from:
