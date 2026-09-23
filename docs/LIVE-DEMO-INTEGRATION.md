@@ -1,6 +1,6 @@
 # KEYS — Live Demo Integration Contract
 
-Status: **BACKEND CONTRACT READY**
+Status: **BACKEND CONTRACT READY / FRONTEND OWNED BY BENITA**
 
 This document is the handoff between Faadil's verified backend proof surfaces and Benita's frontend.
 
@@ -159,3 +159,19 @@ Pyth:
 - canonical proof run: https://github.com/Faadil1/keys/actions/runs/35910460176
 
 The frontend does not need either secret to render or consume the safe response.
+
+
+## Ownership and hosting
+
+Benita owns:
+
+- frontend integration;
+- product experience;
+- hosting/deployment of the judge-facing application;
+- deciding whether the experience uses deterministic-only, live-proof, or a deliberate toggle between the two.
+
+Faadil owns backend semantics and proof maintenance only.
+
+The repository includes a CI-tested Vercel adapter, but canonical state does **not** currently claim a public hosted backend URL. Benita may use Vercel or another appropriate hosting path as long as the API contract and secret boundary remain intact.
+
+If a hosted live backend is used, `PYTH_PRO_API_KEY` must stay server-side.
