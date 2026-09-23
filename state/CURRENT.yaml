@@ -1,0 +1,26 @@
+project: KEYS
+status: TECHNICAL_REALITY_CHECK_STARTED
+candidate: B
+concept_lock: true
+working_category: progressive_financial_stewardship
+promise: "Financial independence shouldn't happen all at once."
+core_primitive: evidence_backed_progressive_authority
+current_proof:
+  reference_engine: PASS
+  automated_tests: 5_PASS
+  deterministic_demo: PASS
+  solana_devnet: NOT_STARTED
+  live_pyth: NOT_STARTED
+  real_minor_execution: OUT_OF_SCOPE
+next_gate:
+  name: DEMO_FIRST_ONCHAIN_SLICE
+  requires:
+    - minimal Solana charter/mandate/proposal accounts
+    - explicit-authorized mandate transition
+    - fail-closed stale/unknown market evidence
+    - live Pyth snapshot or documented entitlement blocker
+truth_boundary:
+  - no competence score
+  - no automatic real-authority promotion
+  - no claim of brokerage/custody
+  - no claim of legal ownership from SPL balance
