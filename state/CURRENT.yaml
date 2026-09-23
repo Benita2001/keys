@@ -1,5 +1,5 @@
 project: KEYS
-status: PYTH_ASSET_CLASS_ENTITLEMENT_DIAGNOSTIC_IN_PROGRESS
+status: PYTH_EQUITY_ENTITLEMENT_REQUIRED
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -27,6 +27,13 @@ current_proof:
   real_minor_execution: OUT_OF_SCOPE
 
 verified_evidence:
+  pyth_asset_class_diagnostic_run: "https://github.com/Faadil1/keys/actions/runs/35909454962"
+  pyth_secret_injection: PASS
+  pyth_aapl_1000ms: PYTH_NOT_ENTITLED
+  pyth_btc_control_1000ms: FRESH
+  pyth_btc_control_price_available: true
+  pyth_btc_control_publish_time_available: true
+  pyth_entitlement_conclusion: "API key is valid and functional; token lacks AAPL/equity entitlement."
   pyth_aapl_1000ms_run: "https://github.com/Faadil1/keys/actions/runs/35909361792"
   pyth_aapl_1000ms_result: PYTH_NOT_ENTITLED
   pyth_secret_injection_result: PASS
@@ -152,6 +159,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: TEST_PYTH_CRYPTO_CONTROL_FEED
-  next_user_action: "None while a BTC control feed tests whether the token is restricted specifically from equities."
+  active_step: OBTAIN_PYTH_EQUITY_ENTITLEMENT
+  next_user_action: "Enable/request Pyth Pro US-equity entitlement for the existing API key or obtain a key/package entitled to Equity.US.AAPL/USD."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
