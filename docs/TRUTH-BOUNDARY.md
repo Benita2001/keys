@@ -26,22 +26,28 @@ Canonical live Pyth proof feed:
 
 `Equity.US.TSLA/USD`
 
-## Product relock
+## Real in v0.2
 
-KEYS Family v0.2 targets **bounded autonomy**.
+KEYS Family v0.2 now has a proven **bounded-autonomy capital path** on local Solana and the canonical devnet program.
 
-The following are **specified but not yet implemented/proven**:
+Runtime proof now covers:
 
-- permission-matrix Mandate;
-- program-controlled vault;
-- in-bounds capital execution;
-- out-of-bounds capital refusal;
-- signed on-chain Pyth Pro verification;
-- boundary-only proposal flow;
-- pause/revoke/downward authority;
-- frontend/backend contract v0.2.
+- permission-matrix core / AssetRule;
+- program-controlled demo-token vault;
+- in-bounds capital execution without guardian approval;
+- out-of-bounds capital refusal inside the KEYS program;
+- explicit human widening with version/nonce advance;
+- stale execution refusal;
+- the same larger action succeeding after the widen;
+- pause/downward authority blocking execution;
+- signed Pyth Pro Solana-payload availability at the backend evidence boundary.
 
-Do not present these as completed until runtime proof exists.
+Still **specified / not yet proven on-chain**:
+
+- Pyth signature/payload verification inside `execute_within_mandate`;
+- Pyth-derived USD/notional enforcement;
+- Pyth-enforced precommitted price conditions;
+- frozen frontend/backend contract v0.2.
 
 ## Not claimed
 
