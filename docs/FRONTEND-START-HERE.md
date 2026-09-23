@@ -129,3 +129,22 @@ Only show a transition as committed when the backend commit route returns:
 with runtime proof metadata.
 
 This keeps the frontend visually ambitious without weakening the KEYS truth boundary.
+
+
+## Live backend integration
+
+The deterministic fixture remains the default frontend bootstrap path.
+
+When you want to connect the verified backend proof, use:
+
+`docs/LIVE-DEMO-INTEGRATION.md`
+
+The frontend-facing live endpoint is:
+
+`GET /api/v0.1/demo/live-proof`
+
+It returns display-safe Pyth market evidence and public Solana devnet proof metadata.
+
+Do not embed either backend secret in frontend code.
+
+The current authenticated live proof uses a trial-entitled US equity (`TSLA`). The product mechanism is asset-independent; the existing AAPL fixture does not need to be redesigned merely because the current Pyth trial entitles a different ticker.
