@@ -27,6 +27,7 @@ current_proof:
   real_minor_execution: OUT_OF_SCOPE
 
 verified_evidence:
+  active_devnet_proof_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
   rust_program_check_run: "https://github.com/Faadil1/keys/actions/runs/35880920062"
   rust_program_check_result: SUCCESS
   local_authority_last_failure_run: "https://github.com/Faadil1/keys/actions/runs/35889679979"
