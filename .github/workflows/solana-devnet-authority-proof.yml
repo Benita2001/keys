@@ -42,8 +42,7 @@ jobs:
           if grep -q 'name = "base64ct"' programs/keys/Cargo.lock; then cargo update --manifest-path programs/keys/Cargo.toml -p base64ct --precise 1.7.3; fi
           if grep -q 'name = "indexmap"' programs/keys/Cargo.lock; then cargo update --manifest-path programs/keys/Cargo.toml -p indexmap --precise 2.11.4; fi
           sed -i 's/^version = 4$/version = 3/' programs/keys/Cargo.lock
-          grep -A2 'name = "blake3"' programs/keys/Cargo.lock
-          grep -A2 'name = "indexmap"' programs/keys/Cargo.lock
+          grep -A2 'name = "indexmap"' programs/keys/Cargo.lock || true
 
 
       - name: Install Solana CLI 2.3.0
