@@ -22,6 +22,33 @@ function mandateSummary(mandate) {
   };
 }
 
+function marketEvidenceSummary(market) {
+  if (!market) return null;
+
+  return {
+    source: market.source ?? null,
+    symbol: market.symbol ?? null,
+    feedId: market.feedId ?? null,
+    status: market.status ?? 'UNAVAILABLE',
+    reasonCode: market.reasonCode ?? null,
+    price: market.price ?? null,
+    confidence: market.confidence ?? null,
+    confidenceBps: market.confidenceBps ?? null,
+    maxConfidenceBps: market.maxConfidenceBps ?? null,
+    publishTime: market.publishTime ?? null,
+    receivedAt: market.receivedAt ?? null,
+    ageSeconds: market.ageSeconds ?? null,
+    marketSession: market.marketSession ?? null,
+    publisherCount: market.publisherCount ?? null
+  };
+}
+
+function eligibilitySummary(eligibility) {
+  return {
+    status: eligibility?.status ?? 'UNKNOWN'
+  };
+}
+
 export function evaluateProposalForFrontend({
   charter,
   mandate,
@@ -44,6 +71,8 @@ export function evaluateProposalForFrontend({
     type: 'PROPOSAL_EVALUATION',
     proposal: proposalSummary(proposal),
     mandate: mandateSummary(mandate),
+    marketEvidence: marketEvidenceSummary(market),
+    eligibility: eligibilitySummary(eligibility),
     decision: result.decision,
     reasonCode: result.reasonCode,
     reasons: [...result.reasons]
