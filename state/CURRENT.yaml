@@ -1,38 +1,45 @@
 project: KEYS
-updated_at: "2026-09-23"
-status: BACKEND_PROOF_COMPLETE_FRONTEND_HANDOFF_TO_BENITA
+updated_at: "2026-09-24"
+status: CONCEPT_RELOCKED_BOUNDED_AUTONOMY_TECHNICAL_REALITY_GATE_PASS
 candidate: B
 concept_lock: true
-working_category: progressive_financial_stewardship
+concept_lock_version: 2
+working_category: family_bounded_autonomy_for_tokenized_stocks
 promise: "Financial independence shouldn't happen all at once."
-core_primitive: evidence_backed_progressive_authority
+product_principle: "Learn in context. Act freely inside bounds. Ask for more freedom only at the boundary."
+core_primitive: mandate_enforced_bounded_autonomy
+
+strategy:
+  stocklana_wedge: "KEYS Family"
+  wedge_positioning: "bounded autonomy / guardrails for owning tokenized stocks"
+  long_term_company: "mandate engine for delegated capital"
+  family_role_long_term: "first policy pack and reference client"
+  stages_role: "family UX / policy pack, not universal protocol architecture"
 
 current_truth:
-  demo_first_onchain_slice: PASS
-  reference_engine: PASS
-  node_ci: PASS
-  backend_http_api: PASS
-  backend_capabilities_endpoint: PASS
-  frontend_backend_contract: PASS
-  frontend_domain_facade: PASS
-  live_demo_backend_contract: PASS
-  live_demo_http_runtime: VERCEL_READY_NOT_HOSTED
-  rust_anchor_unit_ci: PASS
+  v0_1_authority_transition_proof: PASS
+  reference_engine_v0_1: PASS
+  node_ci_v0_1: PASS
+  backend_http_api_v0_1: PASS
+  frontend_backend_contract_v0_1: HISTORICAL_FROZEN_PROOF_CONTRACT
   local_solana_authority_runtime: PASS
-  solana_devnet_runtime: PASS
+  solana_devnet_authority_runtime: PASS
   stable_devnet_program_identity: PASS
-  live_pyth_equity: PASS
+  live_pyth_equity_offchain_proof: PASS
+  bounded_capital_execution_v0_2: NOT_BUILT
+  onchain_pyth_verification_v0_2: NOT_BUILT
+  permission_matrix_mandate_v0_2: NOT_BUILT
+  contextual_learning_layer_spec: LOCKED
   real_minor_execution: OUT_OF_SCOPE
 
 canonical_solana:
   network: devnet
   program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
   explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
-  initial_deploy_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
   stable_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
   upgrade_authority_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  runtime_result: "4 passing"
-  assertions:
+  v0_1_runtime_result: "4 passing"
+  v0_1_assertions:
     - "unauthorized transition -> REFUSE / ConstraintHasOne"
     - "guardian PROPOSE -> BOUNDED -> ALLOW / version=2 / nonce=1"
     - "stale review replay -> REFUSE / ConstraintSeeds"
@@ -43,40 +50,46 @@ canonical_pyth:
   feed_id: 1435
   channel: fixed_rate@1000ms
   status: FRESH
+  proof_mode: OFFCHAIN_AUTHENTICATED_PYTH_PRO
+  current_adapter_format: leUnsigned
+  onchain_signed_payload_verification: NOT_BUILT
   observed_price_at_proof_time: 379.696
   confidence: 0.019
-  confidence_bps: 0.500400320256205
   publish_time: "2026-09-23T19:36:42.000Z"
-  age_seconds: 0
-  market_session: regular
-  publisher_count: 19
-  decision: ESCALATE
-  reason_code: GUARDIAN_REVIEW_REQUIRED
-  terminal_marker: "PYTH_LIVE_PROOF=PASS fresh_market_evidence_reached_guardian_review"
   current_trial_aapl_entitlement: false
   product_asset_dependency: false
 
-live_demo_backend:
-  route: "/api/v0.1/demo/live-proof"
-  capabilities_route: "/api/v0.1/capabilities"
-  deterministic_fixture_route: "/api/v0.1/demo/maya"
-  default_live_equity: TSLA
-  vercel_ready: true
-  vercel_adapter_ci_run: "https://github.com/Faadil1/keys/actions/runs/35912763697"
-  public_hosted_base_url: null
-  secrets_exposed_to_frontend: false
+v0_2_target:
+  architecture: PROGRAM_CONTROLLED_VAULT_PLUS_MANDATE_PERMISSION_MATRIX
+  mandate_truth:
+    - principal / guardian
+    - delegate / beneficiary
+    - allowed assets
+    - allowed actions
+    - per-action notional
+    - per-period notional
+    - expiry
+    - market conditions
+    - escalation rules
+    - revocation
+    - version
+    - nonce
+  execution_rule: "inside mandate -> immediate; outside mandate -> refuse or boundary request"
+  authority_rule: "only authorized human transition may widen human authority"
+  pyth_rule: "market evidence may restrict, expire or escalate; never grant or widen human authority"
+  learning_rule: "learning supports understanding and practice; never auto-promotes authority"
+  canonical_docs:
+    technical_gate: docs/TECHNICAL-REALITY-GATE-BOUNDED-AUTONOMY.md
+    architecture_delta: docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md
+    learning_layer: docs/FAMILY-LEARNING-LAYER.md
 
 collaboration:
-  backend_handoff_complete: true
   frontend_owner: Benita
-  frontend_integration_owner: Benita
-  frontend_deployment_owner: Benita
   backend_owner: Faadil
-  faadil_role_after_handoff: "Backend contract/runtime support only unless an integration issue requires backend changes."
-  frontend_start_here: docs/FRONTEND-START-HERE.md
-  frontend_handoff: docs/BENITA-FRONTEND-HANDOFF.md
-  frontend_contract: docs/FRONTEND-BACKEND-CONTRACT.md
-  live_integration_contract: docs/LIVE-DEMO-INTEGRATION.md
+  frontend_v0_1_contract_status: HISTORICAL
+  frontend_v0_2_contract_status: NOT_YET_FROZEN
+  frontend_guidance: "Do not lock the new experience to the v0.1 proposal-per-action semantics. Wait for / coordinate against the v0.2 bounded-autonomy contract."
+  backend_immediate_owner: Faadil
 
 security:
   devnet_keypair_secret_name: DEVNET_KEYPAIR_JSON
@@ -95,19 +108,17 @@ truth_boundary:
   - live Pyth claim is limited to verified entitled feeds
   - current trial does not prove live AAPL access
   - market evidence does not create authority
-
-historical_proof_trail:
-  devnet_funding_blocker: RESOLVED
-  pyth_missing_key_blocker: RESOLVED
-  pyth_secret_injection_blocker: RESOLVED
-  pyth_aapl_trial_entitlement: NOT_INCLUDED
-  details:
-    - docs/SOLANA-AUTHORITY-PROOF.md
-    - docs/PYTH-EVIDENCE-PROOF.md
-    - evidence/solana/DEVNET-AUTHORITY-RUNTIME-PROOF-2026-09-23.md
-    - evidence/pyth/LIVE-EQUITY-EVIDENCE-PROOF-2026-09-23.md
+  - learning completion does not create authority
+  - v0.1 proves authority transitions, not bounded capital execution
+  - on-chain Pyth enforcement is a v0.2 target, not a current claim
 
 active_step:
-  name: BENITA_FRONTEND_INTEGRATION_AND_DEPLOYMENT
-  owner: Benita
-  faadil_action: "Wait for backend/integration issues; do not take over frontend ownership."
+  name: BACKEND_V0_2_BOUNDED_AUTONOMY_BUILD
+  owner: Faadil
+  next:
+    - "Redesign Anchor Mandate around explicit permission envelope + AssetRule."
+    - "Add program-controlled vault and deterministic in-bounds/out-of-bounds execution proof."
+    - "Upgrade Pyth Pro path from off-chain unsigned evidence to signed Solana payload verification."
+    - "Rebuild boundary request / explicit widen / stale authorization path."
+    - "Add pause/revoke/downward authority."
+    - "Freeze frontend/backend contract v0.2 and hand it to Benita."
