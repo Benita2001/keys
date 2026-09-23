@@ -1,5 +1,5 @@
 project: KEYS
-status: PYTH_TRIAL_ENTITLED_EQUITY_SELECTED
+status: DEMO_FIRST_ONCHAIN_SLICE_PASS
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -16,17 +16,32 @@ current_proof:
   anchor_authority_provider_contract: PASS
   rust_anchor_unit_ci: PASS
   anchor_program_code: PASS
-  demo_first_onchain_slice: DEVNET_RUNTIME_PASS
+  demo_first_onchain_slice: PASS
   local_solana_authority_runtime: PASS
   solana_devnet: PASS
   devnet_funded_wallet_path: COMPLETE_VIA_DEVNET_KEYPAIR_JSON_SECRET
-  live_pyth: BLOCKED_API_KEY
+  live_pyth: PASS
   deterministic_demo: PASS
   frontend_backend_contract: PASS
   frontend_domain_facade: PASS
   real_minor_execution: OUT_OF_SCOPE
 
 verified_evidence:
+  pyth_live_equity_run: "https://github.com/Faadil1/keys/actions/runs/35910460176"
+  pyth_live_equity_result: PASS
+  pyth_live_equity_symbol: Equity.US.TSLA/USD
+  pyth_live_equity_feed_id: 1435
+  pyth_live_equity_channel: fixed_rate@1000ms
+  pyth_live_equity_status: FRESH
+  pyth_live_equity_price: 379.696
+  pyth_live_equity_confidence: 0.019
+  pyth_live_equity_confidence_bps: 0.500400320256205
+  pyth_live_equity_publish_time: "2026-09-23T19:36:42.000Z"
+  pyth_live_equity_age_seconds: 0
+  pyth_live_equity_market_session: regular
+  pyth_live_equity_publisher_count: 19
+  pyth_load_bearing_decision: "ESCALATE / GUARDIAN_REVIEW_REQUIRED"
+  pyth_terminal_marker: "PYTH_LIVE_PROOF=PASS fresh_market_evidence_reached_guardian_review"
   pyth_trial_entitled_equities_observed:
     - Equity.US.VOO/USD
     - Equity.US.TSLA/USD
@@ -107,18 +122,14 @@ verified_evidence:
   backend_contract_ci_result: "36 tests / 36 pass / 0 fail"
 
 next_gate:
-  name: DEMO_FIRST_ONCHAIN_SLICE
+  name: LIVE_DEMO_INTEGRATION
   requires:
-    - PASS: green local Solana authority runtime proof
-    - PASS: create Charter and Mandate
-    - PASS: commit Proposal
-    - PASS: create eligible ReviewReceipt
-    - PASS: refuse unauthorized transition
-    - PASS: allow guardian PROPOSE -> BOUNDED
-    - PASS: advance mandate version and nonce
-    - PASS: refuse replay of old review material
-    - PASS: devnet deployment and transaction references
-    - live Pyth snapshot with freshness/confidence or explicit credential blocker
+    - PASS: devnet authority runtime proof
+    - PASS: stable devnet program identity and upgrade authority
+    - PASS: authenticated live Pyth equity evidence
+    - PASS: market evidence remains separate from authority
+    - integrate live backend evidence into the frontend semantic contract without exposing secrets
+    - preserve explicit truth boundaries in the judge-facing demo
 
 truth_boundary:
   - no competence score
@@ -126,7 +137,7 @@ truth_boundary:
   - no claim of brokerage/custody
   - no claim of legal ownership from SPL balance
   - devnet deployment claim is limited to verified program ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk
-  - no claim of live Pyth price while API credential is unavailable
+  - live Pyth claim is limited to verified trial-entitled Equity.US.TSLA/USD proof; AAPL remains not entitled on current trial token
 
 collaboration:
   frontend_owner: Benita
@@ -171,6 +182,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: RUN_PYTH_LIVE_PROOF_WITH_ENTITLED_TSLA
-  next_user_action: "None while the live Pyth proof is rerun with trial-entitled Equity.US.TSLA/USD."
+  active_step: TECHNICAL_GATE_COMPLETE
+  next_user_action: "None. Technical reality gate is complete; proceed to end-to-end demo integration/packaging."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
