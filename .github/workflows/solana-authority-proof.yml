@@ -47,7 +47,7 @@ jobs:
           if grep -q 'name = "base64ct"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p base64ct --precise 1.7.3; fi
           if grep -q 'name = "indexmap"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p indexmap --precise 2.11.4; fi
           if grep -q 'name = "zeroize"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p zeroize --precise 1.8.1; fi
-          if grep -q 'name = "toml_edit"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p toml_edit --precise 0.23.7; fi
+          if grep -q 'version = "0.23.10+spec-1.0.0"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p 'toml_edit@0.23.10+spec-1.0.0' --precise 0.23.7; fi
           if grep -q 'name = "toml_parser"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p toml_parser --precise 1.0.4; fi
           sed -i 's/^version = 4$/version = 3/' Cargo.lock
           grep -A2 'name = "indexmap"' Cargo.lock || true
