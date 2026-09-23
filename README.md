@@ -43,3 +43,14 @@ KEYS is intentionally independent from COVENANT.
 - **KEYS:** continuity of stewardship while human authority changes.
 
 They should be evaluated as two separate Stocklana product candidates.
+
+## Frontend collaboration
+
+KEYS has a frozen v0.1 semantic contract so frontend work can proceed independently of the deeper Solana/Pyth proof.
+
+- Frontend / product experience: Benita
+- Backend / policy engine / Solana / Pyth / proof: Faadil
+- Contract: [docs/FRONTEND-BACKEND-CONTRACT.md](docs/FRONTEND-BACKEND-CONTRACT.md)
+- Maya integration fixture: [fixtures/frontend-maya-contract.json](fixtures/frontend-maya-contract.json)
+
+The frontend owns interaction and visual language; backend reason codes, authority semantics, truth boundaries, and transition invariants remain canonical.
