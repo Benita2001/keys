@@ -74,3 +74,45 @@ It does not prove:
 - legal authority for a minor to trade securities;
 - live Pyth evidence;
 - automatic competence or maturity assessment.
+
+## Stable-program revalidation — run #18
+
+Canonical stabilization run:
+
+https://github.com/Faadil1/keys/actions/runs/35905841296
+
+The repository was updated to pin the deployed devnet program id:
+
+`ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
+
+The devnet workflow then upgraded the **same on-chain program address** instead of generating another program id.
+
+Verified before upgrade:
+
+- source program id match: `PASS`
+- program id: `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
+- upgrade authority: `FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk`
+- upgrade-authority match: `PASS`
+
+Upgrade transaction signature:
+
+`67hsECJonPA9N9eBP9jjPkzLNBzHPoXm8NGqLoKzrmZQfYFpUM4PDFLLFg7ZmPwsaogh95gg7LdLLHGW8FYvpQtu`
+
+Verified after upgrade:
+
+- program id remained `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
+- upgrade authority remained `FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk`
+- post-deploy authority match: `PASS`
+- authority runtime: `4 passing`
+- terminal marker: `DEVNET_PROOF=PASS`
+
+A concurrent local regression proof also completed successfully:
+
+https://github.com/Faadil1/keys/actions/runs/35905834783
+
+Result:
+
+`4 passing`
+
+Therefore the canonical devnet id is now both **deployed and upgrade-stable**, while the local validator proof remains executable.
+
