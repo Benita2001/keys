@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 1
 updated_at: "2026-09-23"
-status: DEVNET_WALLET_FUNDED_READY_FOR_GITHUB_SECRET
+status: DEVNET_WALLET_FUNDED_KEYPAIR_FILE_INCOMPLETE
 
 mission:
   candidate: B
@@ -63,7 +63,7 @@ current_user_guided_work:
     - "Do not paste a private key or keypair JSON into ChatGPT."
     - "Only the public address and non-secret command output may be shared in chat."
   step: 6
-  step_name: ADD_DEVNET_KEYPAIR_GITHUB_SECRET
+  step_name: RECOVER_OR_RECREATE_COMPLETE_DEVNET_KEYPAIR
   observed:
     solana_cli_present: false
     shell: PowerShell
@@ -90,8 +90,12 @@ current_user_guided_work:
     verified_balance_sol: 5
     balance_evidence: "User screenshot of Solana Explorer devnet account page showing Balance (SOL) = 5 and a successful System Program transfer."
     evidence_source: "User screenshot showing 'Success! Airdrop successful' on faucet.solana.com"
-  next_user_action: "Add the saved devnet-only keypair JSON as the GitHub Actions repository secret DEVNET_KEYPAIR_JSON. Never paste the JSON into chat."
-  completion_condition: "GitHub repository shows a repository Actions secret named DEVNET_KEYPAIR_JSON."
+  observed:
+    funded_wallet_public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
+    funded_wallet_balance_sol: 5
+    complete_keypair_file_available: false
+  next_user_action: "Check browser Downloads for the Solana Playground keypair file saved during wallet creation. Do not paste its contents into chat."
+  completion_condition: "A complete keypair JSON file is available locally, or a replacement devnet-only wallet is created with a complete saved keypair."
 
 after_wallet_creation:
   sequence:
