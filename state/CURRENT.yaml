@@ -15,6 +15,7 @@ current_proof:
   solana_devnet: BLOCKED_FUNDING
   live_pyth: BLOCKED_API_KEY
   deterministic_demo: PASS
+  frontend_backend_contract: PASS
   real_minor_execution: OUT_OF_SCOPE
 
 verified_evidence:
@@ -25,6 +26,8 @@ verified_evidence:
   devnet_attempt_detail: "5 SOL and 2 SOL faucet requests rate-limited; final balance 0 lamports; no deployment occurred."
   pyth_live_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35883434458"
   pyth_live_attempt_result: BLOCKED_API_KEY
+  frontend_contract_ci_run: "https://github.com/Faadil1/keys/actions/runs/35889500633"
+  frontend_contract_ci_result: SUCCESS
 
 next_gate:
   name: DEMO_FIRST_ONCHAIN_SLICE
@@ -47,3 +50,10 @@ truth_boundary:
   - no claim of legal ownership from SPL balance
   - no claim of devnet deployment while faucet funding is blocked
   - no claim of live Pyth price while API credential is unavailable
+
+collaboration:
+  frontend_owner: Benita
+  backend_owner: Faadil
+  frontend_contract: docs/FRONTEND-BACKEND-CONTRACT.md
+  frontend_fixture: fixtures/frontend-maya-contract.json
+  contract_status: FROZEN_FOR_MAYA_DEMO
