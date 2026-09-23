@@ -1,86 +1,105 @@
-# KEYS — Benita Frontend Handoff
+# KEYS — Benita Frontend Handoff v0.2 Transition
 
-Status: **READY FOR FRONTEND INTEGRATION**
+Date: 2026-09-24  
+Status: **FRONTEND OWNERSHIP UNCHANGED; NEW CONTRACT PENDING**
 
 ## Ownership
 
-Benita owns:
+Benita still owns:
 
 - frontend architecture;
 - interaction design;
 - visual system;
 - responsive behavior;
 - judge-facing product experience;
-- frontend hosting/deployment;
-- deciding how/when to surface live backend proof inside the UI.
+- final hosting/deployment.
 
 Faadil owns:
 
-- policy/domain engine;
-- backend API contract;
-- Solana authority runtime;
-- Pyth market-evidence boundary;
-- backend proof maintenance;
-- backend integration support if a frontend blocker appears.
+- v0.2 policy/domain engine;
+- Solana bounded-capital runtime;
+- Pyth signed evidence boundary;
+- frontend/backend contract v0.2;
+- backend proof maintenance.
 
-## What is already complete
+## Product relock
 
-Backend proof is complete for the demo-first slice:
+KEYS Family remains the Stocklana wedge, but the interaction model is now:
 
-- local Solana authority runtime: PASS;
-- Solana devnet deployment/runtime: PASS;
-- stable devnet program id: `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`;
-- authenticated live Pyth US-equity evidence: PASS;
-- live market evidence still resolves Maya-style `PROPOSE` to `ESCALATE / GUARDIAN_REVIEW_REQUIRED`;
-- frontend/backend contract tests: PASS;
-- Vercel-ready serverless adapter: PASS in CI (public hosting not yet claimed).
+**bounded autonomy, not continuous supervision.**
 
-## Frontend starting points
+Inside the current Mandate:
 
-Deterministic UI fixture:
+- Maya acts freely.
 
-`fixtures/frontend-maya-contract.json`
+Outside the current Mandate:
 
-Stable semantic contract:
+- the action refuses or becomes a boundary request.
 
-`docs/FRONTEND-BACKEND-CONTRACT.md`
+Standing authority widens only through an explicit authorized human transition.
 
-Live integration contract:
+## Learning stays
 
-`docs/LIVE-DEMO-INTEGRATION.md`
+LEARN/PRACTICE are not removed.
 
-Backend API documentation:
+They become contextual Family product layers:
 
-`docs/BACKEND-API.md`
+- first-use explanations;
+- Practice for unfamiliar risk;
+- boundary explanations;
+- market-condition learning;
+- post-action reflection.
 
-## Important product rule
+Learning/P&L never auto-promotes authority.
 
-The frontend does not need to be redesigned around TSLA.
+See `docs/FAMILY-LEARNING-LAYER.md`.
 
-The existing Maya/AAPL deterministic fixture may remain the canonical storytelling scenario.
+## Contract status
 
-The current authenticated live Pyth proof uses `TSLA` only because that equity is included in the current trial entitlement.
+The old v0.1 frontend/backend contract remains valid as evidence for the original authority-transition demo, but it should no longer be treated as the final product contract.
 
-KEYS is asset-independent.
+**v0.2 contract status: NOT YET FROZEN.**
 
-If the UI shows live market evidence, it must identify the actual live asset and must not claim AAPL is live unless AAPL entitlement is separately proven.
+Backend work must first add:
 
-## Truth boundaries to preserve
+- explicit permission-matrix Mandate;
+- program-controlled execution boundary;
+- signed on-chain Pyth verification;
+- boundary-only proposal semantics;
+- pause/revoke/downward authority.
 
-- Market evidence does not create authority.
-- Evidence does not equal maturity.
-- Review eligibility is not a competence score.
-- No real minor securities execution claim.
-- No brokerage/custody claim.
-- No API keys or private keys in frontend code.
+## UX target
 
-## Integration freedom
+The most important product feeling:
 
-Benita may choose:
+> Maya has real freedom inside a key whose limits she can understand.
 
-- deterministic-only demo;
-- live-proof mode;
-- a toggle between deterministic and live-backed proof;
-- any frontend hosting/deployment approach that fits the product experience.
+Avoid:
 
-The backend contract should be treated as stable unless an actual integration blocker is found.
+- permission request before every action;
+- LMS/course-first flow;
+- parent surveillance dashboard;
+- maturity score;
+- P&L progression;
+- protocol jargon in primary screens.
+
+Likely core surfaces:
+
+- Maya's current key;
+- contextual learn/practice;
+- instant action;
+- boundary refusal;
+- ask for more room;
+- guardian allow once / widen / refuse;
+- market evidence explanation;
+- concise transition/review history.
+
+## Truth boundaries
+
+- market evidence does not create authority;
+- learning completion does not create authority;
+- evidence does not equal maturity;
+- no real minor securities execution claim;
+- no brokerage/custody claim;
+- no API/private keys in frontend;
+- do not claim AAPL is live under the current Pyth trial unless separately proven.
