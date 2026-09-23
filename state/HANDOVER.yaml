@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 3
 updated_at: "2026-09-23"
-status: PYTH_SECRET_ADDED_LIVE_PROOF_IN_PROGRESS
+status: PYTH_SECRET_INJECTION_FAILED_USER_CHECK_REQUIRED
 
 mission:
   candidate: B
@@ -73,9 +73,12 @@ wallet_security:
   never_commit_or_share_private_key: true
 
 next_work:
-  step: 14
-  step_name: RUN_PYTH_LIVE_PROOF
-  user_action: "No user action required while the authenticated Pyth live proof runs."
+  last_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35908769121"
+  last_pyth_result: BLOCKED_SECRET_NOT_INJECTED
+  last_pyth_detail: "Adapter tests 5/5 pass; live script saw empty PYTH_PRO_API_KEY."
+  step: 15
+  step_name: VERIFY_PYTH_REPOSITORY_SECRET_NAME
+  user_action: "In Faadil1/keys -> Settings -> Secrets and variables -> Actions, confirm under Repository secrets that the name is exactly PYTH_PRO_API_KEY. Do not share its value."
   credential_path:
     terminal_url: "https://app.pyth.com/"
     free_trial_key: true
