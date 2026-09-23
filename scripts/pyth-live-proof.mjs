@@ -1,7 +1,8 @@
 import { evaluateProposal } from '../src/engine.mjs';
 import {
   PYTH_PRO_EQUITY_FEEDS,
-  fetchPythProSnapshot
+  fetchPythProSnapshot,
+  fetchPythProSolanaPayload
 } from '../src/pyth-adapter.mjs';
 
 const proofSymbol = process.env.PYTH_PRO_EQUITY_SYMBOL || 'TSLA';
@@ -15,7 +16,7 @@ const assetTicker = feed.symbol.split('.')[2]?.split('/')[0] || proofSymbol;
 const proofChannel = process.env.PYTH_PRO_CHANNEL || 'fixed_rate@1000ms';
 const receivedAt = new Date().toISOString();
 
-const snapshot = await fetchPythProSnapshot({
+const snapshot = await fetchPythProSolanaPayload({
   apiKey: process.env.PYTH_PRO_API_KEY,
   feed,
   channel: proofChannel,
@@ -38,8 +39,16 @@ console.log(JSON.stringify({
   receivedAt: snapshot.receivedAt,
   ageSeconds: snapshot.ageSeconds ?? null,
   marketSession: snapshot.marketSession ?? null,
-  publisherCount: snapshot.publisherCount ?? null
+  publisherCount: snapshot.publisherCount ?? null,
+  solanaPayloadStatus: snapshot.solanaPayload?.status ?? 'UNAVAILABLE',
+  solanaPayloadBytes: snapshot.solanaPayload?.byteLength ?? null
 }));
+
+if (snapshot.solanaPayload?.status === 'AVAILABLE') {
+  console.log(`PYTH_SIGNED_SOLANA_PAYLOAD=PASS encoding=${snapshot.solanaPayload.encoding} bytes=${snapshot.solanaPayload.byteLength ?? 'unknown'}`);
+} else {
+  console.log(`PYTH_SIGNED_SOLANA_PAYLOAD=BLOCKED reason=${snapshot.solanaPayload?.reasonCode ?? 'UNKNOWN'}`);
+}
 
 if (snapshot.status === 'UNAVAILABLE') {
   if (snapshot.reasonCode === 'PYTH_NOT_ENTITLED') {
