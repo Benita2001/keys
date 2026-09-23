@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("5bgNPkaU8d6imUiozVdqNPdBfttrpAP2GzW9wpPDrrNQ");
+declare_id!("ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk");
 
 pub const STAGE_LEARN: u8 = 0;
 pub const STAGE_PRACTICE: u8 = 1;
