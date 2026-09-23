@@ -32,7 +32,8 @@ Backend proof is complete for the demo-first slice:
 - stable devnet program id: `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`;
 - authenticated live Pyth US-equity evidence: PASS;
 - live market evidence still resolves Maya-style `PROPOSE` to `ESCALATE / GUARDIAN_REVIEW_REQUIRED`;
-- frontend/backend contract tests: PASS.
+- frontend/backend contract tests: PASS;
+- Vercel-ready serverless adapter: PASS in CI (public hosting not yet claimed).
 
 ## Frontend starting points
 
