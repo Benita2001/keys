@@ -73,6 +73,12 @@ Example while external credentials/runtimes are unavailable:
   },
   "simulation": {
     "status": "AVAILABLE"
+  },
+  "liveDemoProof": {
+    "status": "BLOCKED_API_KEY",
+    "selectedEquity": "TSLA",
+    "route": "/api/v0.1/demo/live-proof",
+    "solanaProgramId": "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
   }
 }
 ```
@@ -86,6 +92,34 @@ Returns the canonical frontend fixture from:
 `fixtures/frontend-maya-contract.json`
 
 This is the quickest frontend bootstrap path.
+
+### GET /api/v0.1/demo/live-proof
+
+Returns a frontend-safe live demo envelope.
+
+The backend selects a configured live equity (currently `TSLA` by default), retrieves Pyth evidence server-side, evaluates the Maya-style `PROPOSE` scenario through the same KEYS engine, and attaches public Solana devnet proof metadata.
+
+The route never exposes:
+
+- `PYTH_PRO_API_KEY`;
+- `DEVNET_KEYPAIR_JSON`;
+- signer material.
+
+Current verified semantic outcome with fresh acceptable evidence:
+
+```
+ESCALATE / GUARDIAN_REVIEW_REQUIRED
+```
+
+Public Solana proof metadata includes the canonical devnet program:
+
+`ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
+
+Exact market prices must be treated as live data and not hardcoded.
+
+See:
+
+`docs/LIVE-DEMO-INTEGRATION.md`
 
 ### POST /api/v0.1/proposals/evaluate
 
