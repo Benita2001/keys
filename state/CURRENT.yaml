@@ -13,6 +13,7 @@ current_proof:
   anchor_program_code: PASS
   local_solana_authority_runtime: BUILD_FIX_IN_PROGRESS
   solana_devnet: BLOCKED_FUNDING
+  devnet_funded_wallet_path: READY_VIA_DEVNET_KEYPAIR_JSON_SECRET
   live_pyth: BLOCKED_API_KEY
   deterministic_demo: PASS
   frontend_backend_contract: PASS
@@ -21,11 +22,15 @@ current_proof:
 verified_evidence:
   rust_program_check_run: "https://github.com/Faadil1/keys/actions/runs/35880920062"
   rust_program_check_result: SUCCESS
+  local_authority_last_failure_run: "https://github.com/Faadil1/keys/actions/runs/35889679979"
+  local_authority_last_failure_detail: "SBF rustc 1.84.1-dev rejected unicode-segmentation 1.13.3; workflow now pins 1.12.0."
+  local_authority_active_run: "https://github.com/Faadil1/keys/actions/runs/35890368959"
   devnet_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35885934591"
   devnet_attempt_result: BLOCKED_FUNDING
   devnet_attempt_detail: "5 SOL and 2 SOL faucet requests rate-limited; final balance 0 lamports; no deployment occurred."
   pyth_live_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35883434458"
   pyth_live_attempt_result: BLOCKED_API_KEY
+  pyth_auth_boundary_verified: "Pyth Pro REST requires API key; Pyth Core Hermes also requires API key after 2026-08-26."
   frontend_contract_ci_run: "https://github.com/Faadil1/keys/actions/runs/35889500633"
   frontend_contract_ci_result: SUCCESS
 
