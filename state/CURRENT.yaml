@@ -1,5 +1,5 @@
 project: KEYS
-status: TECHNICAL_REALITY_CHECK_LOCAL_RUNTIME_PASS
+status: DEVNET_WALLET_SETUP_IN_PROGRESS
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -88,3 +88,9 @@ collaboration:
   anchor_authority_provider: src/anchor-authority-provider.mjs
   backend_api_doc: docs/BACKEND-API.md
   contract_status: FROZEN_FOR_MAYA_DEMO
+
+guided_execution:
+  canonical_handover: state/HANDOVER.yaml
+  active_step: CHECK_LOCAL_SOLANA_CLI
+  next_user_action: "Run solana --version in PowerShell."
+  security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
