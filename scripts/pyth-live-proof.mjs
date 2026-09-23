@@ -4,7 +4,14 @@ import {
   fetchPythProSnapshot
 } from '../src/pyth-adapter.mjs';
 
-const feed = PYTH_PRO_EQUITY_FEEDS.AAPL;
+const proofSymbol = process.env.PYTH_PRO_EQUITY_SYMBOL || 'TSLA';
+const feed = PYTH_PRO_EQUITY_FEEDS[proofSymbol];
+
+if (!feed) {
+  throw new Error(`Unsupported PYTH_PRO_EQUITY_SYMBOL: ${proofSymbol}`);
+}
+
+const assetTicker = feed.symbol.split('.')[2]?.split('/')[0] || proofSymbol;
 const proofChannel = process.env.PYTH_PRO_CHANNEL || 'fixed_rate@1000ms';
 const receivedAt = new Date().toISOString();
 
@@ -69,7 +76,7 @@ if (snapshot.status === 'UNAVAILABLE') {
 
 const charter = {
   expiresAt: null,
-  assetUniverse: ['AAPL'],
+  assetUniverse: [assetTicker],
   maxProposalNotional: 50,
   maxBoundedNotional: 25
 };
@@ -80,10 +87,10 @@ const mandate = {
 };
 
 const proposal = {
-  asset: 'AAPL',
+  asset: assetTicker,
   amount: 25,
-  rationale: 'Durable cash generation and ecosystem strength.',
-  counterargument: 'Valuation can compress even if the business stays strong.',
+  rationale: 'Long-term business thesis recorded before the outcome is known.',
+  counterargument: 'Valuation and execution risk can invalidate an otherwise strong narrative.',
   invalidation: 'Revisit if the long-term thesis materially changes.'
 };
 
