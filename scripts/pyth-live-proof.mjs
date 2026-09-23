@@ -5,11 +5,13 @@ import {
 } from '../src/pyth-adapter.mjs';
 
 const feed = PYTH_PRO_EQUITY_FEEDS.AAPL;
+const proofChannel = process.env.PYTH_PRO_CHANNEL || 'fixed_rate@1000ms';
 const receivedAt = new Date().toISOString();
 
 const snapshot = await fetchPythProSnapshot({
   apiKey: process.env.PYTH_PRO_API_KEY,
   feed,
+  channel: proofChannel,
   receivedAt,
   maxAgeSeconds: 30,
   maxConfidenceBps: 100
@@ -19,6 +21,7 @@ console.log(JSON.stringify({
   proof: 'PYTH_LIVE_EVIDENCE',
   symbol: feed.symbol,
   feedId: feed.feedId,
+  channel: proofChannel,
   status: snapshot.status,
   reasonCode: snapshot.reasonCode ?? null,
   price: snapshot.price ?? null,
