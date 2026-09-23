@@ -1,7 +1,7 @@
 project: KEYS
-handover_version: 9
+handover_version: 10
 updated_at: "2026-09-24"
-status: CONCEPT_RELOCKED_BOUNDED_AUTONOMY_TECHNICAL_REALITY_GATE_PASS
+status: V0_2_BOUNDED_CAPITAL_DEVNET_PASS_PYTH_ONCHAIN_ACTIVE
 
 mission:
   candidate: B
@@ -10,8 +10,8 @@ mission:
   promise: "Financial independence shouldn't happen all at once."
   product_principle: "Learn in context. Act freely inside bounds. Ask for more freedom only at the boundary."
   core_primitive: mandate_enforced_bounded_autonomy
-  current_gate: BACKEND_V0_2_BOUNDED_AUTONOMY_BUILD
-  immediate_goal: "Upgrade the proven v0.1 authority-transition runtime into a v0.2 program-controlled bounded-capital execution runtime, then freeze a new frontend contract."
+  current_gate: BACKEND_V0_2_ONCHAIN_PYTH_VERIFICATION
+  immediate_goal: "Integrate signed Pyth Solana evidence into the proven v0.2 program-controlled capital path, then freeze the frontend contract."
 
 strategy_lock:
   family_is_stocklana_wedge: true
@@ -49,13 +49,18 @@ canonical_truth:
     pyth_adapter_format: leUnsigned
     frontend_contract: HISTORICAL_FROZEN_PROOF_CONTRACT
   v0_2:
-    permission_matrix: NOT_BUILT
-    program_controlled_vault: NOT_BUILT
-    bounded_capital_execution: NOT_BUILT
+    permission_matrix_core: PASS_LOCAL_AND_DEVNET
+    program_controlled_vault: PASS_LOCAL_AND_DEVNET
+    bounded_capital_execution: PASS_LOCAL_AND_DEVNET_DEMO_TOKEN
+    explicit_human_widen_and_stale_replay: PASS_LOCAL_AND_DEVNET
+    pause_downward_authority: PASS_LOCAL_AND_DEVNET
+    signed_pyth_solana_payload_availability: PASS
     signed_onchain_pyth_verification: NOT_BUILT
-    boundary_only_proposals: SPEC_LOCKED
-    contextual_learning: SPEC_LOCKED
-    frontend_contract: NOT_YET_FROZEN
+    boundary_only_proposals: SPEC_AND_DRAFT_API
+    contextual_learning: SPEC_AND_DRAFT_FACADE
+    frontend_contract: DRAFT_RUNTIME_PROOF_PENDING
+    devnet_run: "https://github.com/Faadil1/keys/actions/runs/35931280449"
+    pyth_signed_payload_run: "https://github.com/Faadil1/keys/actions/runs/35930425544"
 
 ownership:
   frontend:
@@ -71,12 +76,9 @@ ownership:
   backend:
     owner: Faadil
     current_scope:
-      - Anchor v0.2 permission-matrix redesign
-      - program-controlled vault execution
-      - Pyth signed Solana verification
-      - boundary request / explicit widen
-      - pause/revoke/downward authority
-      - frontend contract v0.2
+      - signed Pyth Solana verification inside Anchor execution
+      - Pyth-derived notional / condition enforcement
+      - frontend contract v0.2 freeze after runtime proof
       - proof maintenance
 
 security:
@@ -96,22 +98,21 @@ truth_boundaries:
   - no mainnet deployment claim
   - verified live Pyth evidence is TSLA on current trial, not AAPL
   - market evidence does not create authority
-  - v0.1 does not prove bounded capital execution
-  - on-chain Pyth verification is not yet claimed
+  - v0.2 bounded demo-token capital execution is proven on local Solana and devnet
+  - current capital limits are token-unit boundaries, not yet Pyth-derived USD notional
+  - signed Pyth Solana payload availability is proven; on-chain Pyth verification is not yet claimed
   - no real minor securities execution claim
 
 next_work:
-  step: 26
-  step_name: BACKEND_V0_2_BOUNDED_AUTONOMY_BUILD
+  step: 27
+  step_name: BACKEND_V0_2_ONCHAIN_PYTH_VERIFICATION
   owner: Faadil
   sequence:
-    - "Mandate permission envelope + AssetRule."
-    - "Program-controlled vault + execute_within_mandate proof."
-    - "Signed Pyth Pro Solana payload verification."
-    - "Boundary request + human widen + stale replay proof."
-    - "Pause/revoke/downward transition."
-    - "Frontend/backend contract v0.2."
-    - "Benita integration against v0.2."
+    - "Verify the signed Pyth Pro Solana payload in the Anchor execution path."
+    - "Enforce Pyth-derived USD/notional and precommitted market conditions fail-closed."
+    - "Re-run local and canonical devnet proofs."
+    - "Freeze frontend/backend contract v0.2."
+    - "Benita integration against frozen v0.2."
 
 key_files:
   - state/CURRENT.yaml
