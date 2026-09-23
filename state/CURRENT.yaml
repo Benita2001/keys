@@ -1,5 +1,5 @@
 project: KEYS
-status: VERCEL_READY_MANUAL_IMPORT_REQUIRED
+status: BACKEND_PROOF_COMPLETE_FRONTEND_HANDOFF_TO_BENITA
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -153,6 +153,10 @@ truth_boundary:
   - live Pyth claim is limited to verified trial-entitled Equity.US.TSLA/USD proof; AAPL remains not entitled on current trial token
 
 collaboration:
+  backend_handoff_complete: true
+  frontend_integration_owner: Benita
+  frontend_deployment_owner: Benita
+  faadil_role_after_handoff: "Backend contract/runtime support only; no frontend ownership."
   frontend_owner: Benita
   backend_owner: Faadil
   frontend_contract: docs/FRONTEND-BACKEND-CONTRACT.md
@@ -195,6 +199,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: IMPORT_KEYS_INTO_VERCEL
-  next_user_action: "Import https://github.com/Faadil1/keys into Vercel, add PYTH_PRO_API_KEY as a Vercel environment variable, deploy, then return the production URL."
+  active_step: BENITA_FRONTEND_INTEGRATION_AND_DEPLOYMENT
+  next_user_action: "Benita owns frontend integration/deployment from here; Faadil only supports backend contract/runtime issues if needed."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
