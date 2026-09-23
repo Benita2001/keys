@@ -131,6 +131,16 @@ function capabilitiesForServices(services = {}) {
     },
     simulation: {
       status: 'AVAILABLE'
+    },
+    liveDemoProof: {
+      status: services.marketEvidenceProvider
+        ? 'PROVIDER_READY'
+        : process.env.PYTH_PRO_API_KEY
+          ? 'LIVE_EVIDENCE_READY'
+          : 'BLOCKED_API_KEY',
+      selectedEquity: liveDemoAsset(),
+      route: '/api/v0.1/demo/live-proof',
+      solanaProgramId: CANONICAL_DEVNET_PROGRAM_ID
     }
   };
 }
