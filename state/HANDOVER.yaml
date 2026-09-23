@@ -1,7 +1,7 @@
 project: KEYS
-handover_version: 6
+handover_version: 7
 updated_at: "2026-09-23"
-status: VERCEL_READY_MANUAL_IMPORT_REQUIRED
+status: BACKEND_PROOF_COMPLETE_FRONTEND_HANDOFF_TO_BENITA
 
 mission:
   candidate: B
@@ -10,7 +10,7 @@ mission:
   core_primitive: evidence_backed_progressive_authority
   completed_gate: DEMO_FIRST_ONCHAIN_SLICE
   current_gate: LIVE_DEMO_INTEGRATION
-  immediate_goal: "Import the Vercel-ready KEYS repo, inject PYTH_PRO_API_KEY server-side, deploy, and smoke-test the public HTTPS API."
+  immediate_goal: "Benita completes frontend integration, experience, and deployment using the frozen backend contract and proof surfaces."
 
 ownership:
   frontend:
@@ -97,8 +97,8 @@ security:
   browser_exposure_of_pyth_key: false
 
 next_work:
-  step: 24
-  step_name: IMPORT_KEYS_INTO_VERCEL
+  step: 25
+  step_name: BENITA_FRONTEND_INTEGRATION_AND_DEPLOYMENT
   completed:
     - "GET /api/v0.1/demo/live-proof implemented."
     - "GET /api/v0.1/capabilities advertises liveDemoProof."
@@ -110,15 +110,15 @@ next_work:
     - "vercel.json committed."
     - "Vercel adapter CI PASS: https://github.com/Faadil1/keys/actions/runs/35912763697"
   remaining:
-    - "Import Faadil1/keys into Vercel."
-    - "Add PYTH_PRO_API_KEY to Vercel environment variables."
-    - "Deploy."
-    - "Return production URL."
-    - "Smoke-test /health, /api/v0.1/capabilities and /api/v0.1/demo/live-proof remotely."
-  blocker:
-    connector_read_access: true
-    connector_deploy_action: unavailable_in_session
-  user_action: "Use Vercel import UI for Faadil1/keys, add PYTH_PRO_API_KEY, deploy, then share only the production URL."
+    - "Benita chooses/owns the frontend hosting path and final app deployment."
+    - "Benita connects the frontend to the live backend contract when useful."
+    - "Benita may keep the deterministic Maya/AAPL fixture for UI continuity."
+    - "For judge-facing live market evidence, use the backend live-proof surface and label the actual verified live asset."
+    - "Faadil supports only backend contract/runtime issues if integration reveals one."
+  ownership:
+    frontend_and_deployment: Benita
+    backend_and_proof: Faadil
+  user_action: "No further frontend/deployment action required from Faadil unless Benita requests backend support."
 
 truth_boundaries:
   - no competence score
