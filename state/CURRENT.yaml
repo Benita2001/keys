@@ -1,5 +1,5 @@
 project: KEYS
-status: LIVE_DEMO_BACKEND_CONTRACT_PASS_RUNTIME_NOT_HOSTED
+status: VERCEL_READY_MANUAL_IMPORT_REQUIRED
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -8,7 +8,7 @@ core_primitive: evidence_backed_progressive_authority
 
 current_proof:
   live_demo_backend_contract: PASS
-  live_demo_http_runtime: NOT_HOSTED
+  live_demo_http_runtime: VERCEL_READY_NOT_HOSTED
   reference_engine: PASS
   node_ci: PASS
   backend_http_api: PASS
@@ -29,6 +29,12 @@ current_proof:
   real_minor_execution: OUT_OF_SCOPE
 
 verified_evidence:
+  vercel_adapter_ci_run: "https://github.com/Faadil1/keys/actions/runs/35912763697"
+  vercel_adapter_ci_result: SUCCESS
+  vercel_runtime_config: vercel.json
+  vercel_catch_all_function: "api/[...path].mjs"
+  vercel_health_function: "api/health.mjs"
+  vercel_connector_deploy_action: UNAVAILABLE_IN_SESSION
   live_demo_contract_ci_run: "https://github.com/Faadil1/keys/actions/runs/35912341160"
   live_demo_contract_ci_result: SUCCESS
   live_demo_route: "/api/v0.1/demo/live-proof"
@@ -189,6 +195,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: HOST_LIVE_DEMO_HTTP_RUNTIME
-  next_user_action: "None yet. Backend must choose and configure a hosted HTTP runtime before Benita can call the live endpoint remotely."
+  active_step: IMPORT_KEYS_INTO_VERCEL
+  next_user_action: "Import https://github.com/Faadil1/keys into Vercel, add PYTH_PRO_API_KEY as a Vercel environment variable, deploy, then return the production URL."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
