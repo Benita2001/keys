@@ -1,35 +1,114 @@
-# Demo-First Architecture
+# Demo-First Architecture v0.2
 
-## 3-minute transformation
+Date: 2026-09-24  
+Title: **The account that can say no**
 
-**0:00–0:30** — Maya's Stake shows beneficiary, funding provenance, purpose, legal/control truth, and current `PROPOSE` mandate.
+## 2–3 minute transformation
 
-**0:30–1:00** — Maya creates a $25 Apple proposal with rationale, counterargument, horizon and invalidation condition.
+### 0:00–0:25 — Freedom first
 
-**1:00–1:30** — KEYS checks the current mandate and returns `ESCALATE / GUARDIAN_REVIEW_REQUIRED`. The system proves that proposal is not execution authority.
+Maya sees her current key:
 
-**1:30–2:00** — Show evidence history: proposals, completed reviews, market-event reviews, scope violations. KEYS can say whether the current record is eligible for a mandate review.
+- allowed assets/actions;
+- current per-action bound;
+- expiry / relevant market rule;
+- a small contextual learning cue.
 
-**2:00–2:25** — Attempt to widen the mandate without an authorized signer. KEYS refuses.
+She performs a small **in-bounds** action.
 
-**2:25–2:45** — Guardian explicitly signs a transition from `PROPOSE` to `BOUNDED`.
+**ALLOW / SUCCESS.**
 
-**2:45–3:00** — Attempt real execution with eligibility `UNKNOWN`. KEYS refuses. Close: **Financial independence shouldn't happen all at once.**
+No guardian approval. No essay.
 
-## Backend proof status
+Message:
 
-The backend proof milestone is complete:
+> Inside her Mandate, Maya is free.
 
-- Solana local authority runtime: PASS;
-- Solana devnet authority runtime: PASS;
-- stable devnet program identity: PASS;
-- authenticated live Pyth US-equity evidence: PASS;
-- market evidence remains separate from authority.
+### 0:25–0:55 — The boundary
 
-The deterministic Maya/AAPL story can remain the primary product narrative. The current live Pyth proof uses a trial-entitled equity (`TSLA`) and is asset-configurable.
+Maya attempts the same kind of action above her standing bound.
 
-## Next milestone
+The Solana execution path refuses.
 
-Benita owns frontend integration, final experience and deployment.
+**REFUSE / MANDATE_LIMIT_EXCEEDED.**
 
-Do not add real minor securities execution.
+Message:
+
+> The app did not say no. The account could not do it.
+
+### 0:55–1:20 — Market truth
+
+A boundary request or precommitted action is attached to a market condition.
+
+Pyth evidence shows the condition is stale/invalid.
+
+**REFUSE / MARKET_CONDITION_INVALIDATED** or **MARKET_EVIDENCE_STALE**.
+
+Message:
+
+> Pyth does not decide whether Maya deserves more authority. It only proves whether the world still matches the condition she committed to.
+
+### 1:20–1:55 — Human decision
+
+Maya asks for more room.
+
+Guardian chooses:
+
+- **Allow once**
+- **Widen Mandate**
+- **Refuse**
+
+A standing widen is explicitly signed.
+
+Mandate version/nonce advances.
+
+### 1:55–2:20 — Same action, new authority
+
+Maya retries the same action that previously failed.
+
+**ALLOW / SUCCESS.**
+
+### 2:20–2:35 — Replay proof
+
+Old authorization material is reused.
+
+**REFUSE / STALE_NONCE.**
+
+Message:
+
+> Machines guard. Humans grant.
+
+### Close
+
+**Financial independence shouldn't happen all at once.**
+
+## Learning in the demo
+
+Learning is visible but not the bottleneck.
+
+Possible short beat:
+
+- first unfamiliar asset → 10–20 second explanation;
+- boundary refusal → explain the risk/bound;
+- Pyth invalidation → show T0 vs now;
+- review → compare thesis/condition with outcome, P&L separate.
+
+Do not turn the demo into an LMS.
+
+## Technical truth
+
+The existing v0.1 backend proves:
+
+- guardian-signed authority transition;
+- version/nonce advance;
+- stale replay refusal;
+- authenticated Pyth Pro equity evidence.
+
+The v0.2 build must still prove:
+
+- program-controlled bounded capital action;
+- signed on-chain Pyth verification;
+- permission-matrix Mandate;
+- boundary-only proposal flow.
+
+No real minor securities execution is currently claimed.
