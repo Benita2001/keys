@@ -32,9 +32,9 @@ verified_evidence:
   local_authority_last_failure_run: "https://github.com/Faadil1/keys/actions/runs/35889679979"
   local_authority_last_failure_detail: "SBF rustc 1.84.1-dev rejected unicode-segmentation 1.13.3; workflow now pins 1.12.0."
   local_authority_previous_pass_run: "https://github.com/Faadil1/keys/actions/runs/35890368959"
-  local_authority_active_run: "https://github.com/Faadil1/keys/actions/runs/35894538107"
+  local_authority_active_run: "https://github.com/Faadil1/keys/actions/runs/35895608533"
   local_authority_result: SUCCESS
-  local_authority_runtime_program_id: "D4g7DYwiWVJmGewivabsyhxF2NRtpdR741T3XsQUJkGL"
+  local_authority_runtime_program_id: "XBjsh428EBwTdjZ4h4PFCm3kBzYrJ98Ro6hV6HbvpYC"
   local_authority_runtime_assertions:
     - "Charter -> Mandate -> ProposalCommitment -> eligible ReviewReceipt"
     - "unauthorized transition REFUSE / ConstraintHasOne"
@@ -44,8 +44,9 @@ verified_evidence:
   devnet_attempt_result: BUILD_PASS_DEPLOY_BLOCKED_FUNDING
   devnet_build_program_id: "8XmhNVJqCFRwvpeTF4vNFsGgcoFs64goK2mjSVP9XKUm"
   devnet_attempt_detail: "SBF/Anchor build passed before funding gate. Ephemeral wallet had 0 lamports; 5 SOL and 2 SOL faucet requests were rate-limited; no deployment occurred."
-  pyth_live_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35883434458"
+  pyth_live_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35896035083"
   pyth_live_attempt_result: BLOCKED_API_KEY
+  pyth_live_attempt_detail: "pyth-live-proof #4: 5 deterministic adapter tests passed; live AAPL feed remained UNAVAILABLE / PYTH_API_KEY_REQUIRED; no price, confidence, or publish time obtained."
   pyth_auth_boundary_verified: "Pyth Pro REST requires API key; Pyth Core Hermes also requires API key after 2026-08-26."
   frontend_contract_ci_run: "https://github.com/Faadil1/keys/actions/runs/35889500633"
   frontend_contract_ci_result: SUCCESS
