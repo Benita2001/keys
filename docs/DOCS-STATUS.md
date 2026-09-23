@@ -12,9 +12,13 @@ Status: **CANONICAL DOCS SYNCHRONIZED TO BOUNDED-AUTONOMY RELOCK**
 - Mandate: **technical authority truth**
 - v0.1 Solana authority-transition proof: **PASS**
 - v0.1 authenticated Pyth Pro live-equity proof: **PASS**
-- v0.2 program-controlled capital execution: **NOT YET BUILT**
+- v0.2 program-controlled capital execution: **PASS — local + canonical devnet, demo SPL token**
+- v0.2 permission-matrix core / AssetRule: **PASS**
+- v0.2 explicit human widen + stale execution refusal: **PASS**
+- v0.2 pause/downward authority: **PASS**
+- Pyth signed Solana payload availability: **PASS**
 - v0.2 signed on-chain Pyth verification: **NOT YET BUILT**
-- frontend/backend contract v0.2: **NOT YET FROZEN**
+- frontend/backend contract v0.2: **DRAFT — runtime proof pending**
 - real minor securities execution: **OUT OF SCOPE**
 - frontend owner: **Benita**
 - backend v0.2 owner: **Faadil**
@@ -45,6 +49,9 @@ Canonical live Pyth proof feed:
 | `docs/SOLANA-AUTHORITY-PROOF.md` | v0.1 Solana evidence | HISTORICAL VALID PROOF |
 | `docs/PYTH-EVIDENCE-PROOF.md` | v0.1 Pyth evidence | HISTORICAL VALID PROOF |
 | `docs/FRONTEND-BACKEND-CONTRACT.md` | original v0.1 semantic contract | HISTORICAL / NOT NEW TARGET |
+| `docs/FRONTEND-BACKEND-CONTRACT-V0.2-DRAFT.md` | bounded-autonomy semantic contract | CURRENT DRAFT |
+| `evidence/solana/LOCAL-BOUNDED-AUTONOMY-RUNTIME-PROOF-2026-09-23.md` | v0.2 local capital proof | CURRENT EVIDENCE |
+| `evidence/solana/DEVNET-BOUNDED-AUTONOMY-RUNTIME-PROOF-2026-09-23.md` | v0.2 canonical devnet capital proof | CURRENT EVIDENCE |
 | `docs/FRONTEND-START-HERE.md` | Benita transition guide | CURRENT |
 | `docs/BENITA-FRONTEND-HANDOFF.md` | ownership/handoff | CURRENT |
 | `state/CURRENT.yaml` | machine-readable current truth | CURRENT |
@@ -63,11 +70,13 @@ The v0.1 program still truthfully proves:
 
 The Pyth proof still truthfully proves authenticated live equity evidence through the server-side boundary.
 
-Those proofs do **not** yet prove:
+The current v0.2 proof now additionally proves bounded capital execution and the permission-matrix core with a demo SPL token.
 
-- bounded capital execution;
-- permission-matrix Mandate;
-- on-chain signed Pyth verification.
+Still **not yet proven**:
+
+- Pyth-derived USD/notional enforcement inside the Solana program;
+- on-chain signed Pyth verification;
+- real tokenized-stock/minor execution.
 
 ## Ownership
 
