@@ -33,10 +33,14 @@
     "mode": "PRACTICE"
   },
   "marketEvidence": {
+    "mode": "SIMULATION",
     "status": "FRESH",
-    "source": "PYTH",
-    "liveValueAvailable": false,
-    "blocker": "PYTH_API_KEY_REQUIRED"
+    "source": "SIMULATED_PYTH_SHAPE",
+    "live": {
+      "source": "PYTH_PRO",
+      "status": "UNAVAILABLE",
+      "reasonCode": "PYTH_API_KEY_REQUIRED"
+    }
   },
   "evaluation": {
     "decision": "ESCALATE",
@@ -53,7 +57,9 @@
     "fromStage": "PROPOSE",
     "toStage": "BOUNDED",
     "ok": false,
-    "reasonCode": "AUTHORIZED_TRANSITION_REQUIRED"
+    "reasonCode": "AUTHORIZED_TRANSITION_REQUIRED",
+    "preview": true,
+    "authorityCommitted": false
   },
   "authorizedTransition": {
     "fromStage": "PROPOSE",
@@ -63,7 +69,10 @@
       "stage": "BOUNDED",
       "version": 2,
       "nonce": 1
-    }
+    },
+    "preview": true,
+    "simulation": true,
+    "authorityCommitted": false
   },
   "executionEligibility": {
     "status": "UNKNOWN",
