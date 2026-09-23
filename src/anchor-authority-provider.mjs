@@ -1,4 +1,4 @@
-import * as anchor from '@coral-xyz/anchor';
+import anchor from '@coral-xyz/anchor';
 import { Stage } from './model.mjs';
 
 const STAGE_TO_CODE = Object.freeze({
