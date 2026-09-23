@@ -151,7 +151,7 @@ Do not render this as an error state.
 
 ## 7. Market evidence surface
 
-The backend owns evidence validity.
+The backend owns evidence validity. Normal API routes do not accept frontend-supplied market evidence as authoritative. Deterministic simulated evidence is confined to explicitly labeled simulation routes.
 
 Frontend may display:
 - asset/symbol,
@@ -168,6 +168,8 @@ Frontend must not claim:
 - financial competence.
 
 If evidence is missing, stale or outside confidence bounds, the backend fails closed and the UI should show a blocked/refused state using the returned reason code.
+
+Frontend-facing proposal/execution envelopes include a safe `marketEvidence` summary and the resolved eligibility status. Secrets/credentials never cross this boundary.
 
 ## 8. Mandate-review surface
 
