@@ -1,5 +1,5 @@
 project: KEYS
-handover_version: 7
+handover_version: 8
 updated_at: "2026-09-23"
 status: BACKEND_PROOF_COMPLETE_FRONTEND_HANDOFF_TO_BENITA
 
@@ -10,134 +10,104 @@ mission:
   core_primitive: evidence_backed_progressive_authority
   completed_gate: DEMO_FIRST_ONCHAIN_SLICE
   current_gate: LIVE_DEMO_INTEGRATION
-  immediate_goal: "Benita completes frontend integration, experience, and deployment using the frozen backend contract and proof surfaces."
+  immediate_goal: "Benita completes frontend integration, product experience and deployment using the frozen backend contract and proof surfaces."
 
 ownership:
   frontend:
     owner: Benita
     scope:
+      - frontend architecture
       - product experience
       - information architecture
-      - interactions
+      - interaction design
       - visual system
+      - live-proof integration
+      - hosting and deployment
     start_here: docs/FRONTEND-START-HERE.md
+    handoff: docs/BENITA-FRONTEND-HANDOFF.md
     contract: docs/FRONTEND-BACKEND-CONTRACT.md
+    live_integration: docs/LIVE-DEMO-INTEGRATION.md
     fixture: fixtures/frontend-maya-contract.json
   backend:
     owner: Faadil
     scope:
-      - reference engine
-      - HTTP API
+      - policy/domain engine
+      - backend API contract
       - Solana authority runtime
-      - Pyth evidence
-      - technical proof
-      - integration
+      - Pyth evidence boundary
+      - proof maintenance
+      - backend support when integration exposes a real backend issue
 
 canonical_truth:
+  backend_proof: PASS
   live_demo_backend_contract: PASS
-  live_demo_http_runtime: NOT_HOSTED
-  live_demo_route: "/api/v0.1/demo/live-proof"
-  reference_engine: PASS
-  node_ci: PASS
-  backend_http_api: PASS
-  frontend_backend_contract: PASS
-  rust_anchor_unit_ci: PASS
+  live_demo_http_runtime: VERCEL_READY_NOT_HOSTED
 
-  local_solana_authority_runtime: PASS
-  local_authority_run: "https://github.com/Faadil1/keys/actions/runs/35905834783"
-  local_authority_result: "4 passing"
+  solana:
+    local_runtime: PASS
+    devnet_runtime: PASS
+    stable_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
+    explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
+    stable_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
+    runtime_result: "4 passing"
 
-  devnet_authority_runtime: PASS
-  initial_devnet_deploy_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
-  stable_devnet_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
-  devnet_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
-  devnet_program_explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
-  devnet_upgrade_authority: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  source_program_id_match: PASS
-  upgrade_authority_match_before: PASS
-  upgrade_authority_match_after: PASS
-  devnet_runtime_result: "4 passing"
-  devnet_terminal_marker: DEVNET_PROOF=PASS
-
-  live_pyth: PASS
-  live_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35910460176"
-  live_pyth_feed:
-    symbol: Equity.US.TSLA/USD
-    feed_id: 1435
-    channel: fixed_rate@1000ms
+  pyth:
+    live_equity: PASS
+    proof_run: "https://github.com/Faadil1/keys/actions/runs/35910460176"
+    verified_feed: Equity.US.TSLA/USD
     status: FRESH
-    price: 379.696
-    confidence: 0.019
-    confidence_bps: 0.500400320256205
-    publish_time: "2026-09-23T19:36:42.000Z"
-    age_seconds: 0
-    market_session: regular
-    publisher_count: 19
-  live_pyth_decision:
     decision: ESCALATE
     reason_code: GUARDIAN_REVIEW_REQUIRED
-  live_pyth_terminal_marker: "PYTH_LIVE_PROOF=PASS fresh_market_evidence_reached_guardian_review"
+    aapl_trial_entitled: false
+    asset_configurable: true
 
-  pyth_trial_entitlement:
-    entitled_equities_observed:
-      - Equity.US.VOO/USD
-      - Equity.US.TSLA/USD
-      - Equity.US.QQQ/USD
-    aapl_entitled: false
-    conclusion: "KEYS proof is asset-configurable; TSLA is used for the authenticated live proof because it is entitled on the current demo trial."
-
-  real_minor_execution: OUT_OF_SCOPE
+  live_demo:
+    deterministic_route: "/api/v0.1/demo/maya"
+    live_route: "/api/v0.1/demo/live-proof"
+    capabilities_route: "/api/v0.1/capabilities"
+    vercel_adapter_ci: "https://github.com/Faadil1/keys/actions/runs/35912763697"
+    public_base_url: null
 
 security:
-  devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
   devnet_secret_name: DEVNET_KEYPAIR_JSON
   pyth_secret_name: PYTH_PRO_API_KEY
   assistant_accessed_secret_values: false
   secrets_committed_to_git: false
-  browser_exposure_of_pyth_key: false
+  pyth_key_allowed_in_frontend: false
 
 next_work:
   step: 25
   step_name: BENITA_FRONTEND_INTEGRATION_AND_DEPLOYMENT
-  completed:
-    - "GET /api/v0.1/demo/live-proof implemented."
-    - "GET /api/v0.1/capabilities advertises liveDemoProof."
-    - "Live route tested with fresh evidence and fail-closed evidence."
-    - "Frontend handoff documented in docs/LIVE-DEMO-INTEGRATION.md."
-  completed:
-    - "Vercel request adapter implemented."
-    - "Vercel catch-all preserves /api/v0.1/* routes."
-    - "vercel.json committed."
-    - "Vercel adapter CI PASS: https://github.com/Faadil1/keys/actions/runs/35912763697"
+  owner: Benita
   remaining:
-    - "Benita chooses/owns the frontend hosting path and final app deployment."
-    - "Benita connects the frontend to the live backend contract when useful."
-    - "Benita may keep the deterministic Maya/AAPL fixture for UI continuity."
-    - "For judge-facing live market evidence, use the backend live-proof surface and label the actual verified live asset."
-    - "Faadil supports only backend contract/runtime issues if integration reveals one."
-  ownership:
-    frontend_and_deployment: Benita
-    backend_and_proof: Faadil
-  user_action: "No further frontend/deployment action required from Faadil unless Benita requests backend support."
+    - "Complete frontend UX/UI."
+    - "Integrate deterministic and/or live backend proof surfaces as desired."
+    - "Choose and complete hosting/deployment."
+    - "If using live Pyth, keep the API key server-side."
+    - "Label the actual live asset when presenting live evidence."
+  faadil_role: "Do not take over frontend work; support backend contract/runtime issues if Benita surfaces one."
 
 truth_boundaries:
   - no competence score
   - no automatic real-authority promotion
   - no brokerage/custody claim
   - no legal ownership claim from token/SPL balance
-  - verified devnet deployment is program ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk
   - no mainnet deployment claim
-  - verified live Pyth evidence is currently Equity.US.TSLA/USD, not AAPL
+  - verified live Pyth evidence is TSLA on current trial, not AAPL
   - market evidence does not create authority
-  - never expose private devnet keypair or Pyth API key
+  - no real minor securities execution claim
 
 key_files:
   - state/CURRENT.yaml
   - state/HANDOVER.yaml
+  - docs/DOCS-STATUS.md
+  - docs/BENITA-FRONTEND-HANDOFF.md
+  - docs/FRONTEND-START-HERE.md
+  - docs/FRONTEND-BACKEND-CONTRACT.md
+  - docs/LIVE-DEMO-INTEGRATION.md
+  - docs/BACKEND-API.md
   - docs/SOLANA-AUTHORITY-PROOF.md
   - docs/PYTH-EVIDENCE-PROOF.md
+  - docs/TRUTH-BOUNDARY.md
   - evidence/solana/DEVNET-AUTHORITY-RUNTIME-PROOF-2026-09-23.md
   - evidence/pyth/LIVE-EQUITY-EVIDENCE-PROOF-2026-09-23.md
-  - docs/EXTERNAL-PROOF-CREDENTIALS.md
-  - .github/workflows/solana-devnet-authority-proof.yml
-  - .github/workflows/pyth-live-proof.yml
