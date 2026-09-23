@@ -32,11 +32,30 @@ function proposal() {
   });
 }
 
-const market = {
+const freshMarket = {
   status: 'FRESH',
   confidenceBps: 10,
   maxConfidenceBps: 100
 };
+
+const unavailableMarket = {
+  status: 'UNAVAILABLE',
+  reasonCode: 'PYTH_API_KEY_REQUIRED'
+};
+
+const backendServices = {
+  marketEvidenceProvider: async () => freshMarket,
+  eligibilityProvider: async () => ({ status: 'UNKNOWN' })
+};
+
+function proposalBody() {
+  return {
+    charter: charter(),
+    mandate: makeMandate({ stage: Stage.PROPOSE, effectiveAt: createdAt }),
+    proposal: proposal(),
+    now: createdAt
+  };
+}
 
 test('HTTP adapter exposes health and contract version', async () => {
   const result = await routeKeysHttp({ method: 'GET', path: '/health' });
@@ -56,21 +75,52 @@ test('HTTP adapter exposes canonical Maya fixture', async () => {
   assert.equal(result.body.mandate.stage, Stage.PROPOSE);
 });
 
-test('HTTP proposal endpoint returns guardian review for canonical scenario', async () => {
+test('normal proposal endpoint uses backend-owned evidence', async () => {
   const result = await routeKeysHttp({
     method: 'POST',
     path: '/api/v0.1/proposals/evaluate',
     body: {
-      charter: charter(),
-      mandate: makeMandate({ stage: Stage.PROPOSE, effectiveAt: createdAt }),
-      proposal: proposal(),
-      market,
-      eligibility: { status: 'UNKNOWN' },
-      now: createdAt
+      ...proposalBody(),
+      market: { status: 'FRESH', confidenceBps: 1, maxConfidenceBps: 100 }
+    },
+    services: {
+      marketEvidenceProvider: async () => unavailableMarket,
+      eligibilityProvider: async () => ({ status: 'UNKNOWN' })
     }
   });
 
   assert.equal(result.status, 200);
+  assert.equal(result.body.decision, 'REFUSE');
+  assert.equal(result.body.reasonCode, 'MARKET_EVIDENCE_UNAVAILABLE');
+});
+
+test('normal proposal endpoint reaches guardian review with trusted backend evidence', async () => {
+  const result = await routeKeysHttp({
+    method: 'POST',
+    path: '/api/v0.1/proposals/evaluate',
+    body: proposalBody(),
+    services: backendServices
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.decision, 'ESCALATE');
+  assert.equal(result.body.reasonCode, 'GUARDIAN_REVIEW_REQUIRED');
+});
+
+test('simulation endpoint accepts explicit simulated evidence and labels the response', async () => {
+  const result = await routeKeysHttp({
+    method: 'POST',
+    path: '/api/v0.1/simulations/proposals/evaluate',
+    body: {
+      ...proposalBody(),
+      market: freshMarket,
+      eligibility: { status: 'UNKNOWN' }
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.simulation, true);
+  assert.equal(result.body.type, 'SIMULATION_PROPOSAL_EVALUATION');
   assert.equal(result.body.decision, 'ESCALATE');
   assert.equal(result.body.reasonCode, 'GUARDIAN_REVIEW_REQUIRED');
 });
@@ -102,10 +152,9 @@ test('HTTP execution endpoint preserves UNKNOWN fail-closed behavior', async () 
       charter: charter(),
       mandate: makeMandate({ stage: Stage.BOUNDED, effectiveAt: createdAt }),
       proposal: proposal(),
-      market,
-      eligibility: { status: 'UNKNOWN' },
       now: createdAt
-    }
+    },
+    services: backendServices
   });
 
   assert.equal(result.status, 200);
