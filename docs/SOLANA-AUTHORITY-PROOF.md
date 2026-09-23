@@ -129,3 +129,41 @@ It still does not claim:
 - token or securities execution;
 - legal custody or brokerage authority;
 - real minor securities execution.
+
+
+## Stable devnet program identity
+
+The first successful devnet deployment was subsequently stabilized and revalidated.
+
+Canonical stabilization run:
+
+https://github.com/Faadil1/keys/actions/runs/35905841296
+
+`solana-devnet-authority-proof #18`
+
+Canonical devnet program id:
+
+`ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
+
+The program source now declares this id and `Anchor.toml` registers it for devnet.
+
+The workflow verified the existing on-chain program before upgrade:
+
+- source program id match: **PASS**
+- upgrade authority: `FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk`
+- expected payer/authority match: **PASS**
+
+It then upgraded the same address rather than deploying a new one.
+
+Upgrade signature:
+
+`67hsECJonPA9N9eBP9jjPkzLNBzHPoXm8NGqLoKzrmZQfYFpUM4PDFLLFg7ZmPwsaogh95gg7LdLLHGW8FYvpQtu`
+
+After the upgrade:
+
+- program id remained unchanged;
+- upgrade authority remained the canonical devnet wallet;
+- authority-provider runtime tests returned `4 passing`;
+- `DEVNET_PROOF=PASS`.
+
+A concurrent local Solana runtime proof also remained green, so pinning the devnet identity did not regress local authority semantics.
