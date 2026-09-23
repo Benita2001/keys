@@ -73,9 +73,9 @@ wallet_security:
   never_commit_or_share_private_key: true
 
 next_work:
-  last_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35908769121"
-  last_pyth_result: BLOCKED_SECRET_NOT_INJECTED
-  last_pyth_detail: "Adapter tests 5/5 pass; live script saw empty PYTH_PRO_API_KEY."
+  last_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35908878998"
+  last_pyth_result: FAILURE_SECRET_INJECTION
+  last_pyth_detail: "Adapter tests 5/5 pass; strict check failed with PYTH_SECRET_INJECTION=FAILED name=PYTH_PRO_API_KEY; live request was skipped."
   step: 15
   step_name: VERIFY_PYTH_REPOSITORY_SECRET_NAME
   user_action: "In Faadil1/keys -> Settings -> Secrets and variables -> Actions, confirm under Repository secrets that the name is exactly PYTH_PRO_API_KEY. Do not share its value."
