@@ -1,6 +1,6 @@
 # Solana Authority Proof — Gate 2
 
-Status: **LOCAL RUNTIME PASS / DEVNET BUILD PASS / DEVNET DEPLOYMENT BLOCKED BY FUNDING**
+Status: **LOCAL RUNTIME PASS / DEVNET RUNTIME PASS**
 
 ## Verified local runtime proof
 
@@ -80,30 +80,35 @@ Full evidence:
 
 ## Current devnet proof
 
-Latest strengthened devnet run:
+Canonical devnet run:
 
-https://github.com/Faadil1/keys/actions/runs/35890663439
+https://github.com/Faadil1/keys/actions/runs/35904484604
 
-`solana-devnet-authority-proof #16` verified:
+`solana-devnet-authority-proof #17` completed successfully.
 
-- SBF-compatible dependency resolution: PASS
-- Anchor/Solana tooling: PASS
-- program build before funding gate: PASS
-- generated devnet-target program id: `8XmhNVJqCFRwvpeTF4vNFsGgcoFs64goK2mjSVP9XKUm`
-- wallet source: ephemeral
-- starting balance: 0 lamports
-- 5 SOL faucet attempt: rate-limited
-- 2 SOL faucet fallback: rate-limited
-- final balance: 0 lamports
-- deployment: **not attempted because funding requirement was not met**
+Verified deployment:
 
-Observed terminal state:
+- funded wallet source: GitHub Actions repository secret
+- payer public address: `FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk`
+- balance before deployment: `5,000,000,000 lamports` (5 devnet SOL)
+- SBF/Anchor build: **PASS**
+- deployed program id: `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
+- deployment signature: `fEZYkktLV38swATo1pgacZroWqHqw7WTs365MZX4H1QEdUZmuoYUDNaHGS441HWmgm3D1WzM2eZZPgoSwzf5Eey`
+- Explorer: https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet
+- authority runtime tests: `4 passing`
+- terminal marker: `DEVNET_PROOF=PASS`
 
-`DEVNET_PROOF=BLOCKED_FUNDING`
+Observed authority assertions on devnet:
 
-The generated program id is not claimed as deployed.
+- unauthorized transition → `REFUSE / ConstraintHasOne`
+- guardian `PROPOSE -> BOUNDED` → `ALLOW / version=2 / nonce=1`
+- stale review replay → `REFUSE / ConstraintSeeds`
 
-The workflow now supports a persistent funded wallet through the repository secret `DEVNET_KEYPAIR_JSON`. The secret is consumed only in CI and is never committed to the repository.
+Full evidence:
+
+[evidence/solana/DEVNET-AUTHORITY-RUNTIME-PROOF-2026-09-23.md](../evidence/solana/DEVNET-AUTHORITY-RUNTIME-PROOF-2026-09-23.md)
+
+The previous build-only run `#16` remains historical evidence of the earlier funding blocker; it is superseded by the successful devnet runtime proof above.
 
 ## What this proves
 
@@ -115,11 +120,12 @@ The local runtime proof now demonstrates these semantics through executed Anchor
 
 ## Truth boundary
 
-This repository still does not claim:
+This repository can now claim the verified devnet deployment and runtime proof documented above.
 
-- a devnet deployment;
+It still does not claim:
+
+- mainnet deployment;
 - live Pyth consumption inside the Solana program;
 - token or securities execution;
-- legal custody or brokerage authority.
-
-The devnet artifact is buildable; deployment remains blocked by devnet funding.
+- legal custody or brokerage authority;
+- real minor securities execution.
