@@ -1,0 +1,75 @@
+{
+  "contractVersion": "0.2-draft",
+  "type": "MAYA_BOUNDED_AUTONOMY_DEMO",
+  "truthBoundary": {
+    "executionAsset": "DEMO_TOKEN",
+    "realMinorSecuritiesExecution": false,
+    "onchainPythVerification": false,
+    "marketEvidenceCreatesAuthority": false,
+    "learningCreatesAuthority": false
+  },
+  "maya": {
+    "displayName": "Maya",
+    "age": 16
+  },
+  "currentMandate": {
+    "status": "ACTIVE",
+    "version": 4,
+    "nonce": 3,
+    "familyStage": "BOUNDED",
+    "summary": "Free inside the current key. Ask only at the boundary."
+  },
+  "assetRule": {
+    "asset": "TSLA",
+    "enabled": true,
+    "allowedActions": ["BUY"],
+    "maxActionNotional": 250,
+    "maxPeriodNotional": 1000,
+    "requiresMarketEvidence": true,
+    "maxMarketAgeSeconds": 30,
+    "maxConfidenceBps": 100
+  },
+  "learning": {
+    "mode": "CONTEXTUAL",
+    "practiceAvailable": true,
+    "authorityEffect": "NONE"
+  },
+  "demoBeats": [
+    {
+      "name": "freedom",
+      "requestedNotional": 100,
+      "decision": "ALLOW",
+      "guardianApprovalRequired": false
+    },
+    {
+      "name": "boundary",
+      "requestedNotional": 500,
+      "decision": "REFUSE",
+      "reasonCode": "MANDATE_LIMIT_EXCEEDED",
+      "boundaryRequestAvailable": true
+    },
+    {
+      "name": "market_change",
+      "decision": "REFUSE",
+      "reasonCode": "MARKET_CONDITION_INVALIDATED",
+      "authorityEffect": "NONE"
+    },
+    {
+      "name": "human_widen",
+      "decision": "WIDEN_MANDATE",
+      "authoritySource": "GUARDIAN_SIGNATURE",
+      "version": 5,
+      "nonce": 4
+    },
+    {
+      "name": "same_action_after_widen",
+      "requestedNotional": 500,
+      "decision": "ALLOW"
+    },
+    {
+      "name": "old_authorization",
+      "decision": "REFUSE",
+      "reasonCode": "STALE_NONCE"
+    }
+  ]
+}
