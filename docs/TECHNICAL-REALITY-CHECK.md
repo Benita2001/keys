@@ -31,7 +31,13 @@ The Node reference engine in `src/` implements this deterministic slice and is c
 
 ## Solana boundary
 
-The Solana program is not yet deployed in this bundle. The intended minimal account model is:
+The minimal Solana authority program is implemented and verified on both local validator and devnet.
+
+Canonical devnet program:
+
+`ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
+
+The account model is:
 
 - `CharterPda`
 - `MandatePda`
@@ -40,6 +46,14 @@ The Solana program is not yet deployed in this bundle. The intended minimal acco
 
 Only hashes / bounded parameters / timestamps / signer identities belong on-chain. Family identity and sensitive narratives stay off-chain.
 
-## Why Solana must eventually matter
+## Pyth boundary
+
+Authenticated live Pyth US-equity evidence is also verified.
+
+The canonical live proof uses `Equity.US.TSLA/USD` because it is included in the current trial entitlement. Fresh evidence reaches the mandate evaluator but still resolves `PROPOSE` to `ESCALATE / GUARDIAN_REVIEW_REQUIRED`.
+
+This verifies that market evidence is load-bearing without becoming an authority oracle.
+
+## Why Solana matters
 
 A centralized database can implement the v0.1 UX. Solana becomes structural only when the authority state is portable, independently inspectable, and enforceable across programmable assets or multiple applications rather than existing only inside one vendor's database.
