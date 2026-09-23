@@ -53,7 +53,6 @@ jobs:
           cargo update --manifest-path programs/keys/Cargo.toml -p anchor-derive-space --precise 0.32.1
           cargo update --manifest-path programs/keys/Cargo.toml -p anchor-syn --precise 0.32.1
           cargo update --manifest-path programs/keys/Cargo.toml -p borsh@1.8.1 --precise 1.5.7
-          cargo update --manifest-path programs/keys/Cargo.toml -p borsh-derive@1.8.1 --precise 1.5.7
           cargo update --manifest-path programs/keys/Cargo.toml -p proc-macro-crate@3.5.0 --precise 3.4.0
           cargo update --manifest-path programs/keys/Cargo.toml -p blake3 --precise 1.8.2
           cargo update --manifest-path programs/keys/Cargo.toml -p constant_time_eq --precise 0.3.1
