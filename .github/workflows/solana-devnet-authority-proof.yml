@@ -67,23 +67,40 @@ jobs:
 
       - name: Attempt full devnet authority proof
         shell: bash
+        env:
+          DEVNET_KEYPAIR_JSON: ${{ secrets.DEVNET_KEYPAIR_JSON }}
         run: |
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$HOME/.avm/bin:$PATH"
           mkdir -p "$HOME/.config/solana"
-          solana-keygen new --no-bip39-passphrase --silent --force -o "$HOME/.config/solana/id.json"
+
+          if [ -n "$DEVNET_KEYPAIR_JSON" ]; then
+            printf '%s' "$DEVNET_KEYPAIR_JSON" > "$HOME/.config/solana/id.json"
+            chmod 600 "$HOME/.config/solana/id.json"
+            echo "PROOF devnet_wallet_source=repository_secret"
+          else
+            solana-keygen new --no-bip39-passphrase --silent --force -o "$HOME/.config/solana/id.json"
+            echo "PROOF devnet_wallet_source=ephemeral"
+          fi
+
           solana config set --url https://api.devnet.solana.com --keypair "$HOME/.config/solana/id.json"
           echo "PROOF devnet_payer=$(solana address)"
 
-          set +e
-          AIRDROP_OUT=$(solana airdrop 5 --url https://api.devnet.solana.com 2>&1)
-          AIRDROP_RC=$?
-          if [ $AIRDROP_RC -ne 0 ]; then
-            AIRDROP_OUT_2=$(solana airdrop 2 --url https://api.devnet.solana.com 2>&1)
+          BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
+          BALANCE=${BALANCE:-0}
+          echo "PROOF devnet_balance_before_airdrop_lamports=$BALANCE"
+
+          if [ "$BALANCE" -lt 1000000000 ]; then
+            set +e
+            AIRDROP_OUT=$(solana airdrop 5 --url https://api.devnet.solana.com 2>&1)
             AIRDROP_RC=$?
-            AIRDROP_OUT="$AIRDROP_OUT | $AIRDROP_OUT_2"
+            if [ $AIRDROP_RC -ne 0 ]; then
+              AIRDROP_OUT_2=$(solana airdrop 2 --url https://api.devnet.solana.com 2>&1)
+              AIRDROP_RC=$?
+              AIRDROP_OUT="$AIRDROP_OUT | $AIRDROP_OUT_2"
+            fi
+            set -e
+            echo "$AIRDROP_OUT"
           fi
-          set -e
-          echo "$AIRDROP_OUT"
 
           BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
           BALANCE=${BALANCE:-0}
