@@ -1,6 +1,6 @@
 # KEYS — External Proof Credentials
 
-Status: **DEVNET COMPLETE / PYTH CREDENTIAL STILL REQUIRED**
+Status: **DEVNET COMPLETE / PYTH LIVE EQUITY COMPLETE**
 
 The backend proof is locally executable. Two remaining external proofs require credentials or funded infrastructure that cannot be manufactured safely inside the repository:
 
@@ -96,7 +96,7 @@ Verified:
 
 No further user action is required for basic devnet funding/deployment proof.
 
-## 2. Pyth live evidence
+## 2. Pyth live evidence — COMPLETE
 
 Workflow:
 
@@ -120,7 +120,7 @@ Then manually run:
 
 ### Expected successful proof
 
-A true live proof must obtain authenticated AAPL evidence and log normalized non-secret output including:
+A true live proof must obtain authenticated, entitled equity evidence and log normalized non-secret output including:
 
 - symbol/feed id;
 - price;
@@ -140,18 +140,21 @@ This proves that Pyth is load-bearing market evidence without becoming an author
 
 ### Current verified state
 
-Canonical live-attempt run:
+Canonical live proof:
 
-https://github.com/Faadil1/keys/actions/runs/35896035083
+https://github.com/Faadil1/keys/actions/runs/35910460176
 
 Observed:
 
-- 5 deterministic adapter tests passed;
-- AAPL feed attempted;
-- status `UNAVAILABLE`;
-- reason `PYTH_API_KEY_REQUIRED`;
-- no price/confidence/publish time obtained;
-- `PYTH_LIVE_PROOF=BLOCKED reason=PYTH_API_KEY_REQUIRED`.
+- secret injection: **PASS**
+- deterministic adapter tests: **5/5 pass**
+- live entitled equity: `Equity.US.TSLA/USD`
+- status: `FRESH`
+- price/confidence/publish-time evidence obtained
+- KEYS decision: `ESCALATE / GUARDIAN_REVIEW_REQUIRED`
+- `PYTH_LIVE_PROOF=PASS fresh_market_evidence_reached_guardian_review`
+
+AAPL remains unavailable on the current demo-trial entitlement, but the live proof is now asset-configurable and succeeds with a trial-entitled US equity.
 
 ## 3. Security rules
 
@@ -165,15 +168,11 @@ Observed:
 
 ## 4. Gate closure
 
-The technical gate can truthfully advance from:
-
-`LOCAL_RUNTIME_PASS`
-
-toward:
+The technical gate has now reached:
 
 `DEVNET_AND_LIVE_EVIDENCE_PASS`
 
-only after both external proofs produce their explicit PASS markers.
+Both external proofs have produced explicit PASS markers.
 
 Current canonical truth:
 
@@ -181,4 +180,4 @@ Current canonical truth:
 - devnet build: **PASS**
 - devnet deployment/runtime: **PASS**
 - deterministic Pyth adapter: **PASS**
-- live Pyth retrieval: **BLOCKED_API_KEY**
+- live Pyth retrieval: **PASS**
