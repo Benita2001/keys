@@ -1,4 +1,5 @@
 project: KEYS
+updated_at: "2026-09-23"
 status: BACKEND_PROOF_COMPLETE_FRONTEND_HANDOFF_TO_BENITA
 candidate: B
 concept_lock: true
@@ -6,199 +7,107 @@ working_category: progressive_financial_stewardship
 promise: "Financial independence shouldn't happen all at once."
 core_primitive: evidence_backed_progressive_authority
 
-current_proof:
-  live_demo_backend_contract: PASS
-  live_demo_http_runtime: VERCEL_READY_NOT_HOSTED
+current_truth:
+  demo_first_onchain_slice: PASS
   reference_engine: PASS
   node_ci: PASS
   backend_http_api: PASS
   backend_capabilities_endpoint: PASS
-  server_owned_market_evidence_boundary: PASS
-  authority_runtime_boundary: PASS
-  anchor_authority_provider_contract: PASS
-  rust_anchor_unit_ci: PASS
-  anchor_program_code: PASS
-  demo_first_onchain_slice: PASS
-  local_solana_authority_runtime: PASS
-  solana_devnet: PASS
-  devnet_funded_wallet_path: COMPLETE_VIA_DEVNET_KEYPAIR_JSON_SECRET
-  live_pyth: PASS
-  deterministic_demo: PASS
   frontend_backend_contract: PASS
   frontend_domain_facade: PASS
+  live_demo_backend_contract: PASS
+  live_demo_http_runtime: VERCEL_READY_NOT_HOSTED
+  rust_anchor_unit_ci: PASS
+  local_solana_authority_runtime: PASS
+  solana_devnet_runtime: PASS
+  stable_devnet_program_identity: PASS
+  live_pyth_equity: PASS
   real_minor_execution: OUT_OF_SCOPE
 
-verified_evidence:
-  vercel_adapter_ci_run: "https://github.com/Faadil1/keys/actions/runs/35912763697"
-  vercel_adapter_ci_result: SUCCESS
-  vercel_runtime_config: vercel.json
-  vercel_catch_all_function: "api/[...path].mjs"
-  vercel_health_function: "api/health.mjs"
-  vercel_connector_deploy_action: UNAVAILABLE_IN_SESSION
-  live_demo_contract_ci_run: "https://github.com/Faadil1/keys/actions/runs/35912341160"
-  live_demo_contract_ci_result: SUCCESS
-  live_demo_route: "/api/v0.1/demo/live-proof"
-  live_demo_default_equity: TSLA
-  live_demo_solana_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
-  pyth_live_equity_run: "https://github.com/Faadil1/keys/actions/runs/35910460176"
-  pyth_live_equity_result: PASS
-  pyth_live_equity_symbol: Equity.US.TSLA/USD
-  pyth_live_equity_feed_id: 1435
-  pyth_live_equity_channel: fixed_rate@1000ms
-  pyth_live_equity_status: FRESH
-  pyth_live_equity_price: 379.696
-  pyth_live_equity_confidence: 0.019
-  pyth_live_equity_confidence_bps: 0.500400320256205
-  pyth_live_equity_publish_time: "2026-09-23T19:36:42.000Z"
-  pyth_live_equity_age_seconds: 0
-  pyth_live_equity_market_session: regular
-  pyth_live_equity_publisher_count: 19
-  pyth_load_bearing_decision: "ESCALATE / GUARDIAN_REVIEW_REQUIRED"
-  pyth_terminal_marker: "PYTH_LIVE_PROOF=PASS fresh_market_evidence_reached_guardian_review"
-  pyth_trial_entitled_equities_observed:
-    - Equity.US.VOO/USD
-    - Equity.US.TSLA/USD
-    - Equity.US.QQQ/USD
-  pyth_trial_aapl_entitled: false
-  pyth_live_proof_selected_feed: Equity.US.TSLA/USD
-  pyth_entitlement_evidence_source: "User screenshot of Pyth Terminal Demo trial Price Feeds Access."
-  pyth_equity_entitlement_control_proof: "https://github.com/Faadil1/keys/actions/runs/35909454962"
-  pyth_control_token_valid: true
-  pyth_control_crypto_btc_status: FRESH
-  pyth_control_equity_aapl_status: PYTH_NOT_ENTITLED
-  pyth_final_entitlement_blocker: "Current token lacks US-equity/AAPL entitlement."
-  pyth_asset_class_diagnostic_run: "https://github.com/Faadil1/keys/actions/runs/35909454962"
-  pyth_secret_injection: PASS
-  pyth_aapl_1000ms: PYTH_NOT_ENTITLED
-  pyth_btc_control_1000ms: FRESH
-  pyth_btc_control_price_available: true
-  pyth_btc_control_publish_time_available: true
-  pyth_entitlement_conclusion: "API key is valid and functional; token lacks AAPL/equity entitlement."
-  pyth_aapl_1000ms_run: "https://github.com/Faadil1/keys/actions/runs/35909361792"
-  pyth_aapl_1000ms_result: PYTH_NOT_ENTITLED
-  pyth_secret_injection_result: PASS
-  pyth_authenticated_attempt_result: PYTH_NOT_ENTITLED
-  pyth_entitlement_diagnostic_reason: "Token is valid/injected; test slower channel to distinguish channel entitlement from AAPL/equity entitlement."
-  pyth_live_run_6: "https://github.com/Faadil1/keys/actions/runs/35908878998"
-  pyth_live_run_6_result: FAILURE_SECRET_INJECTION
-  pyth_live_run_6_marker: "PYTH_SECRET_INJECTION=FAILED name=PYTH_PRO_API_KEY"
-  pyth_live_run_5: "https://github.com/Faadil1/keys/actions/runs/35908769121"
-  pyth_live_run_5_result: BLOCKED_SECRET_NOT_INJECTED
-  pyth_live_run_5_detail: "5 adapter tests passed; process.env.PYTH_PRO_API_KEY was empty, yielding PYTH_API_KEY_REQUIRED."
-  stable_devnet_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
-  stable_devnet_upgrade_result: SUCCESS
-  stable_devnet_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
-  stable_devnet_upgrade_authority_before: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  stable_devnet_upgrade_authority_after: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  stable_devnet_upgrade_signature: "67hsECJonPA9N9eBP9jjPkzLNBzHPoXm8NGqLoKzrmZQfYFpUM4PDFLLFg7ZmPwsaogh95gg7LdLLHGW8FYvpQtu"
-  stable_devnet_source_program_id_match: PASS
-  stable_devnet_runtime_result: "4 passing"
-  local_regression_after_program_id_pin_run: "https://github.com/Faadil1/keys/actions/runs/35905834783"
-  local_regression_after_program_id_pin_result: SUCCESS
-  devnet_authority_proof_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
-  rust_program_check_run: "https://github.com/Faadil1/keys/actions/runs/35880920062"
-  rust_program_check_result: SUCCESS
-  local_authority_last_failure_run: "https://github.com/Faadil1/keys/actions/runs/35889679979"
-  local_authority_last_failure_detail: "SBF rustc 1.84.1-dev rejected unicode-segmentation 1.13.3; workflow now pins 1.12.0."
-  local_authority_previous_pass_run: "https://github.com/Faadil1/keys/actions/runs/35890368959"
-  local_authority_active_run: "https://github.com/Faadil1/keys/actions/runs/35895608533"
-  local_authority_result: SUCCESS
-  local_authority_runtime_program_id: "XBjsh428EBwTdjZ4h4PFCm3kBzYrJ98Ro6hV6HbvpYC"
-  local_authority_runtime_assertions:
-    - "Charter -> Mandate -> ProposalCommitment -> eligible ReviewReceipt"
-    - "unauthorized transition REFUSE / ConstraintHasOne"
-    - "guardian PROPOSE -> BOUNDED ALLOW / version=2 / nonce=1"
-    - "stale review replay REFUSE / ConstraintSeeds"
-  devnet_previous_blocked_run: "https://github.com/Faadil1/keys/actions/runs/35890663439"
-  devnet_previous_blocker: BUILD_PASS_DEPLOY_BLOCKED_FUNDING
-  devnet_authority_proof_result: SUCCESS
-  devnet_payer_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  devnet_balance_before_deploy_lamports: 5000000000
-  devnet_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
-  devnet_program_explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
-  devnet_deploy_signature: "fEZYkktLV38swATo1pgacZroWqHqw7WTs365MZX4H1QEdUZmuoYUDNaHGS441HWmgm3D1WzM2eZZPgoSwzf5Eey"
-  devnet_runtime_result: "4 passing"
-  devnet_runtime_assertions:
-    - "unauthorized transition REFUSE / ConstraintHasOne"
-    - "guardian PROPOSE -> BOUNDED ALLOW / version=2 / nonce=1"
-    - "stale review replay REFUSE / ConstraintSeeds"
-  devnet_terminal_marker: DEVNET_PROOF=PASS
-  pyth_live_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35896035083"
-  pyth_live_attempt_result: BLOCKED_API_KEY
-  pyth_live_attempt_detail: "pyth-live-proof #4: 5 deterministic adapter tests passed; live AAPL feed remained UNAVAILABLE / PYTH_API_KEY_REQUIRED; no price, confidence, or publish time obtained."
-  pyth_auth_boundary_verified: "Pyth Pro REST requires API key; Pyth Core Hermes also requires API key after 2026-08-26."
-  frontend_contract_ci_run: "https://github.com/Faadil1/keys/actions/runs/35889500633"
-  frontend_contract_ci_result: SUCCESS
-  frontend_facade_ci_run: "https://github.com/Faadil1/keys/actions/runs/35894271377"
-  frontend_facade_ci_result: SUCCESS
-  backend_contract_ci_run: "https://github.com/Faadil1/keys/actions/runs/35895732692"
-  backend_contract_ci_result: "36 tests / 36 pass / 0 fail"
+canonical_solana:
+  network: devnet
+  program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
+  explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
+  initial_deploy_run: "https://github.com/Faadil1/keys/actions/runs/35904484604"
+  stable_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
+  upgrade_authority_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+  runtime_result: "4 passing"
+  assertions:
+    - "unauthorized transition -> REFUSE / ConstraintHasOne"
+    - "guardian PROPOSE -> BOUNDED -> ALLOW / version=2 / nonce=1"
+    - "stale review replay -> REFUSE / ConstraintSeeds"
 
-next_gate:
-  name: LIVE_DEMO_INTEGRATION
-  requires:
-    - PASS: devnet authority runtime proof
-    - PASS: stable devnet program identity and upgrade authority
-    - PASS: authenticated live Pyth equity evidence
-    - PASS: market evidence remains separate from authority
-    - integrate live backend evidence into the frontend semantic contract without exposing secrets
-    - preserve explicit truth boundaries in the judge-facing demo
+canonical_pyth:
+  proof_run: "https://github.com/Faadil1/keys/actions/runs/35910460176"
+  symbol: Equity.US.TSLA/USD
+  feed_id: 1435
+  channel: fixed_rate@1000ms
+  status: FRESH
+  observed_price_at_proof_time: 379.696
+  confidence: 0.019
+  confidence_bps: 0.500400320256205
+  publish_time: "2026-09-23T19:36:42.000Z"
+  age_seconds: 0
+  market_session: regular
+  publisher_count: 19
+  decision: ESCALATE
+  reason_code: GUARDIAN_REVIEW_REQUIRED
+  terminal_marker: "PYTH_LIVE_PROOF=PASS fresh_market_evidence_reached_guardian_review"
+  current_trial_aapl_entitlement: false
+  product_asset_dependency: false
+
+live_demo_backend:
+  route: "/api/v0.1/demo/live-proof"
+  capabilities_route: "/api/v0.1/capabilities"
+  deterministic_fixture_route: "/api/v0.1/demo/maya"
+  default_live_equity: TSLA
+  vercel_ready: true
+  vercel_adapter_ci_run: "https://github.com/Faadil1/keys/actions/runs/35912763697"
+  public_hosted_base_url: null
+  secrets_exposed_to_frontend: false
+
+collaboration:
+  backend_handoff_complete: true
+  frontend_owner: Benita
+  frontend_integration_owner: Benita
+  frontend_deployment_owner: Benita
+  backend_owner: Faadil
+  faadil_role_after_handoff: "Backend contract/runtime support only unless an integration issue requires backend changes."
+  frontend_start_here: docs/FRONTEND-START-HERE.md
+  frontend_handoff: docs/BENITA-FRONTEND-HANDOFF.md
+  frontend_contract: docs/FRONTEND-BACKEND-CONTRACT.md
+  live_integration_contract: docs/LIVE-DEMO-INTEGRATION.md
+
+security:
+  devnet_keypair_secret_name: DEVNET_KEYPAIR_JSON
+  pyth_secret_name: PYTH_PRO_API_KEY
+  assistant_accessed_secret_values: false
+  secrets_committed_to_git: false
+  browser_exposure_of_pyth_key: false
 
 truth_boundary:
   - no competence score
   - no automatic real-authority promotion
-  - no claim of brokerage/custody
-  - no claim of legal ownership from SPL balance
-  - devnet deployment claim is limited to verified program ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk
-  - live Pyth claim is limited to verified trial-entitled Equity.US.TSLA/USD proof; AAPL remains not entitled on current trial token
+  - no brokerage/custody claim
+  - no legal ownership claim from token/SPL balance
+  - no mainnet deployment claim
+  - no real minor securities execution claim
+  - live Pyth claim is limited to verified entitled feeds
+  - current trial does not prove live AAPL access
+  - market evidence does not create authority
 
-collaboration:
-  backend_handoff_complete: true
-  frontend_integration_owner: Benita
-  frontend_deployment_owner: Benita
-  faadil_role_after_handoff: "Backend contract/runtime support only; no frontend ownership."
-  frontend_owner: Benita
-  backend_owner: Faadil
-  frontend_contract: docs/FRONTEND-BACKEND-CONTRACT.md
-  frontend_fixture: fixtures/frontend-maya-contract.json
-  frontend_facade: src/frontend-api.mjs
-  backend_http_adapter: src/http-api.mjs
-  authority_runtime: src/authority-runtime.mjs
-  anchor_authority_provider: src/anchor-authority-provider.mjs
-  backend_api_doc: docs/BACKEND-API.md
-  contract_status: FROZEN_FOR_MAYA_DEMO
+historical_proof_trail:
+  devnet_funding_blocker: RESOLVED
+  pyth_missing_key_blocker: RESOLVED
+  pyth_secret_injection_blocker: RESOLVED
+  pyth_aapl_trial_entitlement: NOT_INCLUDED
+  details:
+    - docs/SOLANA-AUTHORITY-PROOF.md
+    - docs/PYTH-EVIDENCE-PROOF.md
+    - evidence/solana/DEVNET-AUTHORITY-RUNTIME-PROOF-2026-09-23.md
+    - evidence/pyth/LIVE-EQUITY-EVIDENCE-PROOF-2026-09-23.md
 
-guided_execution:
-  pyth_secret_name_exact_confirmed_by_user: true
-  pyth_api_key_secret_status: ADDED_USER_CONFIRMED
-  pyth_api_key_secret_value_accessed_by_assistant: false
-  pyth_terminal_url: "https://app.pyth.com/"
-  pyth_trial_key_currently_available: true
-  pyth_trial_key_credit_card_required: false
-  devnet_keypair_secret_status: ADDED_USER_CONFIRMED
-  devnet_keypair_secret_value_accessed_by_assistant: false
-  canonical_devnet_wallet_verified_balance_sol: 5
-  canonical_devnet_wallet_funding: PASS
-  canonical_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  canonical_devnet_wallet_keypair_saved: true
-  canonical_devnet_wallet_funded: true
-  replacement_devnet_wallet_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
-  replacement_keypair_file_confirmed: true
-  original_devnet_wallet_preserve_as_is: true
-  replacement_wallet_required: false
-  devnet_keypair_file_status: INCOMPLETE_OR_NOT_FOUND
-  devnet_wallet_funded: PASS
-  devnet_wallet_verified_balance_sol: 5
-  devnet_airdrop_status: SUCCESS_OBSERVED
-  devnet_airdrop_requested_sol: 5
-  devnet_wallet_public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
-  devnet_wallet_balance_status: VERIFIED_5_SOL
-  selected_devnet_wallet_path: SOLANA_PLAYGROUND_BROWSER
-  wsl_installation_required_for_selected_path: false
-  wsl_local: ABSENT_CONFIRMED
-  official_windows_install_path: WSL
-  solana_cli_local: ABSENT_CONFIRMED
-  canonical_handover: state/HANDOVER.yaml
-  active_step: BENITA_FRONTEND_INTEGRATION_AND_DEPLOYMENT
-  next_user_action: "Benita owns frontend integration/deployment from here; Faadil only supports backend contract/runtime issues if needed."
-  security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
+active_step:
+  name: BENITA_FRONTEND_INTEGRATION_AND_DEPLOYMENT
+  owner: Benita
+  faadil_action: "Wait for backend/integration issues; do not take over frontend ownership."
