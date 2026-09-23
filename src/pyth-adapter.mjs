@@ -224,3 +224,171 @@ export async function fetchPythProSnapshot({
     maxConfidenceBps
   });
 }
+
+
+/**
+ * Fetches the same authenticated Pyth Pro evidence together with a signed
+ * Solana-format payload suitable for the future on-chain verification path.
+ *
+ * This function only proves that a signed payload is available from Pyth Pro.
+ * KEYS does not claim on-chain verification until the Anchor execution path
+ * parses/verifies this payload.
+ */
+export async function fetchPythProSolanaPayload({
+  apiKey,
+  feed = PYTH_PRO_EQUITY_FEEDS.AAPL,
+  channel,
+  receivedAt = new Date().toISOString(),
+  maxAgeSeconds = 30,
+  maxConfidenceBps = 100,
+  fetchImpl = globalThis.fetch,
+  endpoint = 'https://pyth-lazer.dourolabs.app/v1/latest_price'
+} = {}) {
+  if (!apiKey) {
+    return {
+      source: 'PYTH_PRO',
+      symbol: feed.symbol,
+      feedId: feed.feedId,
+      status: 'UNAVAILABLE',
+      reasonCode: 'PYTH_API_KEY_REQUIRED',
+      receivedAt,
+      solanaPayload: {
+        status: 'UNAVAILABLE',
+        reasonCode: 'PYTH_API_KEY_REQUIRED'
+      }
+    };
+  }
+
+  if (typeof fetchImpl !== 'function') {
+    return {
+      source: 'PYTH_PRO',
+      symbol: feed.symbol,
+      feedId: feed.feedId,
+      status: 'UNAVAILABLE',
+      reasonCode: 'PYTH_FETCH_UNAVAILABLE',
+      receivedAt,
+      solanaPayload: {
+        status: 'UNAVAILABLE',
+        reasonCode: 'PYTH_FETCH_UNAVAILABLE'
+      }
+    };
+  }
+
+  let response;
+  try {
+    response = await fetchImpl(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        priceFeedIds: [feed.feedId],
+        properties: [
+          'price',
+          'confidence',
+          'exponent',
+          'feedUpdateTimestamp',
+          'publisherCount',
+          'marketSession'
+        ],
+        formats: ['solana'],
+        channel: channel ?? feed.minChannel
+      })
+    });
+  } catch (error) {
+    return {
+      source: 'PYTH_PRO',
+      symbol: feed.symbol,
+      feedId: feed.feedId,
+      status: 'UNAVAILABLE',
+      reasonCode: 'PYTH_UPSTREAM_UNREACHABLE',
+      detail: error instanceof Error ? error.message : String(error),
+      receivedAt,
+      solanaPayload: {
+        status: 'UNAVAILABLE',
+        reasonCode: 'PYTH_UPSTREAM_UNREACHABLE'
+      }
+    };
+  }
+
+  if (!response.ok) {
+    const reasonCode =
+      response.status === 401
+        ? 'PYTH_AUTH_REQUIRED'
+        : response.status === 403
+          ? 'PYTH_NOT_ENTITLED'
+          : 'PYTH_UPSTREAM_ERROR';
+
+    return {
+      source: 'PYTH_PRO',
+      symbol: feed.symbol,
+      feedId: feed.feedId,
+      status: 'UNAVAILABLE',
+      reasonCode,
+      httpStatus: response.status,
+      receivedAt,
+      solanaPayload: {
+        status: 'UNAVAILABLE',
+        reasonCode
+      }
+    };
+  }
+
+  const body = await response.json();
+  const parsed = body?.parsed ?? body;
+  const priceFeed =
+    parsed?.priceFeeds?.find((item) => Number(item.priceFeedId) === feed.feedId) ??
+    parsed?.priceFeeds?.[0];
+
+  if (!priceFeed) {
+    return {
+      source: 'PYTH_PRO',
+      symbol: feed.symbol,
+      feedId: feed.feedId,
+      status: 'UNAVAILABLE',
+      reasonCode: 'PYTH_FEED_MISSING_FROM_RESPONSE',
+      receivedAt,
+      solanaPayload: {
+        status: 'UNAVAILABLE',
+        reasonCode: 'PYTH_FEED_MISSING_FROM_RESPONSE'
+      }
+    };
+  }
+
+  const snapshot = normalizePythProSnapshot({
+    feed,
+    priceFeed,
+    receivedAt,
+    maxAgeSeconds,
+    maxConfidenceBps
+  });
+
+  const candidate = body?.solana ?? body?.binary?.solana ?? null;
+  const payloadData =
+    typeof candidate === 'string'
+      ? candidate
+      : candidate?.data ?? candidate?.value ?? null;
+  const payloadEncoding =
+    typeof candidate === 'object' && candidate
+      ? candidate.encoding ?? 'hex'
+      : 'hex';
+
+  return {
+    ...snapshot,
+    solanaPayload: payloadData
+      ? {
+          status: 'AVAILABLE',
+          encoding: payloadEncoding,
+          data: payloadData,
+          byteLength:
+            payloadEncoding === 'hex'
+              ? Math.floor(String(payloadData).length / 2)
+              : null
+        }
+      : {
+          status: 'UNAVAILABLE',
+          reasonCode: 'PYTH_SOLANA_PAYLOAD_MISSING'
+        }
+  };
+}
