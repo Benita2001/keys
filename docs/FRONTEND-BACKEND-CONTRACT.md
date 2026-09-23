@@ -60,10 +60,16 @@ The frontend may render human copy around these codes, but should not change the
 - `INDEPENDENT_ELIGIBLE`
 - `UNKNOWN_STAGE`
 
-Mandate-transition outcomes additionally use:
+Mandate-transition policy-preview outcomes additionally use:
 
 - `REVIEW_THRESHOLD_NOT_MET`
 - `AUTHORIZED_TRANSITION_REQUIRED`
+
+Committed authority runtime outcomes may additionally use:
+
+- `AUTHORITY_RUNTIME_UNAVAILABLE`
+- `AUTHORITY_RUNTIME_ERROR`
+- provider/Anchor refusal codes such as stale nonce or account-constraint failures.
 
 Solana/runtime proof also enforces stale/replayed authority refusal through mandate nonce/version binding.
 
@@ -211,6 +217,11 @@ Never use:
 
 A mandate change is a distinct explicit action.
 
+There are two separate backend surfaces:
+
+- **preview** — deterministic policy preview only; never means authority changed;
+- **commit** — requires a server-side authority runtime/provider and may return a signed runtime proof.
+
 Frontend intent:
 
 ```json
@@ -222,14 +233,27 @@ Frontend intent:
 }
 ```
 
-Without an authorized signer:
+Without an authorized signer in preview:
 
 ```json
 {
   "ok": false,
-  "reasonCode": "AUTHORIZED_TRANSITION_REQUIRED"
+  "reasonCode": "AUTHORIZED_TRANSITION_REQUIRED",
+  "authorityCommitted": false
 }
 ```
+
+If the committed authority runtime is unavailable:
+
+```json
+{
+  "ok": false,
+  "reasonCode": "AUTHORITY_RUNTIME_UNAVAILABLE",
+  "authorityCommitted": false
+}
+```
+
+The frontend must only present an authority transition as committed when the commit response explicitly returns `authorityCommitted: true`.
 
 After a valid Solana transition, the backend proof advances mandate version/nonce. Older review authorization becomes stale and must not be presented as reusable authority.
 
