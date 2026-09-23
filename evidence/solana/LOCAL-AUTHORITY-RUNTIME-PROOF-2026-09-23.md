@@ -195,3 +195,38 @@ Observed authority assertions remained unchanged:
 - stale review replay → `REFUSE / ConstraintSeeds`
 
 This confirms the authority primitive remained executable after subsequent backend/repository changes that triggered the proof workflow.
+
+## Canonical revalidation run #18
+
+The latest current-repository authority proof completed successfully:
+
+https://github.com/Faadil1/keys/actions/runs/35895608533
+
+`solana-authority-proof #18`
+
+Result:
+
+`4 passing`
+
+Ephemeral local runtime program id:
+
+`XBjsh428EBwTdjZ4h4PFCm3kBzYrJ98Ro6hV6HbvpYC`
+
+Observed transactions:
+
+- beneficiary funding: `2it4kg8Vn4GC99Wd4Rxv5F1MvuWZASuBDXBEnNp9nWP4QrKvUoozMJTDHhuMbCzXHCrTXuiShWS25ixBtKBMStLY`
+- initialize Charter: `2VB6fhkP3VzvpNYNX2aWhfirn156PxZwrwVGp7R337eP2Zrz5M1gLTh81TRFVPta56PRak5mwteuajh2gTPPJYqB`
+- initialize Mandate: `Q79oLBnkppKFZfhs6VqZ2vwLkrWo5kQY5fgQZ6jDGARfrnQvhjqc5nxYaBni9F1WwS6kzEwnnjWzqGx94K2u`
+- commit Proposal: `4v2qCEbEUHMGiXWxJzu4VegBP5qzBD3hfHmhTjUuHw4aXeU4zVRuGFn4Ch7j9bQv2rsnEJKRpewkzjaAkCEkXiRF`
+- record ReviewReceipt: `5j6Mj9VPt2tPFSGztErjmYdvUqxpBYkXUPHu4dj59611sDvDbR8knGenFBV64LVEuguWrXyuB9oeY2HHLXUtfBWJ`
+- guardian authority transition: `4bXUdv2dN19WmLKnUQDduJGdoihkn5d16wDD5wskduzKgnVMVjzcxyR7Et9qRUh1yEUF8MnmnduwS8tCCfL2tt9V`
+
+Observed authority-provider proof:
+
+- `PROOF anchor_authority_provider=READY`
+- `PROOF unauthorized_transition=REFUSE code=ConstraintHasOne`
+- `PROOF authorized_transition=ALLOW PROPOSE->BOUNDED version=2 nonce=1 provider=anchor-authority-provider`
+- `PROOF stale_review_replay=REFUSE code=ConstraintSeeds provider=anchor-authority-provider`
+
+This supersedes #17 as the latest canonical local runtime revalidation while preserving the same authority semantics.
+
