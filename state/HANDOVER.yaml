@@ -1,72 +1,83 @@
 project: KEYS
-handover_version: 8
-updated_at: "2026-09-23"
-status: BACKEND_PROOF_COMPLETE_FRONTEND_HANDOFF_TO_BENITA
+handover_version: 9
+updated_at: "2026-09-24"
+status: CONCEPT_RELOCKED_BOUNDED_AUTONOMY_TECHNICAL_REALITY_GATE_PASS
 
 mission:
   candidate: B
-  category: progressive_financial_stewardship
+  stocklana_wedge: "KEYS Family"
+  category: family_bounded_autonomy_for_tokenized_stocks
   promise: "Financial independence shouldn't happen all at once."
-  core_primitive: evidence_backed_progressive_authority
-  completed_gate: DEMO_FIRST_ONCHAIN_SLICE
-  current_gate: LIVE_DEMO_INTEGRATION
-  immediate_goal: "Benita completes frontend integration, product experience and deployment using the frozen backend contract and proof surfaces."
+  product_principle: "Learn in context. Act freely inside bounds. Ask for more freedom only at the boundary."
+  core_primitive: mandate_enforced_bounded_autonomy
+  current_gate: BACKEND_V0_2_BOUNDED_AUTONOMY_BUILD
+  immediate_goal: "Upgrade the proven v0.1 authority-transition runtime into a v0.2 program-controlled bounded-capital execution runtime, then freeze a new frontend contract."
+
+strategy_lock:
+  family_is_stocklana_wedge: true
+  family_is_entire_company: false
+  long_term_company: "mandate engine for delegated capital"
+  stages_are: "family policy pack / UX projection"
+  mandate_is: "technical authority truth"
+  inside_bounds: "ALLOW immediately"
+  outside_bounds: "REFUSE or boundary request"
+  widening: "explicit authorized human signature only"
+  pyth: "may restrict/expire/escalate; never grant/widen human authority"
+  learning: "contextual + practice; never an automatic permission oracle"
+
+technical_reality_gate:
+  verdict: PASS_WITH_ARCHITECTURE_DELTA
+  canonical_target: PROGRAM_CONTROLLED_VAULT_PLUS_PERMISSION_MATRIX
+  raw_spl_delegate: PROOF_ADAPTER_ONLY
+  squads_v4: POSSIBLE_PRODUCTION_SUBSTRATE
+  token_transfer_hooks: NOT_REQUIRED
+  docs:
+    - docs/TECHNICAL-REALITY-GATE-BOUNDED-AUTONOMY.md
+    - docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md
+    - docs/FAMILY-LEARNING-LAYER.md
+
+canonical_truth:
+  v0_1:
+    authority_transition_proof: PASS
+    local_solana_runtime: PASS
+    devnet_runtime: PASS
+    stable_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
+    stable_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
+    live_pyth_equity_offchain: PASS
+    pyth_proof_run: "https://github.com/Faadil1/keys/actions/runs/35910460176"
+    pyth_verified_feed: Equity.US.TSLA/USD
+    pyth_adapter_format: leUnsigned
+    frontend_contract: HISTORICAL_FROZEN_PROOF_CONTRACT
+  v0_2:
+    permission_matrix: NOT_BUILT
+    program_controlled_vault: NOT_BUILT
+    bounded_capital_execution: NOT_BUILT
+    signed_onchain_pyth_verification: NOT_BUILT
+    boundary_only_proposals: SPEC_LOCKED
+    contextual_learning: SPEC_LOCKED
+    frontend_contract: NOT_YET_FROZEN
 
 ownership:
   frontend:
     owner: Benita
-    scope:
-      - frontend architecture
-      - product experience
-      - information architecture
-      - interaction design
-      - visual system
-      - live-proof integration
-      - hosting and deployment
-    start_here: docs/FRONTEND-START-HERE.md
-    handoff: docs/BENITA-FRONTEND-HANDOFF.md
-    contract: docs/FRONTEND-BACKEND-CONTRACT.md
-    live_integration: docs/LIVE-DEMO-INTEGRATION.md
-    fixture: fixtures/frontend-maya-contract.json
+    current_instruction: "Do not freeze the new bounded-autonomy UX against v0.1 proposal-per-action semantics. Coordinate on v0.2 when the backend contract is ready."
+    future_scope:
+      - family-native Maya experience
+      - contextual learning and Practice UX
+      - current-key / mandate visualization
+      - boundary request / guardian decision UX
+      - responsive visual system
+      - final hosting/deployment
   backend:
     owner: Faadil
-    scope:
-      - policy/domain engine
-      - backend API contract
-      - Solana authority runtime
-      - Pyth evidence boundary
+    current_scope:
+      - Anchor v0.2 permission-matrix redesign
+      - program-controlled vault execution
+      - Pyth signed Solana verification
+      - boundary request / explicit widen
+      - pause/revoke/downward authority
+      - frontend contract v0.2
       - proof maintenance
-      - backend support when integration exposes a real backend issue
-
-canonical_truth:
-  backend_proof: PASS
-  live_demo_backend_contract: PASS
-  live_demo_http_runtime: VERCEL_READY_NOT_HOSTED
-
-  solana:
-    local_runtime: PASS
-    devnet_runtime: PASS
-    stable_program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
-    explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
-    stable_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35905841296"
-    runtime_result: "4 passing"
-
-  pyth:
-    live_equity: PASS
-    proof_run: "https://github.com/Faadil1/keys/actions/runs/35910460176"
-    verified_feed: Equity.US.TSLA/USD
-    status: FRESH
-    decision: ESCALATE
-    reason_code: GUARDIAN_REVIEW_REQUIRED
-    aapl_trial_entitled: false
-    asset_configurable: true
-
-  live_demo:
-    deterministic_route: "/api/v0.1/demo/maya"
-    live_route: "/api/v0.1/demo/live-proof"
-    capabilities_route: "/api/v0.1/capabilities"
-    vercel_adapter_ci: "https://github.com/Faadil1/keys/actions/runs/35912763697"
-    public_base_url: null
 
 security:
   devnet_secret_name: DEVNET_KEYPAIR_JSON
@@ -75,39 +86,40 @@ security:
   secrets_committed_to_git: false
   pyth_key_allowed_in_frontend: false
 
-next_work:
-  step: 25
-  step_name: BENITA_FRONTEND_INTEGRATION_AND_DEPLOYMENT
-  owner: Benita
-  remaining:
-    - "Complete frontend UX/UI."
-    - "Integrate deterministic and/or live backend proof surfaces as desired."
-    - "Choose and complete hosting/deployment."
-    - "If using live Pyth, keep the API key server-side."
-    - "Label the actual live asset when presenting live evidence."
-  faadil_role: "Do not take over frontend work; support backend contract/runtime issues if Benita surfaces one."
-
 truth_boundaries:
   - no competence score
+  - no learning-score auto-promotion
+  - no P&L auto-promotion
   - no automatic real-authority promotion
   - no brokerage/custody claim
   - no legal ownership claim from token/SPL balance
   - no mainnet deployment claim
   - verified live Pyth evidence is TSLA on current trial, not AAPL
   - market evidence does not create authority
+  - v0.1 does not prove bounded capital execution
+  - on-chain Pyth verification is not yet claimed
   - no real minor securities execution claim
+
+next_work:
+  step: 26
+  step_name: BACKEND_V0_2_BOUNDED_AUTONOMY_BUILD
+  owner: Faadil
+  sequence:
+    - "Mandate permission envelope + AssetRule."
+    - "Program-controlled vault + execute_within_mandate proof."
+    - "Signed Pyth Pro Solana payload verification."
+    - "Boundary request + human widen + stale replay proof."
+    - "Pause/revoke/downward transition."
+    - "Frontend/backend contract v0.2."
+    - "Benita integration against v0.2."
 
 key_files:
   - state/CURRENT.yaml
   - state/HANDOVER.yaml
-  - docs/DOCS-STATUS.md
-  - docs/BENITA-FRONTEND-HANDOFF.md
-  - docs/FRONTEND-START-HERE.md
-  - docs/FRONTEND-BACKEND-CONTRACT.md
-  - docs/LIVE-DEMO-INTEGRATION.md
-  - docs/BACKEND-API.md
-  - docs/SOLANA-AUTHORITY-PROOF.md
-  - docs/PYTH-EVIDENCE-PROOF.md
+  - docs/CONCEPT-LOCK.md
+  - docs/TECHNICAL-REALITY-GATE-BOUNDED-AUTONOMY.md
+  - docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md
+  - docs/FAMILY-LEARNING-LAYER.md
+  - docs/TECHNICAL-REALITY-CHECK.md
   - docs/TRUTH-BOUNDARY.md
-  - evidence/solana/DEVNET-AUTHORITY-RUNTIME-PROOF-2026-09-23.md
-  - evidence/pyth/LIVE-EQUITY-EVIDENCE-PROOF-2026-09-23.md
+  - docs/BUILD-PLAN.md
