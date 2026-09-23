@@ -1,107 +1,96 @@
-# KEYS Backend External Blockers
+# KEYS Backend External Proof Gates
 
-Date: 2026-09-23
+Date: 2026-09-23  
+Status: **DEVNET + LIVE PYTH PROOF COMPLETE**
 
-These are external credential/funding blockers only. They are not current failures of the KEYS local policy engine or local Solana authority runtime.
+This file preserves the external-proof gate history and current remaining constraints.
 
-## 1. Solana devnet deployment
+## 1. Solana devnet — RESOLVED
 
-Current verified state:
+Previous blocker:
 
-- SBF-compatible dependency resolution: PASS
-- Anchor/Solana tooling: PASS
-- devnet-target program build before funding gate: PASS
-- deployment: BLOCKED_FUNDING
-- latest strengthened run: https://github.com/Faadil1/keys/actions/runs/35890663439
+`BLOCKED_FUNDING`
 
-The GitHub-hosted runner received 0 lamports after both the 5 SOL and 2 SOL faucet requests were rate-limited.
+Resolution:
 
-### Secure unblock path
+- canonical devnet-only wallet funded with test SOL;
+- keypair stored only in GitHub Actions secret `DEVNET_KEYPAIR_JSON`;
+- program deployed to devnet;
+- authority runtime executed successfully;
+- same program id subsequently upgraded and revalidated.
 
-Use a persistent **devnet-only** wallet and store its keypair JSON as a GitHub Actions repository secret named:
+Canonical program:
 
-`DEVNET_KEYPAIR_JSON`
+`ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
 
-Do not commit the keypair file or paste it into frontend code.
+Stable-program proof:
 
-The workflow already supports this secret:
+https://github.com/Faadil1/keys/actions/runs/35905841296
 
-`.github/workflows/solana-devnet-authority-proof.yml`
-
-When the secret exists, the workflow:
-
-1. writes it only into the runner's temporary Solana config path;
-2. checks the wallet's existing devnet balance before requesting an airdrop;
-3. builds the program before the funding gate;
-4. deploys only if the wallet has sufficient devnet funds;
-5. runs the Anchor authority proof against devnet after successful deployment.
-
-A successful workflow must end with:
+Terminal state:
 
 `DEVNET_PROOF=PASS`
 
-and emit both a program id and devnet Explorer URL.
+## 2. Live Pyth evidence — RESOLVED
 
-Anything else must not be described as a deployment.
+Previous blockers:
 
-## 2. Live Pyth evidence
+- missing API key;
+- initial secret-injection mismatch;
+- AAPL not included in the current demo-trial entitlement.
 
-Current verified state:
+Resolution:
 
-- deterministic adapter tests: PASS
-- Pyth Pro boundary: implemented
-- live authenticated retrieval: BLOCKED_API_KEY
-- verified run: https://github.com/Faadil1/keys/actions/runs/35883434458
+- `PYTH_PRO_API_KEY` stored only in GitHub Actions;
+- secret injection verified;
+- token validity verified with a BTC control feed;
+- live proof made asset-configurable;
+- trial-entitled `Equity.US.TSLA/USD` used for the canonical authenticated proof.
 
-Required GitHub Actions repository secret:
+Canonical live proof:
 
-`PYTH_PRO_API_KEY`
+https://github.com/Faadil1/keys/actions/runs/35910460176
 
-The secret belongs only in server/CI boundaries.
+Verified:
 
-Do not expose it through:
+- live US-equity status: `FRESH`;
+- price/confidence/publish time obtained;
+- market session and publisher count obtained;
+- KEYS decision: `ESCALATE / GUARDIAN_REVIEW_REQUIRED`.
 
-- browser JavaScript;
-- frontend environment variables shipped to the client;
-- committed configuration;
-- screenshots/logs.
+Terminal state:
 
-Once configured, rerun:
+`PYTH_LIVE_PROOF=PASS fresh_market_evidence_reached_guardian_review`
 
-`.github/workflows/pyth-live-proof.yml`
+AAPL is still **not entitled on the current trial token**. That is not a product blocker because KEYS is asset-independent.
 
-A meaningful PASS must include a real authenticated snapshot containing price, confidence and feed update timestamp and then prove that the snapshot is load-bearing in the KEYS policy path.
+## 3. Remaining real-execution constraint
 
-For Maya at `PROPOSE`, fresh acceptable evidence must still result in:
-
-`ESCALATE / GUARDIAN_REVIEW_REQUIRED`
-
-because market evidence is not authority.
-
-## 3. Real execution eligibility
-
-There is currently no verified brokerage/custody/venue eligibility integration.
+There is still no verified brokerage/custody/venue eligibility integration.
 
 Canonical state:
 
 `UNKNOWN`
 
-Therefore any route implying real execution must fail closed.
+Therefore any route implying real securities execution must fail closed.
 
-Do not replace this with a frontend toggle or demo assumption.
+This remains intentional and is not part of the hackathon proof.
 
-## 4. What can continue without these blockers
+## 4. Frontend/runtime handoff
 
-The following work is not blocked:
+The backend contract and proof surfaces are complete enough for frontend integration.
 
-- Benita frontend design;
-- frontend against the Maya fixture;
-- frontend against the local HTTP API;
-- deterministic proposal/review flows;
-- simulation flows, when explicitly labeled simulation;
-- local Anchor authority proof;
-- policy/authority integration tests;
-- responsive/product experience work;
-- demo narrative and packaging.
+Benita owns:
 
-The external blockers affect only claims of live network deployment, live authenticated market evidence and real execution eligibility.
+- frontend architecture and UX/UI;
+- live-proof integration;
+- frontend/runtime hosting and deployment.
+
+Faadil owns:
+
+- backend semantics;
+- policy engine;
+- Solana/Pyth proof maintenance;
+- backend support if integration uncovers an actual contract/runtime issue.
+
+The backend repo is Vercel-ready, but no hosted public HTTP runtime is currently claimed in canonical state.
