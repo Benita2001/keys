@@ -1,6 +1,6 @@
-# KEYS Backend API — Local Demo v0.1
+# KEYS Backend API — Frontend Integration v0.1
 
-Status: **LOCAL DEMO / FRONTEND INTEGRATION ONLY**
+Status: **CONTRACT READY / LOCAL + VERCEL-READY / PUBLIC RUNTIME NOT YET CLAIMED**
 
 This adapter exists so the KEYS frontend can integrate against the real domain contract without importing Anchor or duplicating policy logic.
 
@@ -56,7 +56,7 @@ Example:
 
 Returns the backend's current truth state for frontend routing.
 
-Example while external credentials/runtimes are unavailable:
+Example when the runtime does not have the Pyth secret configured:
 
 ```json
 {
@@ -330,3 +330,21 @@ Proposal/execution responses include a safe `marketEvidence` object containing o
 No API key or secret is included.
 
 Responses also expose the resolved eligibility status, with `UNKNOWN` as the default fail-closed state.
+
+
+## Hosting status
+
+The repository includes a tested Vercel adapter:
+
+- `src/vercel-adapter.mjs`
+- `api/[...path].mjs`
+- `api/health.mjs`
+- `vercel.json`
+
+CI proof:
+
+https://github.com/Faadil1/keys/actions/runs/35912763697
+
+Canonical state does **not** yet claim a public hosted HTTP base URL. Benita owns final frontend/runtime deployment and may choose the hosting path.
+
+A hosted runtime must keep `PYTH_PRO_API_KEY` server-side only.
