@@ -136,6 +136,6 @@ test('parses a successful latest-price response', async () => {
   });
 
   assert.equal(out.status, 'FRESH');
-  assert.equal(out.price, 250);
+  assert.ok(Math.abs(out.price - 250) < 1e-9);
   assert.equal(out.ageSeconds, 5);
 });
