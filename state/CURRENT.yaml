@@ -1,5 +1,5 @@
 project: KEYS
-status: DEVNET_WALLET_CREATED_NEEDS_FUNDING
+status: DEVNET_AIRDROP_SUCCESS_BALANCE_VERIFY
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -90,6 +90,8 @@ collaboration:
   contract_status: FROZEN_FOR_MAYA_DEMO
 
 guided_execution:
+  devnet_airdrop_status: SUCCESS_OBSERVED
+  devnet_airdrop_requested_sol: 5
   devnet_wallet_public_address: "Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N"
   devnet_wallet_balance_status: UNVERIFIED
   selected_devnet_wallet_path: SOLANA_PLAYGROUND_BROWSER
@@ -98,6 +100,6 @@ guided_execution:
   official_windows_install_path: WSL
   solana_cli_local: ABSENT_CONFIRMED
   canonical_handover: state/HANDOVER.yaml
-  active_step: FUND_DEVNET_WALLET
-  next_user_action: "Fund public address Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N with devnet SOL via the official Solana faucet; return only balance or transaction signature."
+  active_step: VERIFY_DEVNET_WALLET_BALANCE
+  next_user_action: "Verify the current devnet SOL balance for Ag997g9N2dhwT8UUZxEQkP5b1ymD11CiZHyjtnhdZG1N in Explorer or Solana Playground."
   security_rule: "Never paste DEVNET_KEYPAIR_JSON or any private key into chat or Git history."
