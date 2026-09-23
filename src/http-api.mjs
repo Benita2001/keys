@@ -25,6 +25,18 @@ const JSON_HEADERS = Object.freeze({
   'content-type': 'application/json; charset=utf-8'
 });
 
+export const CANONICAL_DEVNET_PROGRAM_ID =
+  'ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk';
+
+export const CANONICAL_DEVNET_EXPLORER =
+  `https://explorer.solana.com/address/${CANONICAL_DEVNET_PROGRAM_ID}?cluster=devnet`;
+
+export const CANONICAL_DEVNET_PROOF_RUN =
+  'https://github.com/Faadil1/keys/actions/runs/35905841296';
+
+export const CANONICAL_PYTH_PROOF_RUN =
+  'https://github.com/Faadil1/keys/actions/runs/35910460176';
+
 async function defaultMarketEvidenceProvider({ asset, now }) {
   const feed = PYTH_PRO_EQUITY_FEEDS[asset];
 
@@ -47,6 +59,53 @@ async function defaultMarketEvidenceProvider({ asset, now }) {
 
 async function defaultEligibilityProvider() {
   return { status: 'UNKNOWN' };
+}
+
+function liveDemoAsset() {
+  const requested = process.env.KEYS_DEMO_LIVE_EQUITY || 'TSLA';
+  return PYTH_PRO_EQUITY_FEEDS[requested] ? requested : 'TSLA';
+}
+
+function buildMayaLiveScenario(asset) {
+  return {
+    beneficiary: { ...mayaFixture.beneficiary },
+    charter: {
+      expiresAt: null,
+      assetUniverse: [asset],
+      maxProposalNotional: 50,
+      maxBoundedNotional: 25
+    },
+    mandate: {
+      stage: mayaFixture.mandate.stage,
+      version: mayaFixture.mandate.version,
+      nonce: mayaFixture.mandate.nonce
+    },
+    proposal: {
+      ...mayaFixture.proposal,
+      id: `maya-${asset.toLowerCase()}-live-001`,
+      asset,
+      rationale: 'I want to study a company I can explain before any authority changes.',
+      counterargument: 'A compelling company story can still be a poor investment at the wrong price.',
+      invalidation: 'I would reconsider if the original business thesis materially changes.'
+    }
+  };
+}
+
+function publicProofEnvelope() {
+  return {
+    solana: {
+      network: 'devnet',
+      status: 'VERIFIED',
+      programId: CANONICAL_DEVNET_PROGRAM_ID,
+      explorerUrl: CANONICAL_DEVNET_EXPLORER,
+      canonicalProofRun: CANONICAL_DEVNET_PROOF_RUN
+    },
+    pyth: {
+      status: 'VERIFIED_LIVE_EQUITY',
+      canonicalProofRun: CANONICAL_PYTH_PROOF_RUN,
+      secretExposedToFrontend: false
+    }
+  };
 }
 
 function capabilitiesForServices(services = {}) {
@@ -140,6 +199,55 @@ export async function routeKeysHttp({
       status: 200,
       headers: JSON_HEADERS,
       body: mayaFixture
+    };
+  }
+
+  if (method === 'GET' && path === '/api/v0.1/demo/live-proof') {
+    const asset = liveDemoAsset();
+    const scenario = buildMayaLiveScenario(asset);
+    const now = new Date().toISOString();
+    const marketEvidenceProvider =
+      services?.marketEvidenceProvider ?? defaultMarketEvidenceProvider;
+
+    const market = await marketEvidenceProvider({
+      asset,
+      proposal: scenario.proposal,
+      charter: scenario.charter,
+      mandate: scenario.mandate,
+      now
+    });
+
+    const evaluation = evaluateProposalForFrontend({
+      charter: scenario.charter,
+      mandate: scenario.mandate,
+      proposal: scenario.proposal,
+      market,
+      eligibility: { status: 'UNKNOWN' },
+      now
+    });
+
+    return {
+      status: 200,
+      headers: JSON_HEADERS,
+      body: {
+        contractVersion: FRONTEND_CONTRACT_VERSION,
+        type: 'LIVE_DEMO_PROOF',
+        mode: 'LIVE_BACKEND_EVIDENCE',
+        beneficiary: scenario.beneficiary,
+        scenario: {
+          asset,
+          proposal: scenario.proposal,
+          mandate: scenario.mandate
+        },
+        evaluation,
+        proofs: publicProofEnvelope(),
+        truthBoundary: {
+          marketEvidenceCreatesAuthority: false,
+          executionEligibility: 'UNKNOWN',
+          realSecuritiesExecution: false,
+          liveEvidenceAsset: asset
+        }
+      }
     };
   }
 
