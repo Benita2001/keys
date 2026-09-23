@@ -1,5 +1,5 @@
 project: KEYS
-status: TECHNICAL_REALITY_CHECK_IN_PROGRESS
+status: TECHNICAL_REALITY_CHECK_LOCAL_RUNTIME_PASS
 candidate: B
 concept_lock: true
 working_category: progressive_financial_stewardship
@@ -11,8 +11,9 @@ current_proof:
   node_ci: PASS
   rust_anchor_unit_ci: PASS
   anchor_program_code: PASS
-  local_solana_authority_runtime: BUILD_FIX_IN_PROGRESS
-  solana_devnet: BLOCKED_FUNDING
+  demo_first_onchain_slice: LOCAL_RUNTIME_PASS
+  local_solana_authority_runtime: PASS
+  solana_devnet: BUILD_PASS_DEPLOY_BLOCKED_FUNDING
   devnet_funded_wallet_path: READY_VIA_DEVNET_KEYPAIR_JSON_SECRET
   live_pyth: BLOCKED_API_KEY
   deterministic_demo: PASS
@@ -25,9 +26,17 @@ verified_evidence:
   local_authority_last_failure_run: "https://github.com/Faadil1/keys/actions/runs/35889679979"
   local_authority_last_failure_detail: "SBF rustc 1.84.1-dev rejected unicode-segmentation 1.13.3; workflow now pins 1.12.0."
   local_authority_active_run: "https://github.com/Faadil1/keys/actions/runs/35890368959"
-  devnet_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35885934591"
-  devnet_attempt_result: BLOCKED_FUNDING
-  devnet_attempt_detail: "5 SOL and 2 SOL faucet requests rate-limited; final balance 0 lamports; no deployment occurred."
+  local_authority_result: SUCCESS
+  local_authority_runtime_program_id: "DbvkVxnYro1S4tVFD9SbGUYSVPvspt2S7yiAfx2wfokH"
+  local_authority_runtime_assertions:
+    - "Charter -> Mandate -> ProposalCommitment -> eligible ReviewReceipt"
+    - "unauthorized transition REFUSE / ConstraintHasOne"
+    - "guardian PROPOSE -> BOUNDED ALLOW / version=2 / nonce=1"
+    - "stale review replay REFUSE / ConstraintSeeds"
+  devnet_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35890663439"
+  devnet_attempt_result: BUILD_PASS_DEPLOY_BLOCKED_FUNDING
+  devnet_build_program_id: "8XmhNVJqCFRwvpeTF4vNFsGgcoFs64goK2mjSVP9XKUm"
+  devnet_attempt_detail: "SBF/Anchor build passed before funding gate. Ephemeral wallet had 0 lamports; 5 SOL and 2 SOL faucet requests were rate-limited; no deployment occurred."
   pyth_live_attempt_run: "https://github.com/Faadil1/keys/actions/runs/35883434458"
   pyth_live_attempt_result: BLOCKED_API_KEY
   pyth_auth_boundary_verified: "Pyth Pro REST requires API key; Pyth Core Hermes also requires API key after 2026-08-26."
@@ -37,14 +46,14 @@ verified_evidence:
 next_gate:
   name: DEMO_FIRST_ONCHAIN_SLICE
   requires:
-    - green local Solana authority runtime proof
-    - create Charter and Mandate
-    - commit Proposal
-    - create eligible ReviewReceipt
-    - refuse unauthorized transition
-    - allow guardian PROPOSE -> BOUNDED
-    - advance mandate version and nonce
-    - refuse replay of old review material
+    - PASS: green local Solana authority runtime proof
+    - PASS: create Charter and Mandate
+    - PASS: commit Proposal
+    - PASS: create eligible ReviewReceipt
+    - PASS: refuse unauthorized transition
+    - PASS: allow guardian PROPOSE -> BOUNDED
+    - PASS: advance mandate version and nonce
+    - PASS: refuse replay of old review material
     - devnet deployment and transaction references when funding is available
     - live Pyth snapshot with freshness/confidence or explicit credential blocker
 
