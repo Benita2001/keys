@@ -1,7 +1,7 @@
 project: KEYS
-handover_version: 4
+handover_version: 5
 updated_at: "2026-09-23"
-status: DEMO_FIRST_ONCHAIN_SLICE_PASS
+status: LIVE_DEMO_BACKEND_CONTRACT_PASS_RUNTIME_NOT_HOSTED
 
 mission:
   candidate: B
@@ -9,8 +9,8 @@ mission:
   promise: "Financial independence shouldn't happen all at once."
   core_primitive: evidence_backed_progressive_authority
   completed_gate: DEMO_FIRST_ONCHAIN_SLICE
-  next_gate: LIVE_DEMO_INTEGRATION
-  immediate_goal: "Connect the verified live backend proofs to the frontend semantic contract without exposing secrets or changing product truth."
+  current_gate: LIVE_DEMO_INTEGRATION
+  immediate_goal: "Host the verified live demo HTTP runtime so Benita can consume /api/v0.1/demo/live-proof remotely."
 
 ownership:
   frontend:
@@ -34,6 +34,9 @@ ownership:
       - integration
 
 canonical_truth:
+  live_demo_backend_contract: PASS
+  live_demo_http_runtime: NOT_HOSTED
+  live_demo_route: "/api/v0.1/demo/live-proof"
   reference_engine: PASS
   node_ci: PASS
   backend_http_api: PASS
@@ -94,15 +97,19 @@ security:
   browser_exposure_of_pyth_key: false
 
 next_work:
-  step: 22
-  step_name: LIVE_DEMO_INTEGRATION
-  objectives:
-    - "Expose live market evidence through the existing server-owned backend boundary."
-    - "Keep frontend contract stable enough for Benita to proceed independently."
-    - "Decide whether judge-facing Maya demo remains AAPL deterministic fixture or switches to a trial-entitled live equity such as TSLA."
-    - "Do not make Pyth market evidence an authority oracle."
-    - "Preserve devnet program and transaction proof links in the demo."
-  user_action: "None required for the completed technical proof. Continue backend/frontend integration."
+  step: 23
+  step_name: HOST_LIVE_DEMO_HTTP_RUNTIME
+  completed:
+    - "GET /api/v0.1/demo/live-proof implemented."
+    - "GET /api/v0.1/capabilities advertises liveDemoProof."
+    - "Live route tested with fresh evidence and fail-closed evidence."
+    - "Frontend handoff documented in docs/LIVE-DEMO-INTEGRATION.md."
+  remaining:
+    - "Choose hosted runtime."
+    - "Configure PYTH_PRO_API_KEY server-side on that runtime."
+    - "Expose a stable HTTPS base URL to Benita."
+    - "Smoke-test /health, /api/v0.1/capabilities and /api/v0.1/demo/live-proof remotely."
+  user_action: "None until runtime choice requires account/deployment access."
 
 truth_boundaries:
   - no competence score
