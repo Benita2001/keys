@@ -230,6 +230,63 @@ export async function routeKeysHttp({
     };
   }
 
+  if (method === 'GET' && path === '/api/v0.2/draft/demo/maya') {
+    return {
+      status: 200,
+      headers: JSON_HEADERS,
+      body: mayaV2DraftFixture
+    };
+  }
+
+  if (method === 'POST' && path === '/api/v0.2/draft/actions/evaluate') {
+    const now = body?.now ?? new Date().toISOString();
+    const requiresMarketEvidence = body?.assetRule?.requiresMarketEvidence === true;
+    let market = null;
+
+    if (requiresMarketEvidence) {
+      const marketEvidenceProvider =
+        services?.marketEvidenceProvider ?? defaultMarketEvidenceProvider;
+      market = await marketEvidenceProvider({
+        asset: body?.action?.asset,
+        action: body?.action,
+        assetRule: body?.assetRule,
+        mandate: body?.mandate,
+        now
+      });
+    }
+
+    return {
+      status: 200,
+      headers: JSON_HEADERS,
+      body: {
+        ...evaluateBoundedAction({
+          mandate: body?.mandate,
+          assetRule: body?.assetRule,
+          action: body?.action,
+          market,
+          now
+        }),
+        type: 'V0_2_DRAFT_ACTION_EVALUATION',
+        runtimeProofStatus: 'DRAFT_RUNTIME_PROOF_PENDING'
+      }
+    };
+  }
+
+  if (method === 'POST' && path === '/api/v0.2/draft/boundary-requests') {
+    return {
+      status: 200,
+      headers: JSON_HEADERS,
+      body: buildBoundaryRequest({
+        mandate: body?.mandate,
+        assetRule: body?.assetRule,
+        action: body?.action,
+        reasoningCommitmentHash: body?.reasoningCommitmentHash,
+        condition: body?.condition ?? null,
+        now: body?.now ?? new Date().toISOString()
+      })
+    };
+  }
+
   if (method === 'GET' && path === '/api/v0.1/demo/live-proof') {
     const asset = liveDemoAsset();
     const scenario = buildMayaLiveScenario(asset);
