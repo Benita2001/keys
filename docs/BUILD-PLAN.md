@@ -48,19 +48,39 @@ See:
 - `docs/TECHNICAL-REALITY-GATE-BOUNDED-AUTONOMY.md`
 - `docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md`
 
-## Gate 6 — backend v0.2 bounded-autonomy build — ACTIVE / FAADIL
+## Gate 6 — backend v0.2 bounded-autonomy capital path — PASS / FAADIL
 
-Build in this order:
+Proven on local Solana and canonical devnet:
 
 1. Mandate permission envelope + AssetRule.
 2. Program-controlled vault.
-3. `execute_within_mandate` deterministic success/refusal proof.
-4. Signed Pyth Pro Solana payload verification.
-5. Boundary request + explicit human widen + stale replay proof.
-6. Pause/revoke/downward authority.
-7. Frontend/backend semantic contract v0.2.
+3. `execute_within_mandate` success/refusal proof.
+4. Explicit human widen + stale execution refusal.
+5. Same larger action succeeds after human widen.
+6. Pause/downward authority.
+7. Draft v0.2 semantic API/contract.
 
-## Gate 7 — Family experience integration — BENITA AFTER V0.2 CONTRACT
+Canonical devnet run:
+
+https://github.com/Faadil1/keys/actions/runs/35931280449
+
+## Gate 6.5 — signed Pyth on-chain enforcement — ACTIVE / FAADIL
+
+Already proven:
+
+- authenticated live Pyth equity evidence;
+- signed Solana-format Pyth payload availability.
+
+Next runtime proof:
+
+1. verify the signed Pyth payload in the KEYS Anchor path;
+2. enforce freshness/confidence from verified evidence;
+3. derive USD/notional from verified price;
+4. fail closed when a user-precommitted market condition is invalid/stale;
+5. re-run local + canonical devnet proof;
+6. freeze frontend/backend semantic contract v0.2.
+
+## Gate 7 — Family experience integration — BENITA AFTER FROZEN V0.2 CONTRACT
 
 Product experience:
 
