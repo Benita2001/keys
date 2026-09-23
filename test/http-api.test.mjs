@@ -346,3 +346,137 @@ test('HTTP adapter returns 404 envelope for unknown routes', async () => {
   assert.equal(result.status, 404);
   assert.equal(result.body.error, 'NOT_FOUND');
 });
+
+
+test('v0.2 draft demo exposes bounded-autonomy semantics without claiming runtime proof', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.2/draft/demo/maya'
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.contractVersion, '0.2-draft');
+  assert.equal(result.body.currentMandate.status, 'ACTIVE');
+  assert.equal(result.body.truthBoundary.realMinorSecuritiesExecution, false);
+  assert.equal(result.body.truthBoundary.onchainPythVerification, false);
+});
+
+test('v0.2 draft action endpoint allows an in-bounds action with backend-owned market evidence', async () => {
+  const result = await routeKeysHttp({
+    method: 'POST',
+    path: '/api/v0.2/draft/actions/evaluate',
+    body: {
+      mandate: {
+        status: 'ACTIVE',
+        version: 4,
+        nonce: 3,
+        expiresAt: '2026-12-01T00:00:00Z'
+      },
+      assetRule: {
+        enabled: true,
+        asset: 'TSLA',
+        allowedActions: ['BUY'],
+        quoteUnit: 'USD',
+        maxActionNotional: 250,
+        maxPeriodNotional: 1000,
+        spentThisPeriod: 0,
+        requiresMarketEvidence: true,
+        maxMarketAgeSeconds: 30,
+        maxConfidenceBps: 100
+      },
+      action: {
+        type: 'BUY',
+        asset: 'TSLA',
+        amount: 0.5,
+        expectedNonce: 3
+      },
+      now: '2026-09-23T22:00:00Z'
+    },
+    services: {
+      marketEvidenceProvider: async () => ({
+        status: 'FRESH',
+        price: 200,
+        ageSeconds: 0,
+        confidenceBps: 10
+      })
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.decision, 'ALLOW');
+  assert.equal(result.body.reasonCode, 'WITHIN_MANDATE');
+  assert.equal(result.body.requestedNotional, 100);
+  assert.equal(result.body.guardianApprovalRequired, false);
+  assert.equal(result.body.runtimeProofStatus, 'DRAFT_RUNTIME_PROOF_PENDING');
+});
+
+test('v0.2 draft action endpoint exposes the boundary instead of auto-escalating every action', async () => {
+  const result = await routeKeysHttp({
+    method: 'POST',
+    path: '/api/v0.2/draft/actions/evaluate',
+    body: {
+      mandate: {
+        status: 'ACTIVE',
+        version: 4,
+        nonce: 3
+      },
+      assetRule: {
+        enabled: true,
+        asset: 'TSLA',
+        allowedActions: ['BUY'],
+        quoteUnit: 'USD',
+        maxActionNotional: 250,
+        maxPeriodNotional: 1000,
+        spentThisPeriod: 0,
+        requiresMarketEvidence: true
+      },
+      action: {
+        type: 'BUY',
+        asset: 'TSLA',
+        amount: 3,
+        expectedNonce: 3
+      }
+    },
+    services: {
+      marketEvidenceProvider: async () => ({
+        status: 'FRESH',
+        price: 100,
+        ageSeconds: 0,
+        confidenceBps: 10
+      })
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.decision, 'REFUSE');
+  assert.equal(result.body.reasonCode, 'MANDATE_LIMIT_EXCEEDED');
+  assert.equal(result.body.boundaryRequestAvailable, true);
+});
+
+test('v0.2 draft boundary request remains a pending human decision', async () => {
+  const result = await routeKeysHttp({
+    method: 'POST',
+    path: '/api/v0.2/draft/boundary-requests',
+    body: {
+      mandate: { version: 4, nonce: 3 },
+      assetRule: { maxActionNotional: 250 },
+      action: {
+        type: 'BUY',
+        asset: 'TSLA',
+        amount: 3,
+        notional: 300
+      },
+      reasoningCommitmentHash: 'hash-only-not-private-reasoning',
+      condition: { maxPrice: 105 },
+      now: '2026-09-23T22:00:00Z'
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.status, 'PENDING_HUMAN_DECISION');
+  assert.deepEqual(
+    result.body.decisions,
+    ['ALLOW_ONCE', 'WIDEN_MANDATE', 'REFUSE']
+  );
+  assert.equal(result.body.mandateNonce, 3);
+});
