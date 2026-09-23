@@ -92,6 +92,8 @@ test('normal proposal endpoint uses backend-owned evidence', async () => {
   assert.equal(result.status, 200);
   assert.equal(result.body.decision, 'REFUSE');
   assert.equal(result.body.reasonCode, 'MARKET_EVIDENCE_UNAVAILABLE');
+  assert.equal(result.body.marketEvidence.status, 'UNAVAILABLE');
+  assert.equal(result.body.marketEvidence.reasonCode, 'PYTH_API_KEY_REQUIRED');
 });
 
 test('normal proposal endpoint reaches guardian review with trusted backend evidence', async () => {
@@ -105,6 +107,8 @@ test('normal proposal endpoint reaches guardian review with trusted backend evid
   assert.equal(result.status, 200);
   assert.equal(result.body.decision, 'ESCALATE');
   assert.equal(result.body.reasonCode, 'GUARDIAN_REVIEW_REQUIRED');
+  assert.equal(result.body.marketEvidence.status, 'FRESH');
+  assert.equal(result.body.eligibility.status, 'UNKNOWN');
 });
 
 test('simulation endpoint accepts explicit simulated evidence and labels the response', async () => {
@@ -121,6 +125,7 @@ test('simulation endpoint accepts explicit simulated evidence and labels the res
   assert.equal(result.status, 200);
   assert.equal(result.body.simulation, true);
   assert.equal(result.body.type, 'SIMULATION_PROPOSAL_EVALUATION');
+  assert.equal(result.body.marketEvidence.status, 'FRESH');
   assert.equal(result.body.decision, 'ESCALATE');
   assert.equal(result.body.reasonCode, 'GUARDIAN_REVIEW_REQUIRED');
 });
