@@ -17,8 +17,18 @@ import {
   commitMandateTransitionForFrontend
 } from './authority-runtime.mjs';
 
+import {
+  V2_CONTRACT_VERSION,
+  buildBoundaryRequest,
+  evaluateBoundedAction
+} from './bounded-autonomy.mjs';
+
 const mayaFixture = JSON.parse(
   await readFile(new URL('../fixtures/frontend-maya-contract.json', import.meta.url), 'utf8')
+);
+
+const mayaV2DraftFixture = JSON.parse(
+  await readFile(new URL('../fixtures/frontend-maya-v0.2-contract.json', import.meta.url), 'utf8')
 );
 
 const JSON_HEADERS = Object.freeze({
@@ -141,6 +151,14 @@ function capabilitiesForServices(services = {}) {
       selectedEquity: liveDemoAsset(),
       route: '/api/v0.1/demo/live-proof',
       solanaProgramId: CANONICAL_DEVNET_PROGRAM_ID
+    },
+    v2Draft: {
+      contractVersion: V2_CONTRACT_VERSION,
+      status: 'DRAFT_RUNTIME_PROOF_PENDING',
+      demoRoute: '/api/v0.2/draft/demo/maya',
+      actionEvaluationRoute: '/api/v0.2/draft/actions/evaluate',
+      boundaryRequestRoute: '/api/v0.2/draft/boundary-requests',
+      realMinorSecuritiesExecution: false
     }
   };
 }
