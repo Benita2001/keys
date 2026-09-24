@@ -24,6 +24,7 @@ strategy_lock:
   widening: "explicit authorized human signature only"
   pyth: "may restrict/expire/escalate; never grant/widen human authority"
   learning: "contextual + practice; never an automatic permission oracle"
+  sponsor_rule: "sponsor integrations extend KEYS; they do not redefine KEYS"
 
 technical_reality_gate:
   verdict: PASS_WITH_ARCHITECTURE_DELTA
@@ -59,6 +60,12 @@ canonical_truth:
     boundary_only_proposals: IMPLEMENTED_FROZEN_V0_2_API
     contextual_learning: FROZEN_CONTRACT_AND_FIXTURE
     frontend_contract: FROZEN
+    bounty_integration_gate: PASS_WITH_SELECTIVE_INTEGRATION
+    pyth_bounty: GO_ALREADY_EARNED
+    prestocks_bounty: CONDITIONAL_GO_REPRESENTATION_PROOF_REQUIRED
+    tessera_bounty: CONDITIONAL_GO_REPRESENTATION_PROOF_REQUIRED
+    clawpump_bounty: SIDECAR_ONLY
+    meteora_bounty: CONDITIONAL_ON_REAL_DBC_USE
     devnet_run: "https://github.com/Faadil1/keys/actions/runs/35959137364"
     pyth_signed_payload_run: "https://github.com/Faadil1/keys/actions/runs/35930425544"
     local_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35956618933"
@@ -148,3 +155,4 @@ key_files:
   - docs/TECHNICAL-REALITY-CHECK.md
   - docs/TRUTH-BOUNDARY.md
   - docs/BUILD-PLAN.md
+  - docs/STOCKLANA-BOUNTY-INTEGRATION-GATE.md
