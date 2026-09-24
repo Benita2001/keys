@@ -66,6 +66,7 @@ export type AppState = {
   completedLessons: string[];
   priorLessonCount: number;
   researched: string[];
+  learningMinutes: { at: string; minutes: number }[];
   practice: { holdings: Holding[]; cash: number };
   money: { holdings: Holding[]; balance: number };
   mandate: CurrentMandate;
@@ -100,6 +101,7 @@ export const initialState: AppState = {
   completedLessons: DEMO_PROFILE.completedLessons,
   priorLessonCount: DEMO_PROFILE.priorLessonCount,
   researched: DEMO_PROFILE.companiesResearched,
+  learningMinutes: [],
   practice: { holdings: DEMO_PRACTICE_HOLDINGS, cash: DEMO_PRACTICE_CASH },
   money: { holdings: [], balance: DEMO_MONEY_BALANCE },
   mandate: DEMO_MANDATE,
@@ -173,6 +175,7 @@ export function reducer(state: AppState, action: Action): AppState {
         requests: action.remote.requests,
         completedLessons: action.remote.learning.completedLessons,
         xp: action.remote.learning.xp,
+        learningMinutes: action.remote.learning.weeklyMinutes ?? [],
       };
     case "signIn":
       return { ...state, session: action.session };
@@ -289,6 +292,9 @@ export function restoreState(raw: string | null): AppState | null {
     ...initialState,
     ...(parsed as Partial<AppState>),
     pendingExecutions: Array.isArray(parsed.pendingExecutions) ? (parsed.pendingExecutions as PendingExecution[]) : [],
+    learningMinutes: Array.isArray(parsed.learningMinutes)
+      ? (parsed.learningMinutes as { at: string; minutes: number }[])
+      : [],
     settings: { ...initialState.settings, ...(isObj(parsed.settings) ? parsed.settings : {}) },
     demoFlags: { ...initialState.demoFlags, ...(isObj(parsed.demoFlags) ? parsed.demoFlags : {}) },
   } as AppState;
