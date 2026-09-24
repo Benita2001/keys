@@ -27,6 +27,7 @@ import {
   DEMO_PROFILE,
 } from "@/mocks/family";
 import { setDemoFlags, type DemoFlags } from "@/services";
+import { fetchFamilyState, keysBackendConfigured } from "@/services/keys-backend";
 
 export type ActivityItem = {
   id: string;
@@ -117,6 +118,10 @@ export const initialState: AppState = {
 
 type Action =
   | { type: "hydrate"; state: AppState }
+  | {
+      type: "syncBackend";
+      remote: Awaited<ReturnType<typeof fetchFamilyState>>;
+    }
   | { type: "signIn"; session: Session }
   | { type: "signOut" }
   | { type: "setProfile"; profile: Partial<AppState["profile"]> }
@@ -148,6 +153,27 @@ export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "hydrate":
       return action.state;
+    case "syncBackend":
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          childName: action.remote.profile.childName,
+          parentName: action.remote.profile.parentName,
+          parentLinked: action.remote.profile.parentLinked,
+        },
+        mandate: {
+          ...state.mandate,
+          ...action.remote.mandate,
+        },
+        money: {
+          holdings: action.remote.moneyHoldings,
+          balance: action.remote.balances.money,
+        },
+        requests: action.remote.requests,
+        completedLessons: action.remote.learning.completedLessons,
+        xp: action.remote.learning.xp,
+      };
     case "signIn":
       return { ...state, session: action.session };
     case "signOut":
@@ -299,6 +325,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
   }, [state, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || !keysBackendConfigured()) return;
+
+    let cancelled = false;
+    const sync = async () => {
+      try {
+        const remote = await fetchFamilyState();
+        if (!cancelled) dispatch({ type: "syncBackend", remote });
+      } catch {
+        // Keep the last local snapshot. Money execution itself still fails closed.
+      }
+    };
+
+    void sync();
+    const id = window.setInterval(sync, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [hydrated]);
 
   useEffect(() => {
     setDemoFlags({ marketFailure: state.demoFlags.marketFailure, slowNetwork: state.demoFlags.slowNetwork });
