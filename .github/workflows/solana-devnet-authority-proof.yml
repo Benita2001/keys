@@ -133,25 +133,23 @@ jobs:
           BALANCE=${BALANCE:-0}
           echo "PROOF devnet_balance_before_airdrop_lamports=$BALANCE"
 
-          if [ "$BALANCE" -lt 1000000000 ]; then
+          # Program growth for the Pyth verifier can require additional rent during upgrade.
+          # Keep a healthy devnet-only buffer; never use mainnet funds here.
+          if [ "$BALANCE" -lt 4000000000 ]; then
             set +e
-            AIRDROP_OUT=$(solana airdrop 5 --url https://api.devnet.solana.com 2>&1)
+            AIRDROP_OUT=$(solana airdrop 2 --url https://api.devnet.solana.com 2>&1)
             AIRDROP_RC=$?
-            if [ $AIRDROP_RC -ne 0 ]; then
-              AIRDROP_OUT_2=$(solana airdrop 2 --url https://api.devnet.solana.com 2>&1)
-              AIRDROP_RC=$?
-              AIRDROP_OUT="$AIRDROP_OUT | $AIRDROP_OUT_2"
-            fi
             set -e
             echo "$AIRDROP_OUT"
+            echo "PROOF devnet_airdrop_attempt_rc=$AIRDROP_RC"
           fi
 
           BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
           BALANCE=${BALANCE:-0}
           echo "PROOF devnet_balance_lamports=$BALANCE"
-          if [ "$BALANCE" -lt 1000000000 ]; then
+          if [ "$BALANCE" -lt 3000000000 ]; then
             echo "DEVNET_PROOF=BLOCKED_FUNDING"
-            exit 0
+            exit 1
           fi
 
           set +e
@@ -163,7 +161,7 @@ jobs:
           if [ $DEPLOY_RC -ne 0 ]; then
             if echo "$DEPLOY_OUT" | grep -Eqi "insufficient|faucet|airdrop|funds|balance"; then
               echo "DEVNET_PROOF=BLOCKED_FUNDING_DURING_DEPLOY"
-              exit 0
+              exit 1
             fi
             echo "DEVNET_PROOF=FAILED_DEPLOY"
             exit $DEPLOY_RC
