@@ -70,6 +70,13 @@ Primary product routes:
 - `POST /api/v0.2/actions/evaluate`
 - `POST /api/v0.2/boundary-requests`
 
+New Cresco devnet bridge (implemented; canonical smoke proof pending):
+
+- `GET /api/v0.2/demo/runtime`
+- `POST /api/v0.2/actions/execute`
+
+The execution bridge is deliberately a **server-held devnet demo signer** over a demo/mock SPL token. It is not a production wallet/custody model. See `docs/CRESCO-BACKEND-DELTA-2026-09-24.md`.
+
 The `/api/v0.1/*` routes and `/api/v0.2/draft/*` aliases are compatibility/history surfaces, not the frontend product target.
 
 The canonical devnet runtime now proves:
