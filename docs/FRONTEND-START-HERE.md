@@ -91,7 +91,7 @@ Cresco devnet bridge now implemented in backend code:
 - `GET /api/v0.2/demo/runtime`
 - `POST /api/v0.2/actions/execute`
 
-Until the dedicated devnet smoke workflow passes, treat those two routes as **IMPLEMENTED / PROOF PENDING** rather than canonically proven. The runtime uses a server-held devnet demo signer and a demo/mock SPL token.
+Those routes are **PASS / PROVEN** on the current AAPL devnet proof lane. The runtime uses a server-held devnet demo signer and a demo/mock SPL token.
 
 Current delta for PR #1:
 
@@ -99,9 +99,13 @@ Current delta for PR #1:
 
 Do not build the new product around `/api/v0.1/*` or `/api/v0.2/draft/*`; those remain compatibility/history surfaces only.
 
-The canonical Solana devnet + live Pyth proof is:
+The current AAPL live-entitlement proof is:
 
-https://github.com/Faadil1/keys/actions/runs/35959137364
+https://github.com/Faadil1/keys/actions/runs/36035283447
+
+The current AAPL HTTP→Solana devnet proof is:
+
+https://github.com/Faadil1/keys/actions/runs/36034651466
 
 Faadil now maintains the backend/proof and supports integration issues. Benita can integrate against the frozen v0.2 semantics.
 
