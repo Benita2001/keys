@@ -56,9 +56,9 @@ export function getCapabilities(): Capabilities {
   const runtime = keysRuntimeExecutionEnabled();
   return {
     backend: backend ? "keys-v0.2-frozen" : "none",
-    marketData: backend ? "mock-with-live-tsla" : "mock",
+    marketData: backend ? "mock-with-live-aapl" : "mock",
     // The Family product lane remains demo/policy-only. A configured runtime
-    // enables only the isolated TSLA technical proof lane.
+    // enables only the isolated AAPL technical proof lane.
     moneyMode: "demo",
     funding: "demo",
     auth: "demo",
