@@ -80,7 +80,7 @@ test('HTTP adapter exposes fail-closed backend capabilities', async () => {
   assert.equal(result.body.authorityCommit.status, 'RUNTIME_UNAVAILABLE');
   assert.equal(result.body.executionEligibility.status, 'UNKNOWN_DEFAULT');
   assert.equal(result.body.simulation.status, 'AVAILABLE');
-  assert.equal(result.body.liveDemoProof.selectedEquity, 'TSLA');
+  assert.equal(result.body.liveDemoProof.selectedEquity, 'AAPL');
   assert.equal(result.body.liveDemoProof.route, '/api/v0.1/demo/live-proof');
   assert.equal(
     ['BLOCKED_API_KEY', 'LIVE_EVIDENCE_READY'].includes(result.body.liveDemoProof.status),
@@ -122,7 +122,7 @@ test('HTTP adapter reports injected providers as ready capabilities', async () =
   assert.equal(result.body.authorityCommit.status, 'RUNTIME_READY');
   assert.equal(result.body.executionEligibility.status, 'PROVIDER_READY');
   assert.equal(result.body.liveDemoProof.status, 'PROVIDER_READY');
-  assert.equal(result.body.liveDemoProof.selectedEquity, 'TSLA');
+  assert.equal(result.body.liveDemoProof.selectedEquity, 'AAPL');
 });
 
 test('HTTP adapter exposes canonical Maya fixture', async () => {
@@ -148,14 +148,14 @@ test('live demo proof surface exposes live evidence plus public devnet proof wit
       marketEvidenceProvider: async ({ asset }) => ({
         source: 'PYTH_PRO',
         symbol: `Equity.US.${asset}/USD`,
-        feedId: 1435,
+        feedId: 922,
         status: 'FRESH',
-        price: 379.696,
-        confidence: 0.019,
-        confidenceBps: 0.5004,
+        price: 337.34502,
+        confidence: 0.04003,
+        confidenceBps: 1.1866,
         maxConfidenceBps: 100,
-        publishTime: '2026-09-23T19:36:42.000Z',
-        receivedAt: '2026-09-23T19:36:42.000Z',
+        publishTime: '2026-09-24T17:34:56.000Z',
+        receivedAt: '2026-09-24T17:34:56.000Z',
         ageSeconds: 0,
         marketSession: 'regular',
         publisherCount: 19
@@ -167,7 +167,7 @@ test('live demo proof surface exposes live evidence plus public devnet proof wit
   assert.equal(result.body.type, 'LIVE_DEMO_PROOF');
   assert.equal(result.body.mode, 'LIVE_BACKEND_EVIDENCE');
   assert.equal(result.body.beneficiary.displayName, 'Maya');
-  assert.equal(result.body.scenario.asset, 'TSLA');
+  assert.equal(result.body.scenario.asset, 'AAPL');
   assert.equal(result.body.evaluation.marketEvidence.status, 'FRESH');
   assert.equal(result.body.evaluation.decision, 'ESCALATE');
   assert.equal(result.body.evaluation.reasonCode, 'GUARDIAN_REVIEW_REQUIRED');
