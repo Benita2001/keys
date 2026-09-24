@@ -27,7 +27,7 @@ const mayaFixture = JSON.parse(
   await readFile(new URL('../fixtures/frontend-maya-contract.json', import.meta.url), 'utf8')
 );
 
-const mayaV2DraftFixture = JSON.parse(
+const mayaV2Fixture = JSON.parse(
   await readFile(new URL('../fixtures/frontend-maya-v0.2-contract.json', import.meta.url), 'utf8')
 );
 
@@ -211,7 +211,8 @@ export async function routeKeysHttp({
       body: {
         ok: true,
         service: 'keys-backend',
-        contractVersion: FRONTEND_CONTRACT_VERSION
+        contractVersion: V2_CONTRACT_VERSION,
+        legacyContractVersion: FRONTEND_CONTRACT_VERSION
       }
     };
   }
@@ -236,7 +237,7 @@ export async function routeKeysHttp({
     return {
       status: 200,
       headers: JSON_HEADERS,
-      body: mayaV2DraftFixture
+      body: mayaV2Fixture
     };
   }
 
