@@ -63,6 +63,10 @@ current_truth:
   backend_cloudflare_worker_config: READY
   cloudflare_worker_dry_run: PASS
   cloudflare_worker_dry_run_run: "https://github.com/Faadil1/keys/actions/runs/36043084725"
+  cloudflare_authenticated_solana_rpc: REQUIRED
+  cloudflare_public_rpc_status: BLOCKED_403_THEN_RATE_LIMITED_429
+  cloudflare_public_health: PASS
+  cloudflare_demo_runtime: BLOCKED_PENDING_AUTHENTICATED_RPC
   backend_cloudflare_deployment: PENDING_USER_ACCOUNT_CONNECTION
   backend_public_url: PENDING
   backend_default_cors_origin: "https://cresco-lac.vercel.app"
