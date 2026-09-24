@@ -106,16 +106,17 @@ test("guardian-only funding refuses missing or child sessions and accepts a guar
   assert.equal(fundedBody.availableBalance, 60);
 });
 
-test("durable reservations enforce one family-wide period and balance boundary", async () => {
+test("durable reservations enforce one family-wide period across asset labels and the shared balance", async () => {
   const state = new FamilyState(memoryState());
+  const assets = ["AAPL", "TSLA", "AAPL", "TSLA", "AAPL"];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < assets.length; i += 1) {
     const response = await state.fetch(
       new Request("https://family.internal/reserve", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          asset: "AAPL",
+          asset: assets[i],
           notional: 10,
           idempotencyKey: `intent-${i}`
         })
@@ -123,6 +124,7 @@ test("durable reservations enforce one family-wide period and balance boundary",
     );
     const result = await body(response);
     assert.equal(result.allowed, true);
+    assert.equal(result.reservation.asset, assets[i]);
   }
 
   const sixth = await state.fetch(
