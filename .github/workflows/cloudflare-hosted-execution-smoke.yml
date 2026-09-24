@@ -32,6 +32,51 @@ jobs:
           '
           echo "CLOUDFLARE_HOSTED_HEALTH=PASS"
 
+      - name: Create child demo session
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "content-type: application/json" \
+            --data '{"role":"child","displayName":"Hosted Smoke Child"}' \
+            "$KEYS_API_URL/api/v0.2/auth/demo-session" \
+            | tee /tmp/child-session.json
+          node -e '
+            const fs = require("fs");
+            const x = JSON.parse(fs.readFileSync("/tmp/child-session.json","utf8"));
+            if (x.role !== "child" || !x.token) { console.error(x); process.exit(1); }
+            fs.appendFileSync(process.env.GITHUB_ENV, "CHILD_TOKEN=" + x.token + "\n");
+          '
+          echo "CLOUDFLARE_HOSTED_CHILD_SESSION=PASS"
+
+      - name: Verify hosted Family state and market truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -H "authorization: Bearer $CHILD_TOKEN" \
+            "$KEYS_API_URL/api/v0.2/family/state" \
+            | tee /tmp/family.json
+          curl --fail --silent --show-error \
+            "$KEYS_API_URL/api/v0.2/market/quotes?symbols=AAPL,NVDA" \
+            | tee /tmp/quotes.json
+          curl --fail --silent --show-error \
+            "$KEYS_API_URL/api/v0.2/market/series?symbol=AAPL&period=1M" \
+            | tee /tmp/history.json
+          node -e '
+            const fs = require("fs");
+            const family = JSON.parse(fs.readFileSync("/tmp/family.json","utf8"));
+            const quotes = JSON.parse(fs.readFileSync("/tmp/quotes.json","utf8"));
+            const history = JSON.parse(fs.readFileSync("/tmp/history.json","utf8"));
+            const aapl = quotes.quotes && quotes.quotes.find((q) => q.symbol === "AAPL");
+            const nvda = quotes.quotes && quotes.quotes.find((q) => q.symbol === "NVDA");
+            if (!family.profile || !family.mandate || !family.balances) process.exit(1);
+            if (quotes.type !== "V0_2_MARKET_QUOTES" || !aapl || !nvda || nvda.status !== "UNAVAILABLE") process.exit(1);
+            if (history.type !== "V0_2_MARKET_SERIES" || history.status !== "UNAVAILABLE" || history.reasonCode !== "HISTORY_PROVIDER_NOT_CONNECTED" || history.points.length !== 0) process.exit(1);
+          '
+          echo "CLOUDFLARE_HOSTED_FAMILY_AND_MARKET=PASS"
+
       - name: Resolve hosted AAPL runtime
         shell: bash
         run: |
@@ -72,7 +117,14 @@ jobs:
           }
           JSON
 
-          curl --fail-with-body --silent --show-error             -X POST             -H "content-type: application/json"             -H "idempotency-key: ${IDEMPOTENCY_KEY}"             --data-binary @/tmp/request.json             "$KEYS_API_URL/api/v0.2/actions/execute"             | tee /tmp/execute.json
+          curl --fail-with-body --silent --show-error \
+            -X POST \
+            -H "content-type: application/json" \
+            -H "authorization: Bearer $CHILD_TOKEN" \
+            -H "idempotency-key: ${IDEMPOTENCY_KEY}" \
+            --data-binary @/tmp/request.json \
+            "$KEYS_API_URL/api/v0.2/actions/execute" \
+            | tee /tmp/execute.json
 
           node - <<'NODE'
           const fs = require("fs");
