@@ -257,14 +257,18 @@ export class FamilyState {
         (sum, item) => sum + Number(item.notional || 0),
         0
       );
-      const allowance = state.requests.find(
-        (r) =>
-          r.status === "ALLOWED_ONCE" &&
-          !r.usedAt &&
-          r.asset === asset &&
-          r.mandateNonce === state.mandate.nonce &&
-          amount <= r.requestedNotional
-      );
+      const allowOnceRequestId = String(body.allowOnceRequestId || "");
+      const allowance = allowOnceRequestId
+        ? state.requests.find(
+            (r) =>
+              r.id === allowOnceRequestId &&
+              r.status === "ALLOWED_ONCE" &&
+              !r.usedAt &&
+              r.asset === asset &&
+              r.mandateNonce === state.mandate.nonce &&
+              amount <= r.requestedNotional
+          )
+        : null;
 
       const actionOk = amount <= state.mandate.maxActionNotional;
       const periodOk =
