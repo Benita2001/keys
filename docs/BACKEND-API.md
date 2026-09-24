@@ -136,6 +136,89 @@ The result is a boundary-request object awaiting a human decision.
 
 A boundary request never widens authority by itself.
 
+## GET /api/v0.2/demo/runtime
+
+Returns the current stable server-held Solana devnet demo runtime when the backend is configured with:
+
+- `DEVNET_KEYPAIR_JSON`
+- `PYTH_PRO_API_KEY`
+
+This route exposes only public runtime metadata.
+
+It does **not** expose signer material.
+
+Current runtime mode:
+
+`SERVER_HELD_DEVNET_DEMO`
+
+Truth boundary:
+
+- capital asset = demo/mock SPL token;
+- market truth = live signed Pyth TSLA evidence;
+- network = Solana devnet;
+- real minor securities execution = false;
+- brokerage/custody = false.
+
+If the stable runtime has not been bootstrapped, the route returns an explicit unavailable/not-ready response rather than fabricating state.
+
+## POST /api/v0.2/actions/execute
+
+Implemented for the Cresco judge-facing demo path.
+
+Body:
+
+```json
+{
+  "asset": "TSLA",
+  "type": "BUY",
+  "notional": 5,
+  "expectedNonce": 3,
+  "idempotencyKey": "uuid"
+}
+```
+
+When configured, the server:
+
+1. loads the stable on-chain demo Mandate and AssetRule;
+2. rejects stale nonce / inactive Mandate / unsupported asset or action;
+3. fetches a fresh signed Pyth TSLA Solana payload server-side;
+4. constructs the Ed25519 + `execute_within_mandate_with_pyth` transaction;
+5. sends it to the canonical KEYS devnet program;
+6. returns the actual devnet signature only after confirmation.
+
+Confirmed proof shape includes:
+
+```json
+{
+  "executionProof": {
+    "status": "CONFIRMED",
+    "network": "solana-devnet",
+    "signature": "<base58>",
+    "programId": "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk",
+    "simulated": false,
+    "executionAsset": "DEMO_TOKEN",
+    "pyth": {
+      "source": "PYTH_PRO",
+      "feedId": 1435,
+      "verification": "ONCHAIN_PYTH_LAZER",
+      "authorityEffect": "NONE"
+    }
+  }
+}
+```
+
+A refusal returns `executionProof: null`.
+
+Current idempotency scope:
+
+`PROCESS_LOCAL_DEMO`
+
+That means duplicate keys are deduplicated inside the active backend process. It is **not** yet a durable cross-region/serverless exactly-once guarantee.
+
+The stable runtime bootstrap + real execution smoke is attached to the `solana-devnet-authority-proof` workflow. Until that new smoke run returns PASS, this bridge is **IMPLEMENTED / PROOF PENDING**.
+
+See `docs/CRESCO-BACKEND-DELTA-2026-09-24.md`.
+
 ## GET /api/v0.2/integrations/prestocks
 
 Returns the live normalized PreStocks catalog from the official public PreStocks token API.
