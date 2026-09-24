@@ -1,0 +1,70 @@
+name: devnet-funding-topup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/devnet-funding-topup.yml"
+  workflow_dispatch:
+
+jobs:
+  topup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      DEVNET_PAYER: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
+      TARGET_LAMPORTS: "2500000000"
+    steps:
+      - name: Request only the required Devnet shortfall from provider faucet
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rpc_call() {
+            local url="$1"
+            local payload="$2"
+            curl --silent --show-error --max-time 20               -H "content-type: application/json"               --data "$payload"               "$url"
+          }
+
+          balance_payload=$(printf '{"jsonrpc":"2.0","id":1,"method":"getBalance","params":["%s",{"commitment":"confirmed"}]}' "$DEVNET_PAYER")
+          before_json=$(rpc_call "https://api.devnet.solana.com" "$balance_payload")
+          echo "$before_json"
+          before=$(printf '%s' "$before_json" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("result",{}).get("value",0))')
+          echo "PROOF topup_balance_before_lamports=$before"
+
+          if [ "$before" -ge "$TARGET_LAMPORTS" ]; then
+            echo "DEVNET_TOPUP=NOT_NEEDED"
+            exit 0
+          fi
+
+          shortfall=$((TARGET_LAMPORTS - before))
+          # Ask for a small margin for transaction fees while keeping the
+          # provider request bounded to this one upgrade gate.
+          request=$((shortfall + 10000000))
+          if [ "$request" -gt 1000000000 ]; then
+            request=1000000000
+          fi
+          echo "PROOF topup_requested_lamports=$request"
+
+          airdrop_payload=$(printf '{"jsonrpc":"2.0","id":1,"method":"requestAirdrop","params":["%s",%s,{"commitment":"confirmed"}]}' "$DEVNET_PAYER" "$request")
+          set +e
+          provider_json=$(rpc_call "https://demo.helius.dev/api/rpc?network=devnet" "$airdrop_payload")
+          provider_rc=$?
+          set -e
+          echo "$provider_json"
+          echo "PROOF helius_provider_faucet_rc=$provider_rc"
+
+          # Give the Devnet transaction a bounded confirmation window.
+          for attempt in $(seq 1 12); do
+            sleep 5
+            after_json=$(rpc_call "https://api.devnet.solana.com" "$balance_payload")
+            after=$(printf '%s' "$after_json" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("result",{}).get("value",0))')
+            echo "PROOF topup_balance_attempt=$attempt lamports=$after"
+            if [ "$after" -ge "$TARGET_LAMPORTS" ]; then
+              echo "DEVNET_TOPUP=PASS"
+              exit 0
+            fi
+          done
+
+          echo "DEVNET_TOPUP=PROVIDER_UNAVAILABLE"
+          exit 1
