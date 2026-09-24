@@ -90,7 +90,7 @@ function mergedMandate(family, runtime) {
       Number(runtime.mandate.maxActionNotionalMicroUsd || 0) / 1_000_000,
     maxPeriodNotional:
       Number(runtime.mandate.maxPeriodNotionalMicroUsd || 0) / 1_000_000,
-    allowedAssets: ["AAPL"],
+    allowedAssets: runtime.assetRule?.enabled === true ? ["AAPL"] : [],
     allowedActions: ["BUY"],
     updatedAt: new Date().toISOString()
   };
@@ -182,6 +182,18 @@ async function handleMandateTransition(env, body) {
     });
     signatures.push(result.signature);
     state = result.state;
+  }
+
+  if (Array.isArray(changes.allowedAssets)) {
+    const shouldEnableAapl = changes.allowedAssets.includes("AAPL");
+    if (shouldEnableAapl !== (state.assetRule?.enabled === true)) {
+      const result = await provider.setCurrentAssetEnabled({
+        expectedNonce: state.mandate.nonce,
+        enabled: shouldEnableAapl
+      });
+      signatures.push(result.signature);
+      state = result.state;
+    }
   }
 
   const mandate = mergedMandate(family, state);
