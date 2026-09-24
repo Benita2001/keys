@@ -48,11 +48,20 @@ jobs:
 
           airdrop_payload=$(printf '{"jsonrpc":"2.0","id":1,"method":"requestAirdrop","params":["%s",%s,{"commitment":"confirmed"}]}' "$DEVNET_PAYER" "$request")
           set +e
-          provider_json=$(rpc_call "https://demo.helius.dev/api/rpc?network=devnet" "$airdrop_payload")
+          provider_json=$(rpc_call "https://docs-demo.solana-devnet.quiknode.pro/" "$airdrop_payload")
           provider_rc=$?
           set -e
           echo "$provider_json"
-          echo "PROOF helius_provider_faucet_rc=$provider_rc"
+          echo "PROOF quicknode_provider_faucet_rc=$provider_rc"
+
+          if ! printf '%s' "$provider_json" | python3 -c 'import json,sys; x=json.load(sys.stdin); raise SystemExit(0 if isinstance(x.get("result"), str) else 1)' ; then
+            set +e
+            provider_json=$(rpc_call "https://demo.helius.dev/api/rpc?network=devnet" "$airdrop_payload")
+            provider_rc=$?
+            set -e
+            echo "$provider_json"
+            echo "PROOF helius_provider_faucet_rc=$provider_rc"
+          fi
 
           # Give the Devnet transaction a bounded confirmation window.
           for attempt in $(seq 1 12); do
