@@ -497,3 +497,75 @@ test('v0.2 boundary request remains a pending human decision', async () => {
   );
   assert.equal(result.body.mandateNonce, 3);
 });
+
+test('v0.2 exposes PreStocks as a live sponsor integration without granting authority', async () => {
+  const asset = {
+    source: 'PRESTOCKS',
+    symbol: 'OPENAI',
+    contractAddress: 'PreweJYECqtQwBtpxHL171nL2K6umo692gTm7Q3rpgF',
+    representation: {
+      kind: 'PRE_IPO_ECONOMIC_EXPOSURE',
+      directEquityOwnership: false
+    },
+    eligibility: {
+      status: 'UNKNOWN',
+      executionEligible: false,
+      reasonCode: 'ELIGIBILITY_NOT_VERIFIED'
+    },
+    keysPolicy: {
+      practiceAvailable: true,
+      executionEligible: false,
+      authorityEffect: 'NONE'
+    }
+  };
+
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.2/integrations/prestocks',
+    services: {
+      preStocksCatalogProvider: async () => [asset]
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.contractVersion, '0.2');
+  assert.equal(result.body.type, 'PRESTOCKS_INTEGRATION_CATALOG');
+  assert.equal(result.body.integration.status, 'LIVE_PUBLIC_API_INTEGRATED');
+  assert.equal(result.body.integration.authorityEffect, 'NONE');
+  assert.equal(result.body.assets[0].symbol, 'OPENAI');
+  assert.equal(result.body.assets[0].eligibility.executionEligible, false);
+});
+
+test('v0.2 PreStocks asset route resolves a sponsor asset by symbol', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.2/integrations/prestocks/openai',
+    services: {
+      preStocksCatalogProvider: async () => [{
+        source: 'PRESTOCKS',
+        symbol: 'OPENAI',
+        contractAddress: 'PreweJYECqtQwBtpxHL171nL2K6umo692gTm7Q3rpgF',
+        eligibility: { status: 'UNKNOWN', executionEligible: false },
+        keysPolicy: { authorityEffect: 'NONE' }
+      }]
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.type, 'PRESTOCKS_INTEGRATION_ASSET');
+  assert.equal(result.body.asset.symbol, 'OPENAI');
+  assert.equal(result.body.asset.keysPolicy.authorityEffect, 'NONE');
+});
+
+test('v0.2 PreStocks asset route fails explicitly for an unknown symbol', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.2/integrations/prestocks/unknown',
+    services: {
+      preStocksCatalogProvider: async () => []
+    }
+  });
+
+  assert.equal(result.status, 404);
+  assert.equal(result.body.error, 'PRESTOCK_NOT_FOUND');
+});
