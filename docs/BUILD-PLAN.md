@@ -58,7 +58,7 @@ Proven on local Solana and canonical devnet:
 4. Explicit human widen + stale execution refusal.
 5. Same larger action succeeds after human widen.
 6. Pause/downward authority.
-7. Draft v0.2 semantic API/contract.
+7. Initial v0.2 semantic API/contract (subsequently frozen after Gate 6.5).
 
 Canonical devnet run:
 
