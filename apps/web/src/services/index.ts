@@ -192,8 +192,15 @@ export const practiceExecution: PracticeExecutionService = {
 /* ------------------------------------------------------------------ */
 
 function preflight(input: MoneyActionInput): ActionEvaluation | null {
-  if (input.asset.moneyModeStatus === "unavailable") {
-    return { decision: "REFUSE", reasonCode: "ASSET_UNAVAILABLE", source: "local-preview" };
+  if (
+    input.asset.moneyModeStatus === "unavailable" ||
+    (keysRuntimeExecutionEnabled() && input.asset.ticker !== "AAPL")
+  ) {
+    return {
+      decision: "REFUSE",
+      reasonCode: "ASSET_UNAVAILABLE",
+      source: "local-preview",
+    };
   }
   return null;
 }
