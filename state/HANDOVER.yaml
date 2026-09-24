@@ -1,7 +1,7 @@
 project: KEYS
 handover_version: 12
 updated_at: "2026-09-24"
-status: V0_2_ONCHAIN_PYTH_DEVNET_PASS_FRONTEND_CONTRACT_FROZEN
+status: V0_2_CRESCO_HTTP_DEVNET_BRIDGE_PASS_FRONTEND_FROZEN
 
 mission:
   candidate: B
@@ -10,8 +10,8 @@ mission:
   promise: "Financial independence shouldn't happen all at once."
   product_principle: "Learn in context. Act freely inside bounds. Ask for more freedom only at the boundary."
   core_primitive: mandate_enforced_bounded_autonomy
-  current_gate: BENITA_V0_2_FRONTEND_INTEGRATION
-  immediate_goal: "Integrate the frozen v0.2 bounded-autonomy contract into the Family frontend while preserving the proven Solana/Pyth truth boundary."
+  current_gate: CRESCO_BACKEND_DEPLOYMENT_AND_LIVE_WIRING
+  immediate_goal: "Deploy the proven KEYS HTTP-to-Solana devnet bridge and wire the merged Cresco frontend to it without weakening the truth boundary."
 
 strategy_lock:
   family_is_stocklana_wedge: true
@@ -67,7 +67,11 @@ canonical_truth:
     cresco_frontend_pr_1: MERGED
     cresco_web_ci: PASS
     cresco_live_proof_lane_ui: IMPLEMENTED_WEB_CI_PASS
-    cresco_devnet_execution_bridge: IMPLEMENTED_PROOF_PENDING
+    cresco_devnet_execution_bridge: PASS_PROVEN_HTTP_TO_SOLANA_DEVNET
+    cresco_devnet_execution_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36008701813"
+    cresco_devnet_execution_signature: "2GqHrafL46sU3RMDEEb8AChHzwgRqkMT5fjn5GiMyqomqkrEukrnywDCmGZrNtnRLkNGYMVjdPowyh5HrKtGdytn"
+    cresco_devnet_mandate: "AnBnNwACbwQ7KMN46jBoDS5pxsek2AdHV6X1B1uA7hXp"
+    cresco_bridge_evidence: evidence/solana/CRESCO-HTTP-DEVNET-EXECUTION-BRIDGE-PROOF-2026-09-24.md
     cresco_demo_runtime_mode: SERVER_HELD_DEVNET_DEMO
     cresco_execution_asset: DEMO_TOKEN
     cresco_execution_route: POST_/api/v0.2/actions/execute
@@ -144,17 +148,16 @@ truth_boundaries:
   - no real minor securities execution claim
 
 next_work:
-  step: 29
-  step_name: BENITA_V0_2_FRONTEND_INTEGRATION
-  owner: Benita
-  support_owner: Faadil
+  step: 30
+  step_name: CRESCO_BACKEND_DEPLOYMENT_AND_LIVE_WIRING
+  owner: Faadil
+  support_owner: Benita
   sequence:
-    - "Benita integrates against docs/FRONTEND-BACKEND-CONTRACT-V0.2.md and docs/CRESCO-BACKEND-DELTA-2026-09-24.md."
-    - "Replace the draft evaluate route in Cresco with the frozen /api/v0.2/actions/evaluate route."
-    - "Wire Cresco to the devnet runtime/execution routes once their smoke proof passes."
-    - "Connect My Key / Learn-Practice / action / boundary / guardian decision / market-change surfaces."
-    - "Keep backend proof stable and support integration issues only."
-    - "Prepare judge-facing demo proof and final Candidate A vs Candidate B collision."
+    - "Deploy KEYS backend separately from Cresco."
+    - "Configure server-only devnet/Pyth secrets and CORS for the Cresco origin."
+    - "Set Cresco NEXT_PUBLIC_KEYS_API_URL and NEXT_PUBLIC_KEYS_EXECUTION=runtime."
+    - "Run the deployed Technical details -> Live Solana proof lane and verify a confirmed non-simulated devnet signature."
+    - "Preserve Family flow, Practice, and sponsor truth boundaries."
 
 key_files:
   - state/CURRENT.yaml
