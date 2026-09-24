@@ -10,6 +10,9 @@ on:
       - "package.json"
       - "tests/anchor-authority-proof.cjs"
       - "src/pyth-adapter.mjs"
+      - "src/devnet-execution-provider.mjs"
+      - "scripts/bootstrap-devnet-demo-runtime.cjs"
+      - "scripts/devnet-execution-smoke.mjs"
       - ".github/workflows/solana-devnet-authority-proof.yml"
   workflow_dispatch:
 
@@ -216,5 +219,15 @@ jobs:
           echo "PROOF explorer=https://explorer.solana.com/address/$PROGRAM_ID?cluster=devnet"
           export ANCHOR_PROVIDER_URL=https://api.devnet.solana.com
           export ANCHOR_WALLET="$HOME/.config/solana/id.json"
+
           npm run test:anchor
+
+          echo "PROOF stable_demo_runtime_bootstrap=START"
+          npm run bootstrap:devnet-demo-runtime
+          echo "PROOF stable_demo_runtime_bootstrap=PASS"
+
+          echo "PROOF http_execution_bridge_smoke=START"
+          npm run proof:devnet-execution-bridge
+          echo "PROOF http_execution_bridge_smoke=PASS"
+
           echo "DEVNET_PROOF=PASS"
