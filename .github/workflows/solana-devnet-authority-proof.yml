@@ -133,17 +133,56 @@ jobs:
           BALANCE=${BALANCE:-0}
           echo "PROOF devnet_balance_before_airdrop_lamports=$BALANCE"
 
-          # Let the actual Solana loader determine the upgrade rent after each build.
-          # A previous fixed 3 SOL threshold became stale after the on-chain Pyth
-          # parser was reduced substantially. We only make a small best-effort
-          # faucet request when the wallet is genuinely low, then attempt deploy.
-          if [ "$BALANCE" -lt 500000000 ]; then
+          # Reclaim any orphaned upgrade buffers left by an interrupted devnet
+          # deployment before asking a faucet for more test SOL.
+          set +e
+          BUFFERS_OUT=$(solana program show --buffers --buffer-authority "$HOME/.config/solana/id.json" --url https://api.devnet.solana.com 2>&1)
+          BUFFERS_RC=$?
+          set -e
+          echo "$BUFFERS_OUT"
+          echo "PROOF devnet_buffer_scan_rc=$BUFFERS_RC"
+          if [ $BUFFERS_RC -eq 0 ]; then
+            BUFFER_ADDRESSES=$(printf '%s\n' "$BUFFERS_OUT" | awk 'NR>2 && $1 ~ /^[1-9A-HJ-NP-Za-km-z]{32,44}$/ {print $1}')
+            for BUFFER_ADDRESS in $BUFFER_ADDRESSES; do
+              set +e
+              CLOSE_OUT=$(solana program close "$BUFFER_ADDRESS" --url https://api.devnet.solana.com 2>&1)
+              CLOSE_RC=$?
+              set -e
+              echo "$CLOSE_OUT"
+              echo "PROOF devnet_buffer_close address=$BUFFER_ADDRESS rc=$CLOSE_RC"
+            done
+          fi
+
+          BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
+          BALANCE=${BALANCE:-0}
+          echo "PROOF devnet_balance_after_buffer_reclaim_lamports=$BALANCE"
+
+          # First use the native faucet. It is cheap when available, but can be
+          # rate-limited independently of our build.
+          if [ "$BALANCE" -lt 2800000000 ]; then
             set +e
             AIRDROP_OUT=$(solana airdrop 0.5 --url https://api.devnet.solana.com 2>&1)
             AIRDROP_RC=$?
             set -e
             echo "$AIRDROP_OUT"
             echo "PROOF devnet_airdrop_attempt amount=0.5 rc=$AIRDROP_RC"
+          fi
+
+          BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
+          BALANCE=${BALANCE:-0}
+
+          # Solana's official faucet guidance directs automated agents to the
+          # proof-of-work faucet when RPC airdrops are rate-limited. Mine only
+          # the small devnet shortfall required for this program upgrade.
+          if [ "$BALANCE" -lt 2800000000 ]; then
+            echo "PROOF devnet_pow_faucet=START balance_lamports=$BALANCE"
+            cargo install devnet-pow --locked
+            set +e
+            POW_OUT=$(devnet-pow mine --target-lamports 700000000 -ud 2>&1)
+            POW_RC=$?
+            set -e
+            echo "$POW_OUT"
+            echo "PROOF devnet_pow_faucet_rc=$POW_RC"
           fi
 
           BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
