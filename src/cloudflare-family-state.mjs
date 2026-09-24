@@ -174,13 +174,31 @@ export class FamilyState {
         ...item,
         status:
           d === "ALLOW_ONCE"
-            ? "ALLOWED_ONCE"
+            ? "ALLOW_ONCE_PENDING_CHAIN"
             : d === "WIDEN_MANDATE"
               ? "WIDEN_PENDING_CHAIN"
               : "REFUSED",
         decidedAt: now(),
         guardianNote: String(body.note || "").slice(0, 140),
         usedAt: null
+      };
+      await this.save(state);
+      return json({ request: state.requests[index], mandate: state.mandate });
+    }
+
+    const allowanceComplete = method === "POST"
+      ? path.match(/^\/requests\/([^/]+)\/complete-allowance$/)
+      : null;
+    if (allowanceComplete) {
+      const index = state.requests.findIndex((r) => r.id === allowanceComplete[1]);
+      if (index < 0) return json({ error: "REQUEST_NOT_FOUND" }, 404);
+      if (state.requests[index].status !== "ALLOW_ONCE_PENDING_CHAIN") {
+        return json({ error: "REQUEST_NOT_PENDING_ALLOWANCE_CHAIN", request: state.requests[index] }, 409);
+      }
+      state.requests[index] = {
+        ...state.requests[index],
+        status: "ALLOWED_ONCE",
+        chainProof: body.chainProof || null
       };
       await this.save(state);
       return json({ request: state.requests[index], mandate: state.mandate });
@@ -263,6 +281,7 @@ export class FamilyState {
             (r) =>
               r.id === allowOnceRequestId &&
               r.status === "ALLOWED_ONCE" &&
+              !!r.chainProof?.allowanceReceipt &&
               !r.usedAt &&
               r.asset === asset &&
               r.mandateNonce === state.mandate.nonce &&
