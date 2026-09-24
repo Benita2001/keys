@@ -227,6 +227,113 @@ export async function fetchPythProSnapshot({
 
 
 /**
+ * Fetch authenticated Pyth Pro OHLC history and project it to KEYS price points.
+ * The Pro API key remains server-side. Auth, entitlement, upstream, malformed,
+ * or empty responses fail closed with no fabricated points.
+ */
+export async function fetchPythProHistory({
+  apiKey,
+  feed = PYTH_PRO_EQUITY_FEEDS.AAPL,
+  channel = 'fixed_rate@1000ms',
+  from,
+  to,
+  resolution = 'D',
+  fetchImpl = globalThis.fetch,
+  endpointBase = 'https://pyth.dourolabs.app/v1'
+} = {}) {
+  const base = {
+    source: 'PYTH_PRO_HISTORY',
+    symbol: feed.symbol,
+    feedId: feed.feedId,
+    channel,
+    resolution,
+    from,
+    to
+  };
+
+  if (!apiKey) {
+    return { ...base, status: 'UNAVAILABLE', points: [], reasonCode: 'PYTH_API_KEY_REQUIRED' };
+  }
+  if (typeof fetchImpl !== 'function') {
+    return { ...base, status: 'UNAVAILABLE', points: [], reasonCode: 'PYTH_FETCH_UNAVAILABLE' };
+  }
+  if (!Number.isFinite(Number(from)) || !Number.isFinite(Number(to)) || Number(from) >= Number(to)) {
+    return { ...base, status: 'UNAVAILABLE', points: [], reasonCode: 'PYTH_HISTORY_WINDOW_INVALID' };
+  }
+
+  const url = new URL(
+    `${String(endpointBase).replace(/\/$/, '')}/${encodeURIComponent(channel)}/history`
+  );
+  url.searchParams.set('symbol', feed.symbol);
+  url.searchParams.set('from', String(Math.floor(Number(from))));
+  url.searchParams.set('to', String(Math.floor(Number(to))));
+  url.searchParams.set('resolution', resolution);
+
+  let response;
+  try {
+    response = await fetchImpl(url.toString(), {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+  } catch (error) {
+    return {
+      ...base,
+      status: 'UNAVAILABLE',
+      points: [],
+      reasonCode: 'PYTH_HISTORY_UPSTREAM_UNREACHABLE',
+      detail: error instanceof Error ? error.message : String(error)
+    };
+  }
+
+  if (!response.ok) {
+    const reasonCode =
+      response.status === 401
+        ? 'PYTH_AUTH_REQUIRED'
+        : response.status === 403
+          ? 'PYTH_NOT_ENTITLED'
+          : response.status === 404
+            ? 'PYTH_HISTORY_FEED_NOT_FOUND'
+            : 'PYTH_HISTORY_UPSTREAM_ERROR';
+    return {
+      ...base,
+      status: 'UNAVAILABLE',
+      points: [],
+      reasonCode,
+      httpStatus: response.status
+    };
+  }
+
+  const body = await response.json().catch(() => null);
+  if (!body || body.s !== 'ok' || !Array.isArray(body.t) || !Array.isArray(body.c)) {
+    return {
+      ...base,
+      status: 'UNAVAILABLE',
+      points: [],
+      reasonCode: body?.s === 'no_data' ? 'PYTH_HISTORY_NO_DATA' : 'PYTH_HISTORY_MALFORMED_RESPONSE'
+    };
+  }
+
+  const points = body.t
+    .map((timestamp, index) => ({
+      t: Number(timestamp) * 1000,
+      v: Number(body.c[index])
+    }))
+    .filter((point) => Number.isFinite(point.t) && Number.isFinite(point.v));
+
+  if (points.length === 0) {
+    return { ...base, status: 'UNAVAILABLE', points: [], reasonCode: 'PYTH_HISTORY_NO_DATA' };
+  }
+
+  return {
+    ...base,
+    status: 'AVAILABLE',
+    points,
+    candleCount: points.length
+  };
+}
+
+
+/**
  * Fetches the same authenticated Pyth Pro evidence together with a signed
  * Solana-format payload suitable for the future on-chain verification path.
  *
