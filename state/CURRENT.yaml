@@ -97,6 +97,15 @@ v0_2_target:
     architecture_delta: docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md
     learning_layer: docs/FAMILY-LEARNING-LAYER.md
 
+sponsor_tracks:
+  stocklana_main: ACTIVE
+  pyth: ACTIVE_PROVEN
+  prestocks: ACTIVE_LIVE_API_INTEGRATED
+  tessera: HOLD_WATCH
+  clawpump: HOLD_OUTSIDE_CORE
+  meteora: HOLD_OUTSIDE_CORE
+  governing_doc: docs/BOUNTY-INTEGRATION-GATE-2026-09-24.md
+
 collaboration:
   frontend_owner: Benita
   backend_owner: Faadil
