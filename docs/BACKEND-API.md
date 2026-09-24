@@ -194,11 +194,21 @@ Current configured Pyth adapter feeds include AAPL and TSLA; AAPL is the current
 
 ### GET /api/v0.2/market/series?symbol=AAPL&period=1M
 
-Currently returns:
+Uses the authenticated **Pyth Pro History API** server-side for configured feeds.
 
-`UNAVAILABLE / HISTORY_PROVIDER_NOT_CONNECTED`
+Supported UI periods map to bounded history windows/resolutions: `1D`, `1W`/`7D`, `1M`/`30D`, `1Y`, and `All`.
 
-with no fabricated points. The frontend can retain clearly labeled sample history.
+When entitled, the route returns `status: AVAILABLE`, `source: PYTH_PRO_HISTORY`, the feed id/resolution, and real close-price points as `{ t, v }`.
+
+Authentication, entitlement, upstream, malformed-response, or no-data failures return `UNAVAILABLE` with an explicit reason code and zero fabricated points. The Pyth Pro key remains server-side.
+
+### POST /api/v0.2/proofs/concurrency
+
+Guardian demo session required.
+
+Runs a no-trade proof against the real Family Durable Object. It submits concurrent AAPL/TSLA-labeled reservations against one shared period/balance budget, verifies serialization/refusal, then releases all proof reservations without changing the Family balance or period spend.
+
+This proves the family-wide reservation boundary is multi-asset-ready. It does **not** claim TSLA is currently executable in Money Mode; AAPL remains the proven Money execution lane.
 
 ## Stable proof/runtime
 
