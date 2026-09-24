@@ -221,6 +221,24 @@ Benita should update the frontend adapter in this order:
 7. keep the copy explicit that the capital asset is a demo/mock SPL token;
 8. optionally add PreStocks under Learn / Practice, never as the homepage hero.
 
+## Frontend routing invariant
+
+The normal Cresco Family flow and the live Solana proof lane are intentionally separate.
+
+**Family product lane**
+- keeps the current broad demo asset set and bounded-autonomy UX;
+- uses the frozen evaluation semantics;
+- does not pretend every visible asset has a proven live Solana execution representation.
+
+**Technical proof lane**
+- lives under `How Cresco works → Technical details`;
+- resolves the stable TSLA demo runtime from `GET /api/v0.2/demo/runtime`;
+- calls `POST /api/v0.2/actions/execute`;
+- shows success only for `CONFIRMED + simulated:false + real signature`;
+- links directly to the devnet transaction.
+
+Do not globally route Apple/NVDA/etc. Money Mode into the TSLA proof runtime.
+
 ## Judge-facing target
 
 The strongest demonstration is:
