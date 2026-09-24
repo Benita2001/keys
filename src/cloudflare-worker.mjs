@@ -1,6 +1,7 @@
 import { routeKeysHttp } from './http-api.mjs';
 import { handleFamilyApi } from './cloudflare-family-api.mjs';
-export { FamilyState } from './cloudflare-family-state.mjs';
+import { FamilyState } from './cloudflare-family-state.mjs';
+export { FamilyState };
 
 const DEFAULT_CRESCO_ORIGIN = 'https://cresco-lac.vercel.app';
 
