@@ -94,15 +94,24 @@ The current frontend/backend semantic contract is:
 
 [docs/FRONTEND-BACKEND-CONTRACT-V0.2.md](docs/FRONTEND-BACKEND-CONTRACT-V0.2.md)
 
-Current v0.2 API semantics:
+Current v0.2 API includes:
 
-- `GET /api/v0.2/demo/maya`
+- `POST /api/v0.2/auth/demo-session`
+- `GET /api/v0.2/family/state`
+- `GET /api/v0.2/mandates/current`
+- `POST /api/v0.2/mandates/transition`
 - `POST /api/v0.2/actions/evaluate`
+- `POST /api/v0.2/actions/execute`
 - `POST /api/v0.2/boundary-requests`
-- `GET /api/v0.2/demo/runtime` — stable AAPL devnet demo-runtime metadata
-- `POST /api/v0.2/actions/execute` — real devnet demo-token execution bridge
+- `POST /api/v0.2/boundary-requests/:id/decision`
+- `POST /api/v0.2/funding/deposits`
+- `POST /api/v0.2/learning/progress`
+- `GET /api/v0.2/portfolio?mode=money`
+- `GET /api/v0.2/market/quotes`
+- `GET /api/v0.2/demo/runtime`
+- `GET /api/v0.2/demo/maya`
 
-The execution bridge is implemented with a server-held devnet demo signer and live signed Pyth AAPL evidence. Its dedicated stable-runtime smoke workflow is the current proof gate; do not interpret it as production wallet/custody architecture.
+The Family execution bridge uses a server-held Devnet demo signer, live signed Pyth AAPL evidence, a demo SPL token, and Durable Object state/idempotency. Do not interpret it as production wallet/custody/brokerage architecture.
 
 The old v0.1 contract remains historical proof only.
 
@@ -153,11 +162,11 @@ KEYS does **not** currently claim:
 - Solana mainnet deployment;
 - universal issuer/venue/jurisdiction eligibility.
 
-The current Pyth trial proves TSLA live evidence; it does not establish live AAPL entitlement.
+The current proof lane establishes live AAPL entitlement and on-chain Pyth-backed execution. Historical TSLA proofs remain valid evidence.
 
 ## Consumer frontend — Cresco
 
-The family-facing app is **Cresco**, built in [`apps/web`](apps/web) (Next.js, isolated from the backend package). Practice and Money modes, bounded-autonomy boundary requests and guardian decisions are implemented against the KEYS v0.2 draft semantics. Money Mode is demo-only in the frontend.
+The family-facing app is **Cresco**, built in [`apps/web`](apps/web). The hackathon Family flow is now connected to the stateful KEYS v0.2 backend: role-scoped demo sessions, shared Family state, server-owned Mandate evaluation, persistent boundary requests, guardian decisions, durable idempotency/reservations, test funding, learning/portfolio sync, and the proven AAPL Solana Devnet demo-token execution lane.
 
 See [Cresco implementation summary](docs/CRESCO-FRONTEND-IMPLEMENTATION-SUMMARY.md) and [backend integration handoff](docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md).
 
