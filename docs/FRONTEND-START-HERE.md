@@ -86,6 +86,17 @@ Use these product routes:
 - `POST /api/v0.2/actions/evaluate`
 - `POST /api/v0.2/boundary-requests`
 
+Cresco devnet bridge now implemented in backend code:
+
+- `GET /api/v0.2/demo/runtime`
+- `POST /api/v0.2/actions/execute`
+
+Until the dedicated devnet smoke workflow passes, treat those two routes as **IMPLEMENTED / PROOF PENDING** rather than canonically proven. The runtime uses a server-held devnet demo signer and a demo/mock SPL token.
+
+Current delta for PR #1:
+
+`docs/CRESCO-BACKEND-DELTA-2026-09-24.md`
+
 Do not build the new product around `/api/v0.1/*` or `/api/v0.2/draft/*`; those remain compatibility/history surfaces only.
 
 The canonical Solana devnet + live Pyth proof is:
