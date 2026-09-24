@@ -69,11 +69,17 @@ Learning, XP, badges and P&L never touch the Mandate. This is covered by tests.
 - `family.ts` — demo family (Alex, parent Sam), Mandate v4/nonce 3, $50 demo balance, practice holdings sized to reproduce the mockup ($1,248.50, +$57.30, +4.8%), badges, challenges, sample weekly minutes.
 - `learning.ts` — lesson content (original copy, not mock data).
 
+Current AAPL proof:
+- entitlement + signed payload: https://github.com/Faadil1/keys/actions/runs/36035283447
+- HTTP→Solana devnet execution: https://github.com/Faadil1/keys/actions/runs/36034651466
+- current feed: `Equity.US.AAPL/USD` / id `922`
+- historical TSLA proof remains valid evidence.
+
 **Real integrations (optional, `NEXT_PUBLIC_KEYS_API_URL`):**
 - `POST /api/v0.2/actions/evaluate` — frozen Money decision route.
-- `GET /api/v0.1/demo/live-proof` — overlays a live Pyth TSLA price only when evidence is FRESH.
-- `GET /api/v0.2/demo/runtime` — implemented stable TSLA devnet proof-lane metadata.
-- `POST /api/v0.2/actions/execute` — implemented real Solana devnet demo-token execution bridge; dedicated stable-runtime smoke proof is the current proof gate.
+- `GET /api/v0.1/demo/live-proof` — overlays a live Pyth AAPL price only when evidence is FRESH.
+- `GET /api/v0.2/demo/runtime` — proven stable AAPL devnet proof-lane metadata.
+- `POST /api/v0.2/actions/execute` — proven real Solana devnet demo-token execution bridge; current AAPL smoke PASS is run `36034651466`.
 - `GET /api/v0.2/integrations/prestocks` and `/:symbol` — optional PreStocks representation/Practice context.
 
 **Still not production-integrated:** funding, production auth/family link, persistent guardian request decisions/allow-once, production wallet/custody architecture, and persistence of learning/portfolio. See the handoff and backend delta docs.
@@ -156,8 +162,8 @@ Verified on the deployment: all primary routes return 200 (unknown routes 404); 
 - Illustrations are original hand-built SVG in the mockup's spirit. They're simpler than the mockup's rendered 3D art; a raster illustration pass would get closer.
 - Company identities use brand-colored lettermarks, not trademarked logos. The Company Detail hero is an illustrated storefront, not the mockup's photo.
 - All state is per-device (localStorage). No accounts, no sync between the child and parent devices. Both views share one browser in the demo.
-- The deployed Cresco site remains demo-first until a KEYS backend URL and runtime env are connected. The repo now contains an implemented TSLA devnet execution proof lane, but it remains explicitly demo-token / server-held-demo-signer infrastructure rather than brokerage, custody or real securities execution.
-- Only TSLA can ever show a live price, and only with a configured backend Pyth key. Series/history are always sample data.
+- The deployed Cresco site remains demo-first until a KEYS backend URL and runtime env are connected. The repo now contains an proven AAPL devnet execution proof lane, but it remains explicitly demo-token / server-held-demo-signer infrastructure rather than brokerage, custody or real securities execution.
+- AAPL is the current proven live-price/proof asset when the backend Pyth key is configured. Other series/history remain sample data unless separately backed by live feeds.
 - Headless screenshots are 500px wide because headless Chrome enforces a minimum window width; the in-browser QA used 375px.
 - The parent "Last 30 days" control is a static label; the weekly bars are a labeled sample week.
 
