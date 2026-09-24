@@ -386,7 +386,12 @@ export function createDevnetExecutionProvider({
       charter: runtime.charter.toBase58(),
       mandateAddress: runtime.mandateAddress.toBase58(),
       mandate: {
-        status: runtime.mandate.status === 0 ? 'ACTIVE' : 'NOT_ACTIVE',
+        status:
+          runtime.mandate.status === 0
+            ? 'ACTIVE'
+            : runtime.mandate.status === 1
+              ? 'PAUSED'
+              : 'REVOKED',
         stage: runtime.mandate.stage,
         version: runtime.mandate.version,
         nonce: runtime.mandate.nonce,
