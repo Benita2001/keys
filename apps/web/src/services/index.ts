@@ -1,7 +1,7 @@
 /**
  * Service registry. Today every service is a demo implementation over local
- * state, with the KEYS backend used for Money-mode decisions and live TSLA
- * evidence when NEXT_PUBLIC_KEYS_API_URL is configured.
+ * state, with the KEYS backend used for Money-mode decisions and fresh Pyth
+ * quotes when NEXT_PUBLIC_KEYS_API_URL is configured.
  */
 import { assetRuleFor, evaluateBoundedAction } from "@/domain/policy";
 import type {
@@ -20,7 +20,8 @@ import {
   decidePersistentBoundaryRequest,
   evaluateAction,
   executeAction,
-  fetchLiveEquityPrice,
+  fetchMarketQuotes,
+  fetchMarketSeries,
   keysBackendConfigured,
   keysRuntimeExecutionEnabled,
   newIdempotencyKey,
@@ -75,18 +76,38 @@ export function getCapabilities(): Capabilities {
 /* Market data                                                         */
 /* ------------------------------------------------------------------ */
 
-let liveOverlay: Promise<Awaited<ReturnType<typeof fetchLiveEquityPrice>>> | null = null;
+let quoteOverlay:
+  | Promise<Awaited<ReturnType<typeof fetchMarketQuotes>> | null>
+  | null = null;
 
 async function withLiveOverlay(assets: MarketAsset[]): Promise<MarketAsset[]> {
   if (!keysBackendConfigured()) return assets;
-  liveOverlay ??= fetchLiveEquityPrice().catch(() => null);
-  const live = await liveOverlay;
-  if (!live) return assets;
-  return assets.map((a) =>
-    a.ticker === live.ticker
-      ? { ...a, price: live.price, priceSource: "pyth", dataStatus: "live", asOf: live.asOf }
-      : a,
+
+  quoteOverlay ??= fetchMarketQuotes(assets.map((asset) => asset.ticker)).catch(
+    () => null,
   );
+  const response = await quoteOverlay;
+  if (!response) return assets;
+
+  const bySymbol = new Map(response.quotes.map((quote) => [quote.symbol, quote]));
+  return assets.map((asset) => {
+    const quote = bySymbol.get(asset.ticker);
+    if (
+      !quote ||
+      !["FRESH", "STALE"].includes(quote.status) ||
+      typeof quote.price !== "number"
+    ) {
+      return asset;
+    }
+
+    return {
+      ...asset,
+      price: quote.price,
+      priceSource: "pyth" as const,
+      dataStatus: quote.status === "FRESH" ? ("live" as const) : ("stale" as const),
+      asOf: quote.publishTime ?? undefined,
+    };
+  });
 }
 
 export const marketData: MarketDataService = {
@@ -103,6 +124,18 @@ export const marketData: MarketDataService = {
   async getSeries(ticker, period) {
     await latency(160);
     if (flags.marketFailure) throw new Error("Market data unavailable");
+
+    if (keysBackendConfigured()) {
+      try {
+        const live = await fetchMarketSeries(ticker, period);
+        if (live.status !== "UNAVAILABLE" && live.points.length > 1) {
+          return live.points;
+        }
+      } catch {
+        // Historical market data is optional for this hackathon lane.
+      }
+    }
+
     const asset = MOCK_ASSETS.find((a) => a.ticker === ticker);
     if (!asset) return [];
     return sampleSeries(ticker, asset.price, asset.dayChangePercent, period);
