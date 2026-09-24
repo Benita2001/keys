@@ -15,7 +15,7 @@ import {
   PlayCircle,
   Wallet,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { PriceChange, PriceChart, WeeklyBars } from "@/components/finance";
 import { MandateSummaryCard, MoneyBalanceCard } from "@/components/mode";
 import { ErrorState, Skeleton, useToast } from "@/components/ui/feedback";
@@ -24,7 +24,6 @@ import { formatAmount } from "@/domain/format";
 import { isRequestStale } from "@/domain/policy";
 import type { PricePoint } from "@/domain/types";
 import { usePortfolio } from "@/hooks/data";
-import { WEEKLY_ACTIVITY } from "@/mocks/family";
 import { MODULES } from "@/mocks/learning";
 import { allAssetSnapshots, mandates, seriesFor } from "@/services";
 import { useSingleFlight } from "@/hooks/single-flight";
@@ -45,6 +44,7 @@ export default function ParentDashboard() {
   const toast = useToast();
   const { assets, view } = usePortfolio("practice");
   const child = state.profile.childName;
+  const [rangeDays, setRangeDays] = useState<7 | 30>(30);
   const pending = state.requests.filter((r) => r.status === "PENDING_HUMAN_DECISION" && !isRequestStale(r, state.mandate));
   const lessonsCompleted = state.priorLessonCount + state.completedLessons.length;
   const topics = MODULES.filter((m) => m.lessonIds.some((id) => state.completedLessons.includes(id))).map((m) => TOPIC_LABEL[m.id]);
@@ -52,9 +52,12 @@ export default function ParentDashboard() {
 
   const perf = useMemo<PricePoint[] | null>(() => {
     if (!view || !view.holdings.length) return null;
-    const series = view.holdings.map((h) => ({ h, s: seriesFor(h.asset, "1M") }));
+    const series = view.holdings.map((h) => ({
+      h,
+      s: seriesFor(h.asset, rangeDays === 7 ? "1W" : "1M"),
+    }));
     return series[0].s.map((p, i) => ({ t: p.t, v: series.reduce((sum, { h, s }) => sum + h.shares * s[i].v, 0) }));
-  }, [view]);
+  }, [view, rangeDays]);
 
   const togglePause = guard(async () => {
     const next = await mandates.update({
@@ -64,6 +67,41 @@ export default function ParentDashboard() {
     dispatch({ type: "setMandate", mandate: next });
     toast(next.status === "PAUSED" ? "Money Mode paused" : "Money Mode resumed");
   });
+
+  const learningBars = useMemo(() => {
+    const now = Date.now();
+    const windowMs = rangeDays * 24 * 60 * 60 * 1000;
+    const entries = state.learningMinutes.filter(
+      (entry) => now - Date.parse(entry.at) <= windowMs,
+    );
+
+    if (rangeDays === 7) {
+      return Array.from({ length: 7 }, (_, index) => {
+        const start = new Date(now - (6 - index) * 24 * 60 * 60 * 1000);
+        const key = start.toISOString().slice(0, 10);
+        return {
+          day: start.toLocaleDateString("en-US", { weekday: "short" }),
+          minutes: entries
+            .filter((entry) => entry.at.slice(0, 10) === key)
+            .reduce((sum, entry) => sum + entry.minutes, 0),
+        };
+      });
+    }
+
+    return Array.from({ length: 6 }, (_, index) => {
+      const from = now - (30 - index * 5) * 24 * 60 * 60 * 1000;
+      const to = from + 5 * 24 * 60 * 60 * 1000;
+      return {
+        day: `${index * 5 + 1}–${index * 5 + 5}`,
+        minutes: entries
+          .filter((entry) => {
+            const t = Date.parse(entry.at);
+            return t >= from && t < to;
+          })
+          .reduce((sum, entry) => sum + entry.minutes, 0),
+      };
+    });
+  }, [rangeDays, state.learningMinutes]);
 
   const settings = [
     { href: "/parent/limits", icon: <CircleDollarSign className="size-5" />, tone: "blue" as const, title: "Funding & investment limits", sub: "Add money and set limits" },
@@ -77,9 +115,18 @@ export default function ParentDashboard() {
       <header className="flex items-center gap-3">
         <Avatar size={52} />
         <h1 className="min-w-0 flex-1 text-[23px] font-black leading-tight text-navy-strong md:text-[28px]">{child}&apos;s Progress</h1>
-        <span className="inline-flex h-9 shrink-0 items-center gap-1 rounded-[11px] border border-line-soft bg-surface px-3 text-[12.5px] font-extrabold text-ink-2">
-          Last 30 days <ChevronDown aria-hidden className="size-3.5" />
-        </span>
+        <label className="relative inline-flex h-9 shrink-0 items-center rounded-[11px] border border-line-soft bg-surface text-[12.5px] font-extrabold text-ink-2">
+          <span className="sr-only">Dashboard period</span>
+          <select
+            value={rangeDays}
+            onChange={(event) => setRangeDays(Number(event.target.value) as 7 | 30)}
+            className="h-full appearance-none rounded-[11px] bg-transparent pl-3 pr-8 font-extrabold outline-none"
+          >
+            <option value={7}>Last 7 days</option>
+            <option value={30}>Last 30 days</option>
+          </select>
+          <ChevronDown aria-hidden className="pointer-events-none absolute right-2.5 size-3.5" />
+        </label>
       </header>
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -158,7 +205,13 @@ export default function ParentDashboard() {
             {assets.status === "error" ? (
               <ErrorState className="mt-3" onRetry={assets.reload} />
             ) : perf ? (
-              <PriceChart points={perf} trend={view?.totalChangePercent ?? 0} label="Practice portfolio value, past month" height={120} className="mt-2" />
+              <PriceChart
+                points={perf}
+                trend={view?.totalChangePercent ?? 0}
+                label={`Practice portfolio value, last ${rangeDays} days`}
+                height={120}
+                className="mt-2"
+              />
             ) : assets.status === "loading" ? (
               <Skeleton className="mt-2 h-[120px] w-full" />
             ) : (
@@ -182,9 +235,11 @@ export default function ParentDashboard() {
           </Card>
 
           <Card className="p-4">
-            <h2 className="text-[16px] font-extrabold text-navy-strong">Weekly Learning Summary</h2>
-            <p className="text-[12px] font-bold text-ink-3">Minutes learning per day (sample week)</p>
-            <WeeklyBars data={WEEKLY_ACTIVITY} className="mt-3" />
+            <h2 className="text-[16px] font-extrabold text-navy-strong">Learning activity</h2>
+            <p className="text-[12px] font-bold text-ink-3">
+              Synced lesson minutes · last {rangeDays} days
+            </p>
+            <WeeklyBars data={learningBars} className="mt-3" />
           </Card>
         </div>
 
@@ -210,8 +265,7 @@ export default function ParentDashboard() {
           <Card className="p-4">
             <p className="text-[14px] font-extrabold text-navy-strong">About Money Mode</p>
             <p className="mt-1 text-[13px] font-semibold text-ink-2">
-              This is a demo. Cresco isn&apos;t connected to a bank, broker or custodian yet, so balances are demo values and no real money
-              moves.
+              Money Mode uses Solana Devnet test capital and a demo SPL token. It is not connected to a bank, broker or custodian and does not represent real securities.
             </p>
           </Card>
         </div>
