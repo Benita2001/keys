@@ -23,6 +23,11 @@ import {
   evaluateBoundedAction
 } from './bounded-autonomy.mjs';
 
+import {
+  fetchPreStocksCatalog,
+  preStocksIntegrationSummary
+} from './prestocks-adapter.mjs';
+
 const mayaFixture = JSON.parse(
   await readFile(new URL('../fixtures/frontend-maya-contract.json', import.meta.url), 'utf8')
 );
@@ -238,6 +243,61 @@ export async function routeKeysHttp({
       status: 200,
       headers: JSON_HEADERS,
       body: mayaV2Fixture
+    };
+  }
+
+  if (method === 'GET' && path === '/api/v0.2/integrations/prestocks') {
+    const provider =
+      services?.preStocksCatalogProvider ?? (() => fetchPreStocksCatalog());
+    const assets = await provider();
+
+    return {
+      status: 200,
+      headers: JSON_HEADERS,
+      body: {
+        contractVersion: V2_CONTRACT_VERSION,
+        type: 'PRESTOCKS_INTEGRATION_CATALOG',
+        integration: preStocksIntegrationSummary(),
+        assets
+      }
+    };
+  }
+
+  const preStocksAssetMatch =
+    method === 'GET'
+      ? path.match(/^\/api\/v0\.2\/integrations\/prestocks\/([A-Za-z0-9_-]+)$/)
+      : null;
+
+  if (preStocksAssetMatch) {
+    const provider =
+      services?.preStocksCatalogProvider ?? (() => fetchPreStocksCatalog());
+    const assets = await provider();
+    const symbol = preStocksAssetMatch[1].toUpperCase();
+    const asset = assets.find(
+      (item) => String(item?.symbol ?? '').toUpperCase() === symbol
+    );
+
+    if (!asset) {
+      return {
+        status: 404,
+        headers: JSON_HEADERS,
+        body: {
+          contractVersion: V2_CONTRACT_VERSION,
+          error: 'PRESTOCK_NOT_FOUND',
+          symbol
+        }
+      };
+    }
+
+    return {
+      status: 200,
+      headers: JSON_HEADERS,
+      body: {
+        contractVersion: V2_CONTRACT_VERSION,
+        type: 'PRESTOCKS_INTEGRATION_ASSET',
+        integration: preStocksIntegrationSummary(),
+        asset
+      }
     };
   }
 
