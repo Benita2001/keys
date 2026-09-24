@@ -413,6 +413,54 @@ export function createDevnetExecutionProvider({
     ]);
   }
 
+  async function setCurrentAssetEnabled({ expectedNonce, enabled }) {
+    const runtime = await loadRuntime();
+    const rule = runtime.assetRule;
+
+    const data = Buffer.concat([
+      discriminator('update_asset_rule'),
+      encodeU64(expectedNonce),
+      Buffer.from([enabled ? 1 : 0]),
+      Buffer.from([rule.actionMask]),
+      encodeU64(rule.maxActionAmount),
+      encodeU64(rule.maxPeriodAmount),
+      encodeI64(rule.periodSeconds),
+      encodeU64(rule.maxUnitPriceMicroUsd),
+      encodeU32(rule.pythFeedId)
+    ]);
+
+    const ix = new TransactionInstruction({
+      programId: DEVNET_KEYS_PROGRAM_ID,
+      keys: [
+        { pubkey: runtime.charter, isSigner: false, isWritable: false },
+        { pubkey: runtime.mandateAddress, isSigner: false, isWritable: true },
+        { pubkey: rule.address, isSigner: false, isWritable: true },
+        { pubkey: signer.publicKey, isSigner: true, isWritable: false }
+      ],
+      data
+    });
+
+    const latest = await rpc.getLatestBlockhash('confirmed');
+    const tx = new Transaction({
+      feePayer: signer.publicKey,
+      recentBlockhash: latest.blockhash
+    }).add(ix);
+    tx.sign(signer);
+
+    const signature = await rpc.sendRawTransaction(tx.serialize(), {
+      skipPreflight: false,
+      maxRetries: 3
+    });
+
+    await confirmSignatureOverRpc({
+      rpc,
+      signature,
+      lastValidBlockHeight: latest.lastValidBlockHeight
+    });
+
+    return { signature, state: await getState() };
+  }
+
   async function grantAllowanceOnce({
     requestId,
     expectedNonce,
@@ -979,6 +1027,7 @@ export function createDevnetExecutionProvider({
     execute,
     configureMandatePolicy,
     setMandateStatus,
+    setCurrentAssetEnabled,
     grantAllowanceOnce,
     idempotencyScope: 'PROCESS_LOCAL_DEMO'
   };
