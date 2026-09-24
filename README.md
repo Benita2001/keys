@@ -66,7 +66,7 @@ The runtime proves:
 6. stale execution material refuses;
 7. the same larger action succeeds after widening;
 8. pause/downward authority blocks execution;
-9. live signed Pyth Pro/Lazer TSLA evidence is verified inside the Solana capital path;
+9. live signed Pyth Pro/Lazer AAPL evidence is verified inside the Solana capital path;
 10. Pyth-derived USD/notional limits are load-bearing;
 11. a notional breach refuses;
 12. a precommitted max-price condition refuses;
@@ -74,7 +74,13 @@ The runtime proves:
 
 Canonical Pyth proof feed:
 
-`Equity.US.TSLA/USD` — feed id `1435`.
+`Equity.US.AAPL/USD` — feed id `922`.
+
+Current AAPL entitlement proof: `https://github.com/Faadil1/keys/actions/runs/36035283447`
+
+Current AAPL HTTP→Solana devnet proof: `https://github.com/Faadil1/keys/actions/runs/36034651466`
+
+Historical TSLA proofs remain valid evidence of the same mechanism.
 
 Evidence:
 
@@ -93,10 +99,10 @@ Current v0.2 API semantics:
 - `GET /api/v0.2/demo/maya`
 - `POST /api/v0.2/actions/evaluate`
 - `POST /api/v0.2/boundary-requests`
-- `GET /api/v0.2/demo/runtime` — stable TSLA devnet demo-runtime metadata
+- `GET /api/v0.2/demo/runtime` — stable AAPL devnet demo-runtime metadata
 - `POST /api/v0.2/actions/execute` — real devnet demo-token execution bridge
 
-The execution bridge is implemented with a server-held devnet demo signer and live signed Pyth TSLA evidence. Its dedicated stable-runtime smoke workflow is the current proof gate; do not interpret it as production wallet/custody architecture.
+The execution bridge is implemented with a server-held devnet demo signer and live signed Pyth AAPL evidence. Its dedicated stable-runtime smoke workflow is the current proof gate; do not interpret it as production wallet/custody architecture.
 
 The old v0.1 contract remains historical proof only.
 
