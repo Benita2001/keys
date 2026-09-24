@@ -1,0 +1,111 @@
+name: devnet-execution-bridge
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/devnet-execution-provider.mjs"
+      - "src/http-api.mjs"
+      - "scripts/bootstrap-devnet-demo-runtime.cjs"
+      - "scripts/devnet-execution-smoke.mjs"
+      - "package.json"
+      - ".github/workflows/devnet-execution-bridge.yml"
+  workflow_dispatch:
+
+jobs:
+  bridge-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ANCHOR_PROVIDER_URL: https://api.devnet.solana.com
+      PYTH_PRO_API_KEY: ${{ secrets.PYTH_PRO_API_KEY }}
+      DEVNET_KEYPAIR_JSON: ${{ secrets.DEVNET_KEYPAIR_JSON }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Resolve SBF-compatible dependency lock
+        shell: bash
+        run: |
+          cargo generate-lockfile --manifest-path Cargo.toml
+          cargo update --manifest-path Cargo.toml -p anchor-attribute-access-control --precise 0.32.1
+          cargo update --manifest-path Cargo.toml -p anchor-attribute-account --precise 0.32.1
+          cargo update --manifest-path Cargo.toml -p anchor-attribute-constant --precise 0.32.1
+          cargo update --manifest-path Cargo.toml -p anchor-attribute-error --precise 0.32.1
+          cargo update --manifest-path Cargo.toml -p anchor-attribute-event --precise 0.32.1
+          cargo update --manifest-path Cargo.toml -p anchor-attribute-program --precise 0.32.1
+          cargo update --manifest-path Cargo.toml -p anchor-derive-accounts --precise 0.32.1
+          cargo update --manifest-path Cargo.toml -p anchor-derive-serde --precise 0.32.1
+          cargo update --manifest-path Cargo.toml -p anchor-derive-space --precise 0.32.1
+          cargo update --manifest-path Cargo.toml -p anchor-syn --precise 0.32.1
+          cargo update --manifest-path Cargo.toml -p borsh@1.8.1 --precise 1.5.7
+          cargo update --manifest-path Cargo.toml -p proc-macro-crate@3.5.0 --precise 3.4.0
+          if grep -q 'name = "blake3"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p blake3 --precise 1.8.2; fi
+          if grep -q 'name = "constant_time_eq"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p constant_time_eq --precise 0.3.1; fi
+          if grep -q 'name = "base64ct"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p base64ct --precise 1.7.3; fi
+          INDEXMAP_V2=$(awk '/name = "indexmap"/ {getline; gsub(/[" ]/, "", $3); if ($3 ~ /^2\./) {print $3; exit}}' Cargo.lock)
+          if [ -n "$INDEXMAP_V2" ] && [ "$INDEXMAP_V2" != "2.11.4" ]; then
+            cargo update --manifest-path Cargo.toml -p "indexmap@$INDEXMAP_V2" --precise 2.11.4
+          fi
+          if grep -q 'name = "zeroize"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p zeroize --precise 1.8.1; fi
+          if grep -q 'name = "zeroize_derive"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p zeroize_derive --precise 1.4.2; fi
+          if grep -q 'version = "0.23.10+spec-1.0.0"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p 'toml_edit@0.23.10+spec-1.0.0' --precise 0.23.7; fi
+          if grep -q 'name = "toml_parser"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p toml_parser --precise 1.0.4; fi
+          if grep -q 'name = "unicode-segmentation"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p unicode-segmentation --precise 1.12.0; fi
+          if grep -q 'name = "serde_with"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p serde_with --precise 3.12.0; fi
+          if grep -q 'name = "time"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p time --precise 0.3.45; fi
+          sed -i 's/^version = 4$/version = 3/' Cargo.lock
+
+      - name: Install Solana CLI 2.3.0
+        shell: bash
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v2.3.0/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+
+      - name: Install Anchor CLI 0.32.1
+        shell: bash
+        run: |
+          cargo install --git https://github.com/otter-sec/anchor avm --force
+          avm install 0.32.1
+          avm use 0.32.1
+          echo "$HOME/.avm/bin" >> "$GITHUB_PATH"
+
+      - name: Install JS dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Configure devnet demo signer
+        shell: bash
+        run: |
+          test -n "$DEVNET_KEYPAIR_JSON"
+          test -n "$PYTH_PRO_API_KEY"
+          mkdir -p "$HOME/.config/solana"
+          printf '%s' "$DEVNET_KEYPAIR_JSON" > "$HOME/.config/solana/id.json"
+          chmod 600 "$HOME/.config/solana/id.json"
+          echo "ANCHOR_WALLET=$HOME/.config/solana/id.json" >> "$GITHUB_ENV"
+          echo "PROOF devnet_demo_signer=$(solana address -k "$HOME/.config/solana/id.json")"
+
+      - name: Build client IDL only
+        shell: bash
+        run: |
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$HOME/.avm/bin:$PATH"
+          anchor build
+          echo "PROOF bridge_client_build=PASS"
+
+      - name: Bootstrap stable demo runtime
+        shell: bash
+        run: |
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$HOME/.avm/bin:$PATH"
+          npm run bootstrap:devnet-demo-runtime
+          echo "PROOF stable_demo_runtime_bootstrap=PASS"
+
+      - name: Execute real HTTP-to-devnet smoke
+        shell: bash
+        run: |
+          npm run proof:devnet-execution-bridge
+          echo "DEVNET_HTTP_EXECUTION_BRIDGE=PASS"
