@@ -112,12 +112,12 @@ jobs:
         run: |
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$HOME/.avm/bin:$PATH"
 
-          # Clone the canonical Pyth Pro/Lazer verifier state from mainnet into the
-          # local validator. Anchor automatically clones the upgradeable program data.
+          # Clone the canonical Pyth Pro/Lazer verifier state from devnet into the
+          # local validator. This matches the official Pyth Lazer Solana example.
           cat >> Anchor.toml <<'EOF'
 
           [test.validator]
-          url = "https://api.mainnet-beta.solana.com"
+          url = "https://api.devnet.solana.com"
 
           [[test.validator.clone]]
           address = "pytd2yyk641x7ak7mkaasSJVXh6YYZnC7wTmtgAyxPt"
@@ -126,7 +126,7 @@ jobs:
           address = "3rdJbqfnagQ4yx9HXJViD4zc4xpiSqmFsKpPuSCQVyQL"
 
           [[test.validator.clone]]
-          address = "Gx4MBPb1vqZLajZmsKLg8fGw9ErhoKsR8LeKcCKFyak"
+          address = "opsLibxVY7Vz5eYMmSfX8cLFCFVYTtH6fr6MiifMpA7"
           EOF
 
           anchor test --skip-build
