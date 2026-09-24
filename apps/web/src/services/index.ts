@@ -14,13 +14,10 @@ import type {
 } from "@/domain/types";
 import { EXPLORE_ORDER, MOCK_ASSETS, sampleSeries } from "@/mocks/market";
 import {
-  buildExecuteRequest,
   evaluateAction,
-  executeAction,
   fetchLiveEquityPrice,
   keysBackendConfigured,
   keysRuntimeExecutionEnabled,
-  newIdempotencyKey,
 } from "./keys-backend";
 import type {
   AuthService,
@@ -60,7 +57,9 @@ export function getCapabilities(): Capabilities {
   return {
     backend: backend ? "keys-v0.2-frozen" : "none",
     marketData: backend ? "mock-with-live-tsla" : "mock",
-    moneyMode: runtime ? "runtime" : "demo",
+    // The Family product lane remains demo/policy-only. A configured runtime
+    // enables only the isolated TSLA technical proof lane.
+    moneyMode: "demo",
     funding: "demo",
     auth: "demo",
     execution: runtime ? "keys-runtime" : "demo-not-executed",
@@ -223,43 +222,12 @@ function sharesFor(input: MoneyActionInput) {
   return input.amount / input.asset.price;
 }
 
-/** Runtime path: the KEYS execute route evaluates and executes atomically. */
-async function executeOnRuntime(input: MoneyActionInput): Promise<ExecutionResult> {
-  const pre = preflight(input);
-  if (pre) return { ok: false, outcome: "REFUSED", evaluation: pre, ticker: input.asset.ticker, amount: input.amount };
-
-  const idempotencyKey = input.idempotencyKey ?? newIdempotencyKey();
-  const res = await executeAction(
-    buildExecuteRequest({
-      mandate: input.mandate,
-      assetRule: input.assetRule,
-      asset: input.asset.ticker,
-      type: input.type,
-      notional: input.amount,
-      idempotencyKey,
-      allowOnceRequestId: allowOnceCovers(input) ? input.allowOnce?.id : undefined,
-    }),
-  );
-  return {
-    ok: res.outcome === "EXECUTED",
-    outcome: res.outcome,
-    evaluation: res.evaluation,
-    proof: res.proof,
-    ticker: input.asset.ticker,
-    amount: input.amount,
-    shares: res.outcome === "EXECUTED" || res.outcome === "PENDING" ? sharesFor(input) : undefined,
-    idempotencyKey,
-  };
-}
-
 export const moneyExecution: MoneyExecutionService = {
   async evaluate(input) {
     await latency(200);
     return decide(input);
   },
   async execute(input) {
-    if (keysRuntimeExecutionEnabled()) return executeOnRuntime(input);
-
     await latency(520);
     const evaluation = await decide(input);
     const ok = evaluation.decision === "ALLOW";
