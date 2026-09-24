@@ -87,6 +87,22 @@ test('HTTP adapter exposes fail-closed backend capabilities', async () => {
   );
 });
 
+test('HTTP adapter advertises frozen v0.2 runtime proof', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.1/capabilities'
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.v2.status, 'FROZEN_RUNTIME_PROVEN');
+  assert.equal(result.body.v2.onchainPythVerification, true);
+  assert.equal(result.body.v2.demoRoute, '/api/v0.2/demo/maya');
+  assert.equal(
+    result.body.v2.canonicalDevnetProofRun,
+    'https://github.com/Faadil1/keys/actions/runs/35959137364'
+  );
+});
+
 test('HTTP adapter reports injected providers as ready capabilities', async () => {
   const result = await routeKeysHttp({
     method: 'GET',
@@ -348,10 +364,10 @@ test('HTTP adapter returns 404 envelope for unknown routes', async () => {
 });
 
 
-test('v0.2 draft demo exposes bounded-autonomy semantics without claiming runtime proof', async () => {
+test('v0.2 demo exposes frozen bounded-autonomy semantics', async () => {
   const result = await routeKeysHttp({
     method: 'GET',
-    path: '/api/v0.2/draft/demo/maya'
+    path: '/api/v0.2/demo/maya'
   });
 
   assert.equal(result.status, 200);
@@ -361,10 +377,10 @@ test('v0.2 draft demo exposes bounded-autonomy semantics without claiming runtim
   assert.equal(result.body.truthBoundary.onchainPythVerification, false);
 });
 
-test('v0.2 draft action endpoint allows an in-bounds action with backend-owned market evidence', async () => {
+test('v0.2 action endpoint allows an in-bounds action with backend-owned market evidence', async () => {
   const result = await routeKeysHttp({
     method: 'POST',
-    path: '/api/v0.2/draft/actions/evaluate',
+    path: '/api/v0.2/actions/evaluate',
     body: {
       mandate: {
         status: 'ACTIVE',
@@ -407,13 +423,13 @@ test('v0.2 draft action endpoint allows an in-bounds action with backend-owned m
   assert.equal(result.body.reasonCode, 'WITHIN_MANDATE');
   assert.equal(result.body.requestedNotional, 100);
   assert.equal(result.body.guardianApprovalRequired, false);
-  assert.equal(result.body.runtimeProofStatus, 'DRAFT_RUNTIME_PROOF_PENDING');
+  assert.equal(result.body.runtimeProofStatus, 'CANONICAL_DEVNET_RUNTIME_PROVEN');
 });
 
-test('v0.2 draft action endpoint exposes the boundary instead of auto-escalating every action', async () => {
+test('v0.2 action endpoint exposes the boundary instead of auto-escalating every action', async () => {
   const result = await routeKeysHttp({
     method: 'POST',
-    path: '/api/v0.2/draft/actions/evaluate',
+    path: '/api/v0.2/actions/evaluate',
     body: {
       mandate: {
         status: 'ACTIVE',
@@ -453,10 +469,10 @@ test('v0.2 draft action endpoint exposes the boundary instead of auto-escalating
   assert.equal(result.body.boundaryRequestAvailable, true);
 });
 
-test('v0.2 draft boundary request remains a pending human decision', async () => {
+test('v0.2 boundary request remains a pending human decision', async () => {
   const result = await routeKeysHttp({
     method: 'POST',
-    path: '/api/v0.2/draft/boundary-requests',
+    path: '/api/v0.2/boundary-requests',
     body: {
       mandate: { version: 4, nonce: 3 },
       assetRule: { maxActionNotional: 250 },
