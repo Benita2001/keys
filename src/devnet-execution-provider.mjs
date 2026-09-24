@@ -206,13 +206,13 @@ export function createDevnetExecutionProvider({
           rule.pythFeedId === DEMO_FEED_ID
       );
 
-    if (parsedRules.length !== 1) {
-      throw new Error(
-        parsedRules.length === 0
-          ? 'DEVNET_DEMO_ASSET_RULE_NOT_FOUND'
-          : 'DEVNET_DEMO_ASSET_RULE_AMBIGUOUS'
-      );
+    if (parsedRules.length === 0) {
+      throw new Error('DEVNET_DEMO_ASSET_RULE_NOT_FOUND');
     }
+
+    parsedRules.sort((a, b) =>
+      a.address.toBase58().localeCompare(b.address.toBase58())
+    );
 
     const assetRule = parsedRules[0];
     const [vaultTokenAccount] = PublicKey.findProgramAddressSync(
