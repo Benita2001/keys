@@ -1,6 +1,6 @@
 project: KEYS
 updated_at: "2026-09-24"
-status: V0_2_BOUNDED_CAPITAL_DEVNET_PASS_PYTH_ONCHAIN_ACTIVE
+status: V0_2_LOCAL_ONCHAIN_PYTH_PASS_DEVNET_CONFIRMATION_ACTIVE
 candidate: B
 concept_lock: true
 concept_lock_version: 2
@@ -32,7 +32,7 @@ current_truth:
   boundary_human_widen_stale_replay_v0_2: PASS_LOCAL_AND_DEVNET
   pause_downward_authority_v0_2: PASS_LOCAL_AND_DEVNET
   pyth_signed_solana_payload_availability_v0_2: PASS
-  onchain_pyth_verification_v0_2: NOT_BUILT
+  onchain_pyth_verification_v0_2: PASS_LOCAL_LIVE_PYTH
   contextual_learning_layer_spec: LOCKED
   real_minor_execution: OUT_OF_SCOPE
 
@@ -61,7 +61,9 @@ canonical_pyth:
   current_adapter_format: leUnsigned
   signed_solana_payload_availability: PASS
   signed_payload_encoding_observed: base64
-  onchain_signed_payload_verification: NOT_BUILT
+  local_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35956618933"
+  local_onchain_pyth_result: "12 passing"
+  onchain_signed_payload_verification: PASS_LOCAL_LIVE_PYTH
   observed_price_at_proof_time: 379.696
   confidence: 0.019
   publish_time: "2026-09-23T19:36:42.000Z"
@@ -119,14 +121,15 @@ truth_boundary:
   - market evidence does not create authority
   - learning completion does not create authority
   - v0.2 proves bounded demo-token capital execution on local Solana and devnet
-  - current v0.2 on-chain limits are token-unit boundaries, not yet Pyth-derived USD-notional enforcement
-  - signed Pyth Solana payload availability is proven, but on-chain Pyth enforcement is not yet a current claim
+  - base bounded-capital path remains proven with a demo/mock SPL token
+  - live Pyth TSLA evidence is now cryptographically verified in the local Solana capital path
+  - Pyth-derived USD notional and a precommitted max-price condition are proven locally
+  - canonical devnet confirmation of the Pyth-integrated path is still pending
 
 active_step:
-  name: BACKEND_V0_2_ONCHAIN_PYTH_VERIFICATION
+  name: BACKEND_V0_2_DEVNET_PYTH_CONFIRMATION
   owner: Faadil
   next:
-    - "Wire the Pyth-signed Solana payload into the Anchor execution path and verify it on-chain."
-    - "Use verified price evidence to enforce USD/notional and user-precommitted market conditions fail-closed."
-    - "Promote the v0.2 frontend/backend contract from DRAFT only after the Pyth-integrated runtime proof passes."
+    - "Confirm the Pyth-integrated bounded-capital path on the canonical devnet program."
+    - "If devnet passes, freeze frontend/backend contract v0.2 against the proven semantics."
     - "Hand the frozen v0.2 contract to Benita for final integration."
