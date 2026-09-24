@@ -61,11 +61,12 @@ canonical_truth:
     contextual_learning: FROZEN_CONTRACT_AND_FIXTURE
     frontend_contract: FROZEN
     bounty_integration_gate: PASS_WITH_SELECTIVE_INTEGRATION
-    pyth_bounty: GO_ALREADY_EARNED
-    prestocks_bounty: CONDITIONAL_GO_REPRESENTATION_PROOF_REQUIRED
-    tessera_bounty: CONDITIONAL_GO_REPRESENTATION_PROOF_REQUIRED
-    clawpump_bounty: SIDECAR_ONLY
-    meteora_bounty: CONDITIONAL_ON_REAL_DBC_USE
+    pyth_bounty: ACTIVE_PROVEN
+    prestocks_bounty: ACTIVE_LIVE_API_INTEGRATED
+    prestocks_live_proof: PASS
+    tessera_bounty: HOLD_WATCH
+    clawpump_bounty: HOLD_OUTSIDE_CORE
+    meteora_bounty: HOLD_OUTSIDE_CORE
     devnet_run: "https://github.com/Faadil1/keys/actions/runs/35959137364"
     pyth_signed_payload_run: "https://github.com/Faadil1/keys/actions/runs/35930425544"
     local_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35956618933"
@@ -155,4 +156,4 @@ key_files:
   - docs/TECHNICAL-REALITY-CHECK.md
   - docs/TRUTH-BOUNDARY.md
   - docs/BUILD-PLAN.md
-  - docs/STOCKLANA-BOUNTY-INTEGRATION-GATE.md
+  - docs/BOUNTY-INTEGRATION-GATE-2026-09-24.md
