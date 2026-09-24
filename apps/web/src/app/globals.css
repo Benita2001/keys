@@ -1,0 +1,189 @@
+@import "tailwindcss";
+
+/*
+ * Cresco design tokens — see docs/CRESCO-FRONTEND-DESIGN-SYSTEM.md.
+ * Values come from the approved spec (§7). Cresco is light-only by design.
+ */
+:root {
+  --cresco-bg: #fff9f1;
+  --cresco-surface: #ffffff;
+  --cresco-surface-soft: #f7faff;
+
+  --cresco-blue: #1769f6;
+  --cresco-blue-strong: #0f57e8;
+  --cresco-blue-soft: #eaf2ff;
+
+  --cresco-navy: #102b63;
+  --cresco-navy-strong: #08235b;
+  --cresco-text-secondary: #5d6a80;
+  --cresco-text-muted: #637084;
+
+  --cresco-green: #21b66f;
+  --cresco-green-strong: #0c7a47;
+  --cresco-green-soft: #e8f8ef;
+
+  --cresco-yellow: #ffbc32;
+  --cresco-orange: #ff8a3d;
+  --cresco-yellow-soft: #fff5d8;
+  /* Text-safe variants (WCAG AA 4.5:1 on light surfaces). Fills keep the brand values. */
+  --cresco-orange-text: #a64d0b;
+
+  --cresco-lavender: #8b75f7;
+  --cresco-lavender-soft: #f0edff;
+
+  --cresco-aqua: #55cfc6;
+  --cresco-aqua-soft: #e8faf8;
+
+  --cresco-pink: #ff7aa8;
+  --cresco-pink-soft: #ffeef4;
+
+  --cresco-loss: #eb5757;
+  --cresco-loss-soft: #fff0f0;
+  --cresco-loss-text: #c8373a;
+  --cresco-warning: #d98a13;
+
+  --cresco-border: #dce6f2;
+  --cresco-border-soft: #ebf0f6;
+
+  --cresco-shadow-card: 0 8px 24px rgba(16, 43, 99, 0.08), 0 2px 8px rgba(16, 43, 99, 0.04);
+  --cresco-shadow-soft: 0 2px 10px rgba(16, 43, 99, 0.05);
+  --cresco-shadow-button: 0 6px 16px rgba(23, 105, 246, 0.28);
+
+  --nav-height: 72px;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--cresco-bg);
+  --color-surface: var(--cresco-surface);
+  --color-surface-soft: var(--cresco-surface-soft);
+  --color-blue: var(--cresco-blue);
+  --color-blue-strong: var(--cresco-blue-strong);
+  --color-blue-soft: var(--cresco-blue-soft);
+  --color-navy: var(--cresco-navy);
+  --color-navy-strong: var(--cresco-navy-strong);
+  --color-ink-2: var(--cresco-text-secondary);
+  --color-ink-3: var(--cresco-text-muted);
+  --color-green: var(--cresco-green);
+  --color-green-strong: var(--cresco-green-strong);
+  --color-green-soft: var(--cresco-green-soft);
+  --color-yellow: var(--cresco-yellow);
+  --color-orange: var(--cresco-orange);
+  --color-yellow-soft: var(--cresco-yellow-soft);
+  --color-orange-text: var(--cresco-orange-text);
+  --color-lavender: var(--cresco-lavender);
+  --color-lavender-soft: var(--cresco-lavender-soft);
+  --color-aqua: var(--cresco-aqua);
+  --color-aqua-soft: var(--cresco-aqua-soft);
+  --color-pink: var(--cresco-pink);
+  --color-pink-soft: var(--cresco-pink-soft);
+  --color-loss: var(--cresco-loss);
+  --color-loss-soft: var(--cresco-loss-soft);
+  --color-loss-text: var(--cresco-loss-text);
+  --color-warning: var(--cresco-warning);
+  --color-line: var(--cresco-border);
+  --color-line-soft: var(--cresco-border-soft);
+
+  --font-sans: var(--font-nunito-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-card: var(--cresco-shadow-card);
+  --shadow-soft: var(--cresco-shadow-soft);
+  --shadow-button: var(--cresco-shadow-button);
+
+  --radius-chip: 11px;
+  --radius-control: 15px;
+  --radius-card: 20px;
+  --radius-hero: 24px;
+  --radius-sheet: 28px;
+
+  --animate-rise: rise 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade: fade 220ms ease-out both;
+  --animate-bloom: bloom 560ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  --animate-sheet: sheet 340ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes bloom {
+  0% { opacity: 0; transform: scale(0.6); }
+  70% { opacity: 1; transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+@keyframes sheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes shimmer {
+  from { background-position: -240px 0; }
+  to { background-position: 240px 0; }
+}
+
+html {
+  background: var(--cresco-bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--cresco-bg);
+  color: var(--cresco-navy);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(23, 105, 246, 0.45);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #eef2f8 0px, #f7f9fc 80px, #eef2f8 160px);
+  background-size: 480px 100%;
+  animation: var(--animate-shimmer);
+}
+
+.pb-nav {
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 20px);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+@media (min-width: 768px) {
+  .pb-nav {
+    padding-bottom: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

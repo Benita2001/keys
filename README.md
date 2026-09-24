@@ -145,6 +145,12 @@ KEYS does **not** currently claim:
 
 The current Pyth trial proves TSLA live evidence; it does not establish live AAPL entitlement.
 
+## Consumer frontend — Cresco
+
+The family-facing app is **Cresco**, built in [`apps/web`](apps/web) (Next.js, isolated from the backend package). Practice and Money modes, bounded-autonomy boundary requests and guardian decisions are implemented against the KEYS v0.2 draft semantics. Money Mode is demo-only in the frontend.
+
+See [Cresco implementation summary](docs/CRESCO-FRONTEND-IMPLEMENTATION-SUMMARY.md) and [backend integration handoff](docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md).
+
 ## Collaboration
 
 - Frontend / product experience: **Benita**
