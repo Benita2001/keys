@@ -15,7 +15,7 @@ import type {
 import { EXPLORE_ORDER, MOCK_ASSETS, sampleSeries } from "@/mocks/market";
 import {
   buildExecuteRequest,
-  evaluateActionDraft,
+  evaluateAction,
   executeAction,
   fetchLiveEquityPrice,
   keysBackendConfigured,
@@ -58,7 +58,7 @@ export function getCapabilities(): Capabilities {
   const backend = keysBackendConfigured();
   const runtime = keysRuntimeExecutionEnabled();
   return {
-    backend: backend ? "keys-v0.2-draft" : "none",
+    backend: backend ? "keys-v0.2-frozen" : "none",
     marketData: backend ? "mock-with-live-tsla" : "mock",
     moneyMode: runtime ? "runtime" : "demo",
     funding: "demo",
@@ -179,7 +179,7 @@ async function decide(input: MoneyActionInput): Promise<ActionEvaluation> {
   let evaluation: ActionEvaluation;
   if (keysBackendConfigured()) {
     try {
-      evaluation = await evaluateActionDraft({
+      evaluation = await evaluateAction({
         mandate: input.mandate,
         assetRule: input.assetRule,
         asset: input.asset.ticker,
@@ -188,7 +188,7 @@ async function decide(input: MoneyActionInput): Promise<ActionEvaluation> {
       });
     } catch {
       // Fail closed: an unreachable backend never becomes an ALLOW.
-      return { decision: "REFUSE", reasonCode: "DECISION_UNAVAILABLE", source: "keys-backend-draft" };
+      return { decision: "REFUSE", reasonCode: "DECISION_UNAVAILABLE", source: "keys-backend" };
     }
   } else {
     evaluation = evaluateBoundedAction({
