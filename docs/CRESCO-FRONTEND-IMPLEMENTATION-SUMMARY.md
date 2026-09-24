@@ -48,7 +48,7 @@ AAPL, NVDA, TSLA, NFLX, AMZN, MSFT, META, MCD, SPY, QQQ.
 
 The frontend requests quotes from the KEYS market route. A quote is overlaid only when Pyth returns `FRESH` or `STALE`; otherwise the existing value remains visibly **Sample prices**.
 
-Historical charts remain explicitly sample because the backend truthfully returns `HISTORY_PROVIDER_NOT_CONNECTED` rather than inventing history.
+Configured entitled history now comes from Pyth Pro History through the backend. Unavailable or unconfigured history remains an explicitly labeled sample fallback rather than fabricated live data.
 
 ## Security/truth boundary
 
