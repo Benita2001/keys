@@ -1,10 +1,10 @@
 {
-  "contractVersion": "0.2-draft",
+  "contractVersion": "0.2",
   "type": "MAYA_BOUNDED_AUTONOMY_DEMO",
   "truthBoundary": {
     "executionAsset": "DEMO_TOKEN",
     "realMinorSecuritiesExecution": false,
-    "onchainPythVerification": false,
+    "onchainPythVerification": true,
     "marketEvidenceCreatesAuthority": false,
     "learningCreatesAuthority": false
   },
