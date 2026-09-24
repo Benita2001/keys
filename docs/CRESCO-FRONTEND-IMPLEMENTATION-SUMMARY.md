@@ -6,7 +6,8 @@ The Cresco consumer frontend is a mobile-first responsive web app built from the
 
 Related docs:
 - [CRESCO-FRONTEND-DESIGN-SYSTEM.md](CRESCO-FRONTEND-DESIGN-SYSTEM.md) — tokens, components, mode semantics, responsive, motion, a11y
-- [CRESCO-BACKEND-INTEGRATION-HANDOFF.md](CRESCO-BACKEND-INTEGRATION-HANDOFF.md) — what the backend needs to provide
+- [CRESCO-BACKEND-INTEGRATION-HANDOFF.md](CRESCO-BACKEND-INTEGRATION-HANDOFF.md) — current integration surface + remaining production gaps
+- [CRESCO-BACKEND-DELTA-2026-09-24.md](CRESCO-BACKEND-DELTA-2026-09-24.md) — corrections to the older backend snapshot
 
 ---
 
@@ -69,10 +70,13 @@ Learning, XP, badges and P&L never touch the Mandate. This is covered by tests.
 - `learning.ts` — lesson content (original copy, not mock data).
 
 **Real integrations (optional, `NEXT_PUBLIC_KEYS_API_URL`):**
-- `POST /api/v0.2/draft/actions/evaluate` — Money decisions. Verified against the local KEYS API from the browser.
-- `GET /api/v0.1/demo/live-proof` — overlays a live Pyth TSLA price only when evidence is FRESH. Without the server's Pyth key it stays "Sample prices" (verified).
+- `POST /api/v0.2/actions/evaluate` — frozen Money decision route.
+- `GET /api/v0.1/demo/live-proof` — overlays a live Pyth TSLA price only when evidence is FRESH.
+- `GET /api/v0.2/demo/runtime` — implemented stable TSLA devnet proof-lane metadata.
+- `POST /api/v0.2/actions/execute` — implemented real Solana devnet demo-token execution bridge; dedicated stable-runtime smoke proof is the current proof gate.
+- `GET /api/v0.2/integrations/prestocks` and `/:symbol` — optional PreStocks representation/Practice context.
 
-**Not integrated (clearly labeled in UI):** Money execution on Solana, funding, auth/family link, persistence of requests/progress/portfolio. See the handoff doc.
+**Still not production-integrated:** funding, production auth/family link, persistent guardian request decisions/allow-once, production wallet/custody architecture, and persistence of learning/portfolio. See the handoff and backend delta docs.
 
 ---
 
@@ -152,7 +156,7 @@ Verified on the deployment: all primary routes return 200 (unknown routes 404); 
 - Illustrations are original hand-built SVG in the mockup's spirit. They're simpler than the mockup's rendered 3D art; a raster illustration pass would get closer.
 - Company identities use brand-colored lettermarks, not trademarked logos. The Company Detail hero is an illustrated storefront, not the mockup's photo.
 - All state is per-device (localStorage). No accounts, no sync between the child and parent devices. Both views share one browser in the demo.
-- Money Mode is demo only: no funding, custody, brokerage, execution or on-chain proof from this app.
+- The deployed Cresco site remains demo-first until a KEYS backend URL and runtime env are connected. The repo now contains an implemented TSLA devnet execution proof lane, but it remains explicitly demo-token / server-held-demo-signer infrastructure rather than brokerage, custody or real securities execution.
 - Only TSLA can ever show a live price, and only with a configured backend Pyth key. Series/history are always sample data.
 - Headless screenshots are 500px wide because headless Chrome enforces a minimum window width; the in-browser QA used 375px.
 - The parent "Last 30 days" control is a static label; the weekly bars are a labeled sample week.
