@@ -1,343 +1,243 @@
-# KEYS Backend API — Frontend Integration v0.2
+# KEYS Backend API — Cresco / v0.2
 
 Date: 2026-09-24  
-Status: **FROZEN V0.2 PRODUCT CONTRACT / RUNTIME PROVEN**
+Status: **FROZEN SEMANTICS / STATEFUL DEVNET DEMO IMPLEMENTED**
 
-This adapter lets the KEYS frontend integrate against the bounded-autonomy domain contract without importing Anchor or duplicating policy logic.
+Base URL:
 
-It is not a production brokerage/custody API and does not claim real minor securities execution.
+`https://keys-api-stocklana.faadil-casecraft.workers.dev`
 
-## Current product contract
+CORS production origin:
 
-Contract version:
+`https://cresco-lac.vercel.app`
 
-`0.2`
+This API is a hackathon-grade Devnet implementation of KEYS bounded autonomy. It is not a brokerage/custody API and does not claim real minor securities execution.
 
-Frozen semantic contract:
+## Session model
 
-`docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
+### POST /api/v0.2/auth/demo-session
 
-Primary product routes:
-
-- `GET /api/v0.2/demo/maya`
-- `POST /api/v0.2/actions/evaluate`
-- `POST /api/v0.2/boundary-requests`
-
-The `/api/v0.1/*` routes remain historical/compatibility surfaces.  
-The `/api/v0.2/draft/*` aliases remain compatibility aliases only.
-
-Benita should integrate against the non-draft v0.2 routes above.
-
-## Start locally
-
-```bash
-npm run api
-```
-
-Default:
-
-```
-http://127.0.0.1:8787
-```
-
-Optional environment variables:
-
-- `KEYS_API_HOST`
-- `KEYS_API_PORT`
-- `KEYS_CORS_ORIGIN`
-
-The default host is loopback. CORS defaults to `*` for local demo convenience only.
-
-## GET /health
-
-Returns service health for the current product integration target.
-
-Current response includes:
+Body:
 
 ```json
-{
-  "ok": true,
-  "service": "keys-backend",
-  "contractVersion": "0.2",
-  "legacyContractVersion": "0.1"
-}
+{ "role": "child", "displayName": "Alex" }
 ```
 
-The legacy version field exists only because the repository intentionally preserves the v0.1 proof surfaces.
+or `role: "guardian"`.
 
-## GET /api/v0.2/demo/maya
+Returns a temporary role-scoped demo token. Protected routes use:
 
-Returns:
+`Authorization: Bearer <token>`
 
-`fixtures/frontend-maya-v0.2-contract.json`
+This is **not** production identity verification/KYC.
 
-Key truth fields include:
+## Shared Family state
 
-- `contractVersion: "0.2"`;
-- `truthBoundary.onchainPythVerification: true`;
-- `truthBoundary.realMinorSecuritiesExecution: false`;
-- current Mandate version/nonce;
-- bounded-autonomy demo beats.
+### GET /api/v0.2/family/state
+Family session required.
 
-This is the fastest frontend bootstrap route.
+Returns shared profile, Mandate projection, test balances, Money holdings, requests and learning summary from the Cloudflare Durable Object.
 
-## POST /api/v0.2/actions/evaluate
+### POST /api/v0.2/family/link
+Child session required. Uses the demo family-link code.
+
+## Mandate
+
+### GET /api/v0.2/mandates/current
+Family session required.
+
+Returns the current server/on-chain Mandate plus current AAPL AssetRule projection.
+
+### POST /api/v0.2/mandates/transition
+Guardian session required.
 
 Body:
 
 ```json
 {
-  "mandate": {},
-  "assetRule": {},
-  "action": {},
-  "now": "ISO-8601 timestamp"
+  "expectedNonce": 4,
+  "changes": {
+    "maxActionNotional": 20,
+    "maxPeriodNotional": 50,
+    "status": "ACTIVE"
+  }
 }
 ```
 
-When `assetRule.requiresMarketEvidence === true`, the backend resolves market evidence server-side.
+Supported current Devnet demo changes are policy notional limits and status. They call the KEYS Solana program and return Devnet proof signatures. Browser data is not the authority source.
 
-The route never trusts a browser-supplied Pyth API key.
+## Evaluate
 
-Response metadata includes:
-
-```json
-{
-  "type": "V0_2_ACTION_EVALUATION",
-  "runtimeProofStatus": "CANONICAL_DEVNET_RUNTIME_PROVEN"
-}
-```
-
-Relevant decisions/reason codes include:
-
-- `ALLOW / WITHIN_MANDATE`;
-- `REFUSE / MANDATE_LIMIT_EXCEEDED`;
-- `REFUSE / PYTH_NOTIONAL_EXCEEDED`;
-- `REFUSE / MARKET_CONDITION_INVALIDATED`;
-- stale/invalid Pyth evidence fail-closed reason codes.
-
-The UI should translate protocol reason codes into plain language.
-
-## POST /api/v0.2/boundary-requests
+### POST /api/v0.2/actions/evaluate
+Child session required.
 
 Body:
 
 ```json
 {
-  "mandate": {},
-  "assetRule": {},
-  "action": {},
-  "reasoningCommitmentHash": "...",
-  "condition": null,
-  "now": "ISO-8601 timestamp"
+  "action": {
+    "asset": "AAPL",
+    "type": "BUY",
+    "notional": 5,
+    "expectedNonce": 4
+  }
 }
 ```
 
-The result is a boundary-request object awaiting a human decision.
+The server loads current authority. The browser no longer submits a trusted Mandate/AssetRule.
 
-A boundary request never widens authority by itself.
+## Execute
 
-## GET /api/v0.2/demo/runtime
-
-Returns the current stable server-held Solana devnet demo runtime when the backend is configured with:
-
-- `DEVNET_KEYPAIR_JSON`
-- `PYTH_PRO_API_KEY`
-
-This route exposes only public runtime metadata.
-
-It does **not** expose signer material.
-
-Current runtime mode:
-
-`SERVER_HELD_DEVNET_DEMO`
-
-Truth boundary:
-
-- capital asset = demo/mock SPL token;
-- market truth = live signed Pyth AAPL evidence;
-- network = Solana devnet;
-- real minor securities execution = false;
-- brokerage/custody = false.
-
-If the stable runtime has not been bootstrapped, the route returns an explicit unavailable/not-ready response rather than fabricating state.
-
-## POST /api/v0.2/actions/execute
-
-Implemented for the Cresco judge-facing demo path.
-
-Body:
+### POST /api/v0.2/actions/execute
+Child session required. Header/body idempotency key must identify one user intent.
 
 ```json
 {
   "asset": "AAPL",
   "type": "BUY",
   "notional": 5,
-  "expectedNonce": 3,
-  "idempotencyKey": "uuid"
+  "expectedNonce": 4,
+  "idempotencyKey": "uuid",
+  "allowOnceRequestId": null
 }
 ```
 
-When configured, the server:
+Execution sequence:
 
-1. loads the stable on-chain demo Mandate and AssetRule;
-2. rejects stale nonce / inactive Mandate / unsupported asset or action;
-3. fetches a fresh signed Pyth AAPL Solana payload server-side;
-4. constructs the Ed25519 + `execute_within_mandate_with_pyth` transaction;
-5. sends it to the canonical KEYS devnet program;
-6. returns the actual devnet signature only after confirmation.
+1. load current runtime + Family state;
+2. create/check a Durable Object reservation;
+3. serialize balance and period-boundary checks;
+4. verify optional exact ALLOW_ONCE request;
+5. fetch live signed Pyth AAPL evidence;
+6. submit KEYS Devnet transaction;
+7. wait for confirmation;
+8. finalize durable balance/portfolio/request state;
+9. return proof.
 
-Confirmed proof shape includes:
+Confirmed proof includes the Devnet signature, program id, Mandate version/nonce, idempotency key and Pyth proof metadata.
 
-```json
-{
-  "executionProof": {
-    "status": "CONFIRMED",
-    "network": "solana-devnet",
-    "signature": "<base58>",
-    "programId": "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk",
-    "simulated": false,
-    "executionAsset": "DEMO_TOKEN",
-    "pyth": {
-      "source": "PYTH_PRO",
-      "feedId": 922,
-      "verification": "ONCHAIN_PYTH_LAZER",
-      "authorityEffect": "NONE"
-    }
-  }
-}
-```
+Durable idempotency scope:
 
-A refusal returns `executionProof: null`.
+`DURABLE_OBJECT_FAMILY`
 
-Current idempotency scope:
+### ALLOW_ONCE
 
-`PROCESS_LOCAL_DEMO`
+A one-time allowance is valid only when all are true:
 
-That means duplicate keys are deduplicated inside the active backend process. It is **not** yet a durable cross-region/serverless exactly-once guarantee.
+- exact `allowOnceRequestId`;
+- request status is `ALLOWED_ONCE`;
+- same asset;
+- amount ≤ approved request;
+- same current Mandate nonce;
+- not previously consumed.
 
-The stable AAPL runtime bootstrap + real execution smoke is **PASS / PROVEN** in `devnet-execution-bridge` run `36034651466`.
+Successful use marks it `ALLOWED_ONCE_USED`.
 
-Current AAPL entitlement/signed-payload proof: https://github.com/Faadil1/keys/actions/runs/36035283447
+## Boundary requests
 
-Current AAPL devnet bridge proof: https://github.com/Faadil1/keys/actions/runs/36034651466
+### POST /api/v0.2/boundary-requests
+Child session required.
 
-See `docs/CRESCO-BACKEND-DELTA-2026-09-24.md`.
+Persists a family-private request. Free-form minor reasoning is not placed on-chain.
 
-## GET /api/v0.2/integrations/prestocks
+### GET /api/v0.2/boundary-requests
+Family session required.
 
-Returns the live normalized PreStocks catalog from the official public PreStocks token API.
+### POST /api/v0.2/boundary-requests/:id/decision
+Guardian session required.
 
-Each item exposes frontend-safe representation context including:
-
-- source / symbol / name;
-- Solana contract address;
-- product URL;
-- representation semantics;
-- live mark/token pricing when available;
-- eligibility state;
-- KEYS policy metadata.
-
-Default policy is deliberately fail-closed:
-
-```json
-{
-  "eligibility": {
-    "status": "UNKNOWN",
-    "executionEligible": false
-  },
-  "keysPolicy": {
-    "practiceAvailable": true,
-    "authorityEffect": "NONE"
-  }
-}
-```
-
-This route is suitable for contextual Learn / Practice and representation details.
-
-It must not be interpreted as proof of live minor securities execution.
-
-## GET /api/v0.2/integrations/prestocks/:symbol
-
-Returns one normalized PreStocks representation by symbol, for example:
-
-`GET /api/v0.2/integrations/prestocks/openai`
-
-The same eligibility and authority boundaries apply.
-
-Canonical live integration proof:
-
-https://github.com/Faadil1/keys/actions/runs/35969672666
-
-## Guardian decisions and authority transitions
-
-The v0.2 product semantics require:
+Decisions:
 
 `ALLOW_ONCE | WIDEN_MANDATE | REFUSE`
 
-Standing widen authority comes only from an authorized human transition and advances Mandate version/nonce.
+WIDEN goes through the same on-chain Mandate transition path.
 
-The current frozen v0.2 HTTP surface does not invent a new guardian mutation endpoint. The on-chain human-widen and stale-replay behavior is already proven by the canonical Solana runtime and represented in the frontend fixture/demo spine.
+## Test funding
 
-Do not label a frontend-only state transition as a committed on-chain transition unless an actual proof/signature is attached.
+### POST /api/v0.2/funding/deposits
+Guardian session required.
 
-## Canonical Solana / Pyth proof
+Adds backend **test credit only**.
 
-Program:
+Response includes:
+
+`realPaymentTaken: false`
+
+### GET /api/v0.2/balances
+Family session required.
+
+No bank/card provider is connected.
+
+## Learning / portfolio
+
+### POST /api/v0.2/learning/progress
+Child session required. Persists lesson/minute progress. Authority effect is always `NONE`.
+
+### GET /api/v0.2/learning/summary
+Family session required.
+
+### GET /api/v0.2/portfolio?mode=money
+Family session required. Returns holdings/activity finalized from confirmed Money executions.
+
+## Market
+
+### GET /api/v0.2/market/quotes?symbols=AAPL,NVDA,...
+
+Public market-evidence surface.
+
+Only a Pyth result with status `FRESH` may be rendered as live. Missing/unentitled feeds return `UNAVAILABLE`; unknown prices are never converted to zero.
+
+Current UI universe:
+AAPL, NVDA, TSLA, NFLX, AMZN, MSFT, META, MCD, SPY, QQQ.
+
+Current configured Pyth adapter feeds include AAPL and TSLA; AAPL is the current proven Money lane.
+
+### GET /api/v0.2/market/series?symbol=AAPL&period=1M
+
+Currently returns:
+
+`UNAVAILABLE / HISTORY_PROVIDER_NOT_CONNECTED`
+
+with no fabricated points. The frontend can retain clearly labeled sample history.
+
+## Stable proof/runtime
+
+### GET /api/v0.2/demo/runtime
+
+Returns public metadata for the server-held AAPL Devnet demo runtime.
+
+### GET /api/v0.2/demo/maya
+
+Returns the frozen bounded-autonomy fixture.
+
+## PreStocks
+
+- `GET /api/v0.2/integrations/prestocks`
+- `GET /api/v0.2/integrations/prestocks/:symbol`
+
+Live public API integration, fail-closed for execution eligibility:
+`eligibility=UNKNOWN`, `executionEligible=false`, `practiceAvailable=true`, `authorityEffect=NONE`.
+
+## Canonical proof
+
+Solana program:
 
 `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
 
-Network:
+Network: **Devnet**
 
-`devnet`
+Current Pyth proof asset:
 
-Canonical run:
+`Equity.US.AAPL/USD` / feed `922`
 
-https://github.com/Faadil1/keys/actions/runs/35959137364
-
-Proven:
-
-- in-bounds execution without guardian approval;
-- out-of-bounds program refusal;
-- explicit authorized human widen;
-- version/nonce advance;
-- stale authorization refusal;
-- live signed Pyth verification in the capital path;
-- Pyth-derived USD/notional enforcement;
-- precommitted max-price refusal;
-- Pyth authority effect = NONE.
+Current capital asset: **DEMO_TOKEN**
 
 ## Secret boundary
 
-Never expose to the frontend:
+Never expose:
 
-- `PYTH_PRO_API_KEY`;
-- `DEVNET_KEYPAIR_JSON`;
-- signer material.
+- `PYTH_PRO_API_KEY`
+- `DEVNET_KEYPAIR_JSON`
+- server signer material
 
-The browser receives only frontend-safe proof/evidence metadata.
-
-## Hosting status
-
-The repository includes a tested Vercel adapter:
-
-- `src/vercel-adapter.mjs`
-- `api/[...path].mjs`
-- `api/health.mjs`
-- `vercel.json`
-
-A public hosted HTTP base URL is not currently claimed.
-
-Benita owns the current Cresco frontend deployment. Faadil owns the separate KEYS backend deployment and runtime secrets.
-
-## Legacy compatibility
-
-The following remain available because successful v0.1 proof/evidence is intentionally preserved:
-
-- `/api/v0.1/capabilities`
-- `/api/v0.1/demo/maya`
-- `/api/v0.1/demo/live-proof`
-- v0.1 proposal/review/transition/execution routes
-
-They are **not** the current product target.
-
-Likewise, `/api/v0.2/draft/*` aliases are compatibility aliases and should not be used in new frontend code.
+Production auth/KYC, embedded wallets, fiat rails, brokerage/custody, mainnet and all-symbol live/history data are intentionally outside the hackathon demo.
