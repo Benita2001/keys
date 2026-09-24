@@ -142,21 +142,23 @@ This proves that Pyth is load-bearing market evidence without becoming an author
 
 ### Current verified state
 
-Canonical live proof:
+Current canonical live proof:
 
-https://github.com/Faadil1/keys/actions/runs/35910460176
+https://github.com/Faadil1/keys/actions/runs/36035283447
 
 Observed:
 
 - secret injection: **PASS**
-- deterministic adapter tests: **5/5 pass**
-- live entitled equity: `Equity.US.TSLA/USD`
+- deterministic adapter tests: **7/7 pass**
+- live entitled equity: `Equity.US.AAPL/USD`
+- Pyth Pro feed id: `922`
 - status: `FRESH`
+- signed Solana payload: **PASS**
 - price/confidence/publish-time evidence obtained
 - KEYS decision: `ESCALATE / GUARDIAN_REVIEW_REQUIRED`
 - `PYTH_LIVE_PROOF=PASS fresh_market_evidence_reached_guardian_review`
 
-AAPL remains unavailable on the current demo-trial entitlement, but the live proof is now asset-configurable and succeeds with a trial-entitled US equity.
+AAPL entitlement is now active and independently proven. The full AAPL HTTP→Solana devnet proof is run `36034651466`. Earlier TSLA proof remains historical valid evidence.
 
 ## 3. Security rules
 
