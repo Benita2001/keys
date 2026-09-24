@@ -7,7 +7,8 @@
     "test": "node --test test/*.test.mjs && node --check scripts/dev-api.mjs",
     "test:anchor": "mocha --timeout 120000 tests/anchor-authority-proof.cjs",
     "demo": "node scripts/demo-run.mjs",
-    "api": "node scripts/dev-api.mjs"
+    "api": "node scripts/dev-api.mjs",
+    "proof:prestocks": "node scripts/prestocks-live-proof.mjs"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.32.1",
