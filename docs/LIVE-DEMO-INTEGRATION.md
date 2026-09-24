@@ -131,7 +131,7 @@ Build the product experience in this order:
 9. **Same action** → ALLOW.
 10. **Old authorization** → STALE / REFUSE.
 
-## Cresco execution bridge — implemented / smoke proof pending
+## Cresco execution bridge — PASS / PROVEN on AAPL
 
 The backend now includes:
 
