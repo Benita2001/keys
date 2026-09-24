@@ -2,8 +2,14 @@
  * KEYS backend adapter (repository root: src/http-api.mjs).
  *
  * Configuration (build-time public env; no secrets ever live here):
- *   NEXT_PUBLIC_KEYS_API_URL=http://127.0.0.1:8787   KEYS API base URL
- *   NEXT_PUBLIC_KEYS_EXECUTION=runtime                 use the execute route
+ *   NEXT_PUBLIC_KEYS_API_URL=http://127.0.0.1:8787   optional KEYS API override
+ *   NEXT_PUBLIC_KEYS_EXECUTION=runtime                 optional execution override
+ *
+ * Production fallback:
+ *   https://keys-api-stocklana.faadil-casecraft.workers.dev
+ *
+ * In production, the hosted runtime is enabled by default only for the isolated
+ * technical proof lane. The normal Family Money lane remains demo/policy-only.
  *
  * Routes used:
  *   GET  /api/v0.1/capabilities                 (exists)
@@ -28,6 +34,9 @@ import type {
 
 type KeysConfig = { url: string; execution: "demo" | "runtime"; timeoutMs: number };
 
+const PUBLIC_HOSTED_KEYS_API =
+  "https://keys-api-stocklana.faadil-casecraft.workers.dev";
+
 let override: Partial<KeysConfig> | null = null;
 
 /** Test hook: override env-derived config. Pass null to reset. */
@@ -36,9 +45,31 @@ export function configureKeysBackend(next: Partial<KeysConfig> | null) {
 }
 
 export function keysConfig(): KeysConfig {
-  const url = (override?.url ?? process.env.NEXT_PUBLIC_KEYS_API_URL ?? "").replace(/\/$/, "");
-  const execution = override?.execution ?? (process.env.NEXT_PUBLIC_KEYS_EXECUTION === "runtime" ? "runtime" : "demo");
-  return { url, execution: url ? execution : "demo", timeoutMs: override?.timeoutMs ?? 8000 };
+  const productionFallback =
+    process.env.NODE_ENV === "production" ? PUBLIC_HOSTED_KEYS_API : "";
+
+  const url = (
+    override?.url ??
+    process.env.NEXT_PUBLIC_KEYS_API_URL ??
+    productionFallback
+  ).replace(/\/$/, "");
+
+  const envExecution = process.env.NEXT_PUBLIC_KEYS_EXECUTION;
+  const execution =
+    override?.execution ??
+    (envExecution
+      ? envExecution === "runtime"
+        ? "runtime"
+        : "demo"
+      : productionFallback
+        ? "runtime"
+        : "demo");
+
+  return {
+    url,
+    execution: url ? execution : "demo",
+    timeoutMs: override?.timeoutMs ?? 8000,
+  };
 }
 
 export function keysBackendConfigured() {
