@@ -17,6 +17,16 @@ Optional: get Money Mode decisions from the real KEYS draft API.
 echo "NEXT_PUBLIC_KEYS_API_URL=http://127.0.0.1:8787" > .env.local
 ```
 
+### Execute integration (mock of the proposed backend route)
+
+```bash
+npm run mock:keys                                   # mock KEYS API on 127.0.0.1:8788
+MOCK_EXECUTE_SCENARIO=pending-once npm run mock:keys # or: slow | error500-once | malformed
+printf "NEXT_PUBLIC_KEYS_API_URL=http://127.0.0.1:8788\nNEXT_PUBLIC_KEYS_EXECUTION=runtime\n" >> .env.local
+```
+
+Mock proofs are `simulated: true` with `MOCK…` signatures and are labeled "Test run (simulated)" in the UI. Contract: `docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md` §3.3.
+
 ## Layout
 
 | Path | What |

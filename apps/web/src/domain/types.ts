@@ -137,7 +137,9 @@ export type ReasonCode =
   | "INSUFFICIENT_BALANCE"
   | "ASSET_UNAVAILABLE"
   /** Backend unreachable: fail closed, never ALLOW. */
-  | "DECISION_UNAVAILABLE";
+  | "DECISION_UNAVAILABLE"
+  /** Execute call outcome is not known yet (timeout / dropped connection). */
+  | "EXECUTION_UNCONFIRMED";
 
 export type MarketEvidence = {
   source: "PYTH_PRO" | "MOCK";
@@ -159,7 +161,7 @@ export type ActionEvaluation = {
   mandateVersion?: number;
   mandateNonce?: number;
   /** Where the decision came from. "local-preview" is never authority. */
-  source: "keys-backend-draft" | "local-preview";
+  source: "keys-backend-draft" | "keys-runtime" | "local-preview";
 };
 
 /** learningContext — short contextual explanation. Never a score. */
@@ -197,7 +199,12 @@ export type BoundaryRequest = {
   guardianNote?: string;
 };
 
-export type ProofStatus = "DEMO_NOT_EXECUTED" | "PRACTICE_LOCAL" | "RUNTIME_CONFIRMED";
+export type ProofStatus =
+  | "DEMO_NOT_EXECUTED"
+  | "PRACTICE_LOCAL"
+  /** Submitted to the runtime, not yet confirmed. Re-check with the same idempotency key. */
+  | "RUNTIME_PENDING"
+  | "RUNTIME_CONFIRMED";
 
 /** executionProof — what actually happened. */
 export type ExecutionProof = {
@@ -208,15 +215,33 @@ export type ExecutionProof = {
   mandateVersion?: number;
   mandateNonce?: number;
   executedAt: string;
+  /**
+   * True when a test server produced this proof (no Solana transaction exists).
+   * The UI never links a simulated signature to an explorer.
+   */
+  simulated?: boolean;
+  idempotencyKey?: string;
 };
+
+/**
+ * EXECUTED — confirmed by the runtime (or demo/practice, per proof status).
+ * REFUSED  — the Mandate or evidence said no; nothing happened.
+ * PENDING  — submitted, not confirmed yet.
+ * UNKNOWN  — the request may or may not have executed (timeout, dropped
+ *            connection, malformed response). Never shown as success or
+ *            failure; the user re-checks with the same idempotency key.
+ */
+export type ExecutionOutcome = "EXECUTED" | "REFUSED" | "PENDING" | "UNKNOWN";
 
 export type ExecutionResult = {
   ok: boolean;
+  outcome: ExecutionOutcome;
   evaluation: ActionEvaluation;
   proof?: ExecutionProof;
   ticker: string;
   amount: number;
   shares?: number;
+  idempotencyKey?: string;
 };
 
 /* ------------------------------------------------------------------ */

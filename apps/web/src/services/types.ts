@@ -22,10 +22,10 @@ export type Capabilities = {
   /** "none" → frontend runs fully on local demo state. */
   backend: "none" | "keys-v0.2-draft";
   marketData: "mock" | "mock-with-live-tsla";
-  moneyMode: "demo";
+  moneyMode: "demo" | "runtime";
   funding: "demo";
   auth: "demo";
-  execution: "demo-not-executed";
+  execution: "demo-not-executed" | "keys-runtime";
 };
 
 export interface MarketDataService {
@@ -43,6 +43,11 @@ export type MoneyActionInput = {
   balance: number;
   /** A guardian ALLOW_ONCE decision that covers exactly this action. */
   allowOnce?: BoundaryRequest | null;
+  /**
+   * One key per user intent. Retries and re-checks reuse it so the runtime
+   * can never execute the same intent twice.
+   */
+  idempotencyKey?: string;
 };
 
 export interface MoneyExecutionService {

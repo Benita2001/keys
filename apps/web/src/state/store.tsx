@@ -36,6 +36,15 @@ export type ActivityItem = {
   shares: number;
   reason?: string;
   proof: ExecutionProof;
+  idempotencyKey?: string;
+};
+
+/** A Money intent whose outcome isn't confirmed yet. Re-checks must reuse its key. */
+export type PendingExecution = {
+  idempotencyKey: string;
+  ticker: string;
+  amount: number;
+  createdAt: string;
 };
 
 export type AppState = {
@@ -61,6 +70,7 @@ export type AppState = {
   mandate: CurrentMandate;
   requests: BoundaryRequest[];
   activity: ActivityItem[];
+  pendingExecutions: PendingExecution[];
   settings: {
     weeklyLessonGoal: number;
     notifyBoundaryRequests: boolean;
@@ -94,6 +104,7 @@ export const initialState: AppState = {
   mandate: DEMO_MANDATE,
   requests: [],
   activity: [],
+  pendingExecutions: [],
   settings: {
     weeklyLessonGoal: 5,
     notifyBoundaryRequests: true,
@@ -114,7 +125,9 @@ type Action =
   | { type: "completeLesson"; lessonId: string; xp: number }
   | { type: "researched"; ticker: string }
   | { type: "practiceBuy"; ticker: string; amount: number; shares: number; reason?: string; proof: ExecutionProof }
-  | { type: "moneyBuy"; ticker: string; amount: number; shares: number; reason?: string; proof: ExecutionProof; usedRequestId?: string }
+  | { type: "moneyBuy"; ticker: string; amount: number; shares: number; reason?: string; proof: ExecutionProof; usedRequestId?: string; idempotencyKey?: string }
+  | { type: "trackPending"; pending: PendingExecution }
+  | { type: "clearPending"; idempotencyKey: string }
   | { type: "addRequest"; request: BoundaryRequest }
   | { type: "decideRequest"; request: BoundaryRequest; mandate: CurrentMandate }
   | { type: "setMandate"; mandate: CurrentMandate }
@@ -169,6 +182,8 @@ export function reducer(state: AppState, action: Action): AppState {
         ],
       };
     case "moneyBuy":
+      // One user intent is applied at most once, even if a re-check confirms it again.
+      if (action.idempotencyKey && state.activity.some((a) => a.idempotencyKey === action.idempotencyKey)) return state;
       return {
         ...state,
         money: {
@@ -176,14 +191,20 @@ export function reducer(state: AppState, action: Action): AppState {
           balance: Math.max(0, state.money.balance - action.amount),
         },
         mandate: { ...state.mandate, spentThisPeriod: state.mandate.spentThisPeriod + action.amount },
+        pendingExecutions: state.pendingExecutions.filter((p) => p.idempotencyKey !== action.idempotencyKey),
         requests: action.usedRequestId
           ? state.requests.map((r) => (r.id === action.usedRequestId ? { ...r, status: "ALLOWED_ONCE_USED" } : r))
           : state.requests,
         activity: [
-          { id: `a_${Date.now()}`, mode: "money", ticker: action.ticker, amount: action.amount, shares: action.shares, reason: action.reason, proof: action.proof },
+          { id: `a_${Date.now()}`, mode: "money", ticker: action.ticker, amount: action.amount, shares: action.shares, reason: action.reason, proof: action.proof, idempotencyKey: action.idempotencyKey },
           ...state.activity,
         ],
       };
+    case "trackPending":
+      if (state.pendingExecutions.some((p) => p.idempotencyKey === action.pending.idempotencyKey)) return state;
+      return { ...state, pendingExecutions: [...state.pendingExecutions, action.pending] };
+    case "clearPending":
+      return { ...state, pendingExecutions: state.pendingExecutions.filter((p) => p.idempotencyKey !== action.idempotencyKey) };
     case "addRequest":
       return { ...state, requests: [action.request, ...state.requests] };
     case "decideRequest":
@@ -241,6 +262,7 @@ export function restoreState(raw: string | null): AppState | null {
   return {
     ...initialState,
     ...(parsed as Partial<AppState>),
+    pendingExecutions: Array.isArray(parsed.pendingExecutions) ? (parsed.pendingExecutions as PendingExecution[]) : [],
     settings: { ...initialState.settings, ...(isObj(parsed.settings) ? parsed.settings : {}) },
     demoFlags: { ...initialState.demoFlags, ...(isObj(parsed.demoFlags) ? parsed.demoFlags : {}) },
   } as AppState;

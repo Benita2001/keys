@@ -40,6 +40,7 @@ Unset → the frontend runs fully on local demo state and the local policy previ
 | `evaluateActionDraft()` | `POST /api/v0.2/draft/actions/evaluate` | Money Mode decision (ALLOW / REFUSE + `boundaryRequestAvailable`) | Yes: local API, browser CORS, $5 → ALLOW, $20 → REFUSE `MANDATE_LIMIT_EXCEEDED` |
 | `fetchLiveEquityPrice()` | `GET /api/v0.1/demo/live-proof` | Overlay a live Pyth price for the configured demo equity (TSLA) when `evaluation.marketEvidence.status === "FRESH"` | Route reachable. Without `PYTH_PRO_API_KEY` it returns no fresh evidence, so TSLA stays labeled **Sample prices** (correct fail-closed behavior). Live path not observed locally. |
 | `fetchCapabilities()` | `GET /api/v0.1/capabilities` | Available for routing decisions; not yet consumed by UI | Route exists |
+| `executeAction()` | `POST /api/v0.2/actions/execute` (**proposed, not built**) | Money execution + proof when `NEXT_PUBLIC_KEYS_EXECUTION=runtime` | Against the local mock only (`npm run mock:keys`): confirm, pending, timeout, 5xx, malformed, stale nonce, allow-once, idempotent replay |
 
 Fail-closed rule in the adapter: if the evaluate call errors or times out (8s), the frontend returns `REFUSE / DECISION_UNAVAILABLE` ("We couldn't check your limits. Nothing happened."). An unreachable backend never becomes an ALLOW.
 
@@ -85,15 +86,78 @@ Each entry: screen → purpose → existing support → missing → proposed end
 - **Errors:** 401/403 → sign-in; 409 stale nonce → `STALE_NONCE` UI exists; 5xx/timeout → fail closed (implemented).
 - **Truth boundary:** evaluation ≠ execution. UI never shows "bought" from an evaluation.
 
-### 3.3 Money Mode execution + proof
+### 3.3 Money Mode execution + proof — **frontend built against a mock; backend route needed**
 
-- **Screens:** Invest success, *View transaction details*.
-- **Existing:** Anchor program `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk` proves bounded **demo-token** execution on devnet (in-bounds executes without guardian, out-of-bounds fails in-program, widen advances version/nonce, stale refuses, pause blocks). No HTTP route executes it for the frontend.
-- **Missing:** an execution endpoint that signs/relays `execute_within_mandate` for the delegate, returns the signature, and updates holdings.
-- **Proposed:** `POST /api/v0.2/actions/execute` `{ asset, type, notional, expectedNonce, idempotencyKey }` → `{ evaluation, executionProof:{ status:"RUNTIME_CONFIRMED", network:"solana-devnet", signature, programId, mandateVersion, mandateNonce, executedAt } }`.
-- **Permissions:** delegate session; server-side signer or embedded wallet. No keys in the browser.
-- **States:** pending (UI shows "Checking your limits…"), confirmed, refused-in-program (map program error → reason code), timeout (show "not confirmed yet", never "done").
-- **Truth boundary:** until a mainnet/regulated path exists, label devnet demo-token execution as such. Do not claim share ownership, custody, brokerage or xStocks settlement.
+- **Screens:** Invest (`/invest/[ticker]?mode=money`) success, pending, "still checking" and *View transaction details*.
+- **Existing:** Anchor program `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk` proves bounded **demo-token** execution on devnet (in-bounds executes without guardian, out-of-bounds fails in-program, widen advances version/nonce, stale refuses, pause blocks). No HTTP route executes it yet.
+- **Frontend status:** implemented in `apps/web/src/services/keys-backend.ts` (`executeAction`) and `services/index.ts` (`executeOnRuntime`). Enabled with `NEXT_PUBLIC_KEYS_API_URL=…` + `NEXT_PUBLIC_KEYS_EXECUTION=runtime`. Verified against the local mock `apps/web/scripts/mock-keys-api.mjs` (`npm run mock:keys`, port 8788), which evaluates with the real `src/bounded-autonomy.mjs` and returns `simulated: true` proofs.
+
+**Route:** `POST /api/v0.2/actions/execute` · header `idempotency-key: <same as body>`
+
+Request:
+
+```json
+{
+  "asset": "AAPL",
+  "type": "BUY",
+  "notional": 5,
+  "expectedNonce": 3,
+  "idempotencyKey": "3f1c…uuid",
+  "allowOnceRequestId": "br_… (optional)",
+  "draft": {
+    "mandate": { "status": "ACTIVE", "version": 4, "nonce": 3 },
+    "assetRule": { "asset": "AAPL", "enabled": true, "allowedActions": ["BUY"], "maxActionNotional": 10, "maxPeriodNotional": 50, "spentThisPeriod": 0, "requiresMarketEvidence": false }
+  }
+}
+```
+
+`draft` exists only until the server owns the Mandate (§3.4). The final route must load the Mandate from the session and ignore `draft`.
+
+Response: **HTTP 200 for every policy outcome.**
+
+```json
+{
+  "contractVersion": "0.2",
+  "evaluation": { "decision": "ALLOW", "reasonCode": "WITHIN_MANDATE", "guardianApprovalRequired": false, "mandateVersion": 4, "mandateNonce": 3 },
+  "executionProof": {
+    "status": "CONFIRMED",
+    "network": "solana-devnet",
+    "signature": "<base58 tx signature>",
+    "programId": "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk",
+    "mandateVersion": 4,
+    "mandateNonce": 3,
+    "executedAt": "2026-09-24T12:00:00Z",
+    "idempotencyKey": "3f1c…uuid",
+    "simulated": false
+  }
+}
+```
+
+- REFUSE / ESCALATE → `executionProof: null` and the same `evaluation` fields as the draft evaluate route (`boundaryRequestAvailable`, `standingLimit`, …).
+- Submitted but not final → `executionProof.status: "PENDING"` (signature optional). The client re-sends the **same** request/key to re-check.
+
+**Server requirements the frontend relies on:**
+
+1. **Idempotency.** The same `idempotencyKey` must return the original result and never execute twice, including after a timeout or 5xx. The frontend persists unconfirmed keys and re-uses them on "Check again", even after navigation.
+2. **Atomic evaluate + debit.** Two different keys arriving concurrently must not both pass a period limit.
+3. **Stale nonce.** Refuse with `reasonCode: "STALE_NONCE"` (200) or HTTP 409 when `expectedNonce` ≠ current Mandate nonce.
+4. **Allow-once.** Verify `allowOnceRequestId` server-side: guardian decided `ALLOW_ONCE`, same asset, amount ≤ requested, same nonce, unused. Mark it used atomically. (The mock trusts it; the real route must not.)
+5. **`simulated: false` only for real devnet transactions.** The UI links `signature` to `https://explorer.solana.com/tx/<sig>?cluster=devnet` only when `status: "CONFIRMED"` and `simulated: false`.
+6. **`idempotencyKey` echoed in the proof.** The client rejects proofs for a different key.
+
+**How the frontend classifies responses (tested in `apps/web/src/services/execute.test.ts`):**
+
+| Response | Outcome | UI |
+|---|---|---|
+| 200 + ALLOW + CONFIRMED | EXECUTED | Success + proof note (devnet link, or "Test run (simulated)") |
+| 200 + ALLOW + PENDING | PENDING | "Sent. Waiting for confirmation." + Check again; balance unchanged |
+| 200 + REFUSE/ESCALATE | REFUSED | Boundary message / ask for more room |
+| 400 / 401 / 403 / 422 | REFUSED (`DECISION_UNAVAILABLE`) | "We couldn't check your limits. Nothing happened." |
+| 409 | REFUSED (`STALE_NONCE`) | "Your limits just changed." |
+| 5xx, timeout (8s), network error, malformed body | UNKNOWN | "We're still checking on this." + Check again; never success or failure |
+
+- **Permissions:** delegate session; server-side signer/relayer or embedded wallet. No keys in the browser.
+- **Truth boundary:** devnet demo tokens only. Do not claim share ownership, custody, brokerage or xStocks settlement.
 
 ### 3.4 Mandate read/update (guardian)
 

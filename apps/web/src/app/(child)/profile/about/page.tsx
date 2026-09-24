@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useToast } from "@/components/ui/feedback";
 import { ActionButton, Card, PageHeader, SectionHeader, Toggle } from "@/components/ui/primitives";
 import { getCapabilities } from "@/services";
-import { KEYS_API_URL } from "@/services/keys-backend";
+import { keysApiUrl } from "@/services/keys-backend";
 import { useStore } from "@/state/store";
 
 const PROGRAM_ID = "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk";
@@ -29,7 +29,10 @@ export default function AboutPage() {
     },
     {
       title: "Money Mode",
-      body: "Money Mode is a demo. It isn't connected to a bank, broker or custodian, so no real money moves and nothing is bought.",
+      body:
+        caps.execution === "keys-runtime"
+          ? "Money actions run through the KEYS program on Solana devnet using demo tokens. No real money moves and no real shares are bought. Each result says whether it was confirmed on devnet or came from a test server."
+          : "Money Mode is a demo. It isn't connected to a bank, broker or custodian, so no real money moves and nothing is bought.",
     },
     {
       title: "Limits",
@@ -56,9 +59,12 @@ export default function AboutPage() {
         </summary>
         <dl className="mt-3 space-y-2 text-[13px]">
           <Detail k="Authority engine" v="KEYS bounded-autonomy Mandate (contract v0.2, draft)" />
-          <Detail k="Backend" v={caps.backend === "none" ? "Not configured, using the local policy preview" : `KEYS API at ${KEYS_API_URL}`} />
+          <Detail k="Backend" v={caps.backend === "none" ? "Not configured, using the local policy preview" : `KEYS API at ${keysApiUrl()}`} />
           <Detail k="Solana program (devnet)" v={PROGRAM_ID} mono />
-          <Detail k="Money execution from this app" v="Not connected (demo only)" />
+          <Detail
+            k="Money execution from this app"
+            v={caps.execution === "keys-runtime" ? "KEYS execute route (devnet demo tokens)" : "Not connected (demo only)"}
+          />
           <Detail k="Mandate version" v={`v${state.mandate.version} · nonce ${state.mandate.nonce}`} />
           <Detail k="Proven live market feed" v="Pyth Pro Equity.US.TSLA/USD (server-side only)" />
         </dl>

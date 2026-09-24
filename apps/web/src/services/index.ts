@@ -14,9 +14,13 @@ import type {
 } from "@/domain/types";
 import { EXPLORE_ORDER, MOCK_ASSETS, sampleSeries } from "@/mocks/market";
 import {
+  buildExecuteRequest,
   evaluateActionDraft,
+  executeAction,
   fetchLiveEquityPrice,
   keysBackendConfigured,
+  keysRuntimeExecutionEnabled,
+  newIdempotencyKey,
 } from "./keys-backend";
 import type {
   AuthService,
@@ -51,13 +55,15 @@ function latency(base = 280) {
 }
 
 export function getCapabilities(): Capabilities {
+  const backend = keysBackendConfigured();
+  const runtime = keysRuntimeExecutionEnabled();
   return {
-    backend: keysBackendConfigured ? "keys-v0.2-draft" : "none",
-    marketData: keysBackendConfigured ? "mock-with-live-tsla" : "mock",
-    moneyMode: "demo",
+    backend: backend ? "keys-v0.2-draft" : "none",
+    marketData: backend ? "mock-with-live-tsla" : "mock",
+    moneyMode: runtime ? "runtime" : "demo",
     funding: "demo",
     auth: "demo",
-    execution: "demo-not-executed",
+    execution: runtime ? "keys-runtime" : "demo-not-executed",
   };
 }
 
@@ -68,7 +74,7 @@ export function getCapabilities(): Capabilities {
 let liveOverlay: Promise<Awaited<ReturnType<typeof fetchLiveEquityPrice>>> | null = null;
 
 async function withLiveOverlay(assets: MarketAsset[]): Promise<MarketAsset[]> {
-  if (!keysBackendConfigured) return assets;
+  if (!keysBackendConfigured()) return assets;
   liveOverlay ??= fetchLiveEquityPrice().catch(() => null);
   const live = await liveOverlay;
   if (!live) return assets;
@@ -134,6 +140,7 @@ export const practiceExecution: PracticeExecutionService = {
     };
     return {
       ok,
+      outcome: ok ? "EXECUTED" : "REFUSED",
       evaluation,
       ticker: asset.ticker,
       amount,
@@ -170,7 +177,7 @@ async function decide(input: MoneyActionInput): Promise<ActionEvaluation> {
   if (pre) return pre;
 
   let evaluation: ActionEvaluation;
-  if (keysBackendConfigured) {
+  if (keysBackendConfigured()) {
     try {
       evaluation = await evaluateActionDraft({
         mandate: input.mandate,
@@ -212,28 +219,66 @@ async function decide(input: MoneyActionInput): Promise<ActionEvaluation> {
   return evaluation;
 }
 
+function sharesFor(input: MoneyActionInput) {
+  return input.amount / input.asset.price;
+}
+
+/** Runtime path: the KEYS execute route evaluates and executes atomically. */
+async function executeOnRuntime(input: MoneyActionInput): Promise<ExecutionResult> {
+  const pre = preflight(input);
+  if (pre) return { ok: false, outcome: "REFUSED", evaluation: pre, ticker: input.asset.ticker, amount: input.amount };
+
+  const idempotencyKey = input.idempotencyKey ?? newIdempotencyKey();
+  const res = await executeAction(
+    buildExecuteRequest({
+      mandate: input.mandate,
+      assetRule: input.assetRule,
+      asset: input.asset.ticker,
+      type: input.type,
+      notional: input.amount,
+      idempotencyKey,
+      allowOnceRequestId: allowOnceCovers(input) ? input.allowOnce?.id : undefined,
+    }),
+  );
+  return {
+    ok: res.outcome === "EXECUTED",
+    outcome: res.outcome,
+    evaluation: res.evaluation,
+    proof: res.proof,
+    ticker: input.asset.ticker,
+    amount: input.amount,
+    shares: res.outcome === "EXECUTED" || res.outcome === "PENDING" ? sharesFor(input) : undefined,
+    idempotencyKey,
+  };
+}
+
 export const moneyExecution: MoneyExecutionService = {
   async evaluate(input) {
     await latency(200);
     return decide(input);
   },
   async execute(input) {
+    if (keysRuntimeExecutionEnabled()) return executeOnRuntime(input);
+
     await latency(520);
     const evaluation = await decide(input);
     const ok = evaluation.decision === "ALLOW";
     const result: ExecutionResult = {
       ok,
+      outcome: ok ? "EXECUTED" : "REFUSED",
       evaluation,
       ticker: input.asset.ticker,
       amount: input.amount,
-      shares: ok ? input.amount / input.asset.price : undefined,
-      // No Money execution runtime is wired to the frontend yet. Be explicit.
+      shares: ok ? sharesFor(input) : undefined,
+      idempotencyKey: input.idempotencyKey,
+      // No Money execution runtime is configured. Be explicit.
       proof: ok
         ? {
             status: "DEMO_NOT_EXECUTED",
             mandateVersion: input.mandate.version,
             mandateNonce: input.mandate.nonce,
             executedAt: new Date().toISOString(),
+            idempotencyKey: input.idempotencyKey,
           }
         : undefined,
     };

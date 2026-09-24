@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Info, Send, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Clock, Info, Send, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CompanyLogo } from "@/components/finance";
 import { PlantPot } from "@/components/illustrations/objects";
@@ -13,6 +13,8 @@ import { assetRuleFor, evaluateBoundedAction, explainEvaluation, maxAllowedNow, 
 import type { ActionEvaluation, ExecutionResult, MarketAsset, Mode } from "@/domain/types";
 import { useAsset } from "@/hooks/data";
 import { boundaryRequests, moneyExecution, practiceExecution } from "@/services";
+import { newIdempotencyKey } from "@/services/keys-backend";
+import { ExecutionProofNote, onChainLabel } from "@/components/proof";
 import { useSingleFlight } from "@/hooks/single-flight";
 import { useStore } from "@/state/store";
 
@@ -21,7 +23,8 @@ type Phase =
   | { kind: "submitting" }
   | { kind: "done"; result: ExecutionResult; allowedOnce: boolean }
   | { kind: "boundary"; evaluation: ActionEvaluation }
-  | { kind: "requested" };
+  | { kind: "requested" }
+  | { kind: "unconfirmed"; result: ExecutionResult; idempotencyKey: string; checking: boolean };
 
 export function InvestFlow({ ticker, initialMode, initialAmount }: { ticker: string; initialMode?: Mode; initialAmount?: number }) {
   const { state } = useStore();
@@ -67,9 +70,33 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
     (r) => r.status === "ALLOWED_ONCE" && r.asset === asset.ticker && r.mandateNonce === mandate.nonce,
   );
   const presets = mode === "practice" ? [25, 50, 100, 250] : [2, 5, 10, 20];
-  const [amountText, setAmountText] = useState(String(initialAmount ?? allowOnce?.requestedNotional ?? (mode === "practice" ? 50 : 5)));
+  const [amountText, setAmountText] = useState(
+    String(
+      (mode === "money" ? state.pendingExecutions.find((p) => p.ticker === asset.ticker)?.amount : undefined) ??
+        initialAmount ??
+        allowOnce?.requestedNotional ??
+        (mode === "practice" ? 50 : 5),
+    ),
+  );
   const [reason, setReason] = useState("");
-  const [phase, setPhase] = useState<Phase>({ kind: "edit" });
+  // A previously unconfirmed intent for this company resumes with the same key.
+  const resumable = mode === "money" ? state.pendingExecutions.find((p) => p.ticker === asset.ticker) : undefined;
+  const [phase, setPhase] = useState<Phase>(() =>
+    resumable
+      ? {
+          kind: "unconfirmed",
+          idempotencyKey: resumable.idempotencyKey,
+          checking: false,
+          result: {
+            ok: false,
+            outcome: "UNKNOWN",
+            evaluation: { decision: "REFUSE", reasonCode: "EXECUTION_UNCONFIRMED", source: "keys-runtime" },
+            ticker: resumable.ticker,
+            amount: resumable.amount,
+          },
+        }
+      : { kind: "edit" },
+  );
   const [askOpen, setAskOpen] = useState(false);
   const [asking, setAsking] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -103,6 +130,19 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
       }
       return;
     }
+    await runMoney(intentKeyFor(amount));
+  });
+
+  // One idempotency key per user intent (asset + amount). Re-checks reuse it.
+  const [intent, setIntent] = useState<{ amount: number; key: string } | null>(null);
+  const intentKeyFor = (value: number) => {
+    if (intent && intent.amount === value) return intent.key;
+    const next = { amount: value, key: newIdempotencyKey() };
+    setIntent(next);
+    return next.key;
+  };
+
+  const runMoney = async (idempotencyKey: string) => {
     const result = await moneyExecution.execute({
       mandate,
       assetRule: assetRuleFor(mandate, asset.ticker),
@@ -111,10 +151,11 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
       amount,
       balance: state.money.balance,
       allowOnce: allowOnce ?? null,
+      idempotencyKey,
     });
     // The allowance is only "used" when the standing Mandate alone would have refused.
     const usedAllowOnce = coveredByAllowOnce && preview?.decision !== "ALLOW";
-    if (result.ok && result.shares != null && result.proof) {
+    if (result.outcome === "EXECUTED" && result.shares != null && result.proof) {
       dispatch({
         type: "moneyBuy",
         ticker: asset.ticker,
@@ -123,11 +164,25 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
         reason: reason.trim() || undefined,
         proof: result.proof,
         usedRequestId: usedAllowOnce ? allowOnce?.id : undefined,
+        idempotencyKey,
       });
+      setIntent(null);
       setPhase({ kind: "done", result, allowedOnce: usedAllowOnce });
+    } else if (result.outcome === "PENDING" || result.outcome === "UNKNOWN") {
+      // Never shown as success or failure. Balance is unchanged until confirmed.
+      dispatch({ type: "trackPending", pending: { idempotencyKey, ticker: asset.ticker, amount, createdAt: new Date().toISOString() } });
+      setPhase({ kind: "unconfirmed", result, idempotencyKey, checking: false });
     } else {
+      dispatch({ type: "clearPending", idempotencyKey });
+      setIntent(null);
       setPhase({ kind: "boundary", evaluation: result.evaluation });
     }
+  };
+
+  const recheck = guard(async () => {
+    if (phase.kind !== "unconfirmed") return;
+    setPhase({ ...phase, checking: true });
+    await runMoney(phase.idempotencyKey);
   });
 
   const sendRequest = guard(async (why: string) => {
@@ -166,17 +221,15 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
           {formatAmount(amount)} in {asset.companyName} · about {formatShares(shares)} shares at a {asset.dataStatus === "live" ? "live" : "sample"} price of {formatUsd(asset.price)}.
         </p>
         {mode === "money" ? (
-          <div className="mt-4 w-full rounded-[16px] bg-yellow-soft p-3.5 text-left text-[13px] font-semibold text-[#6f4a06]">
-            <p className="flex items-center gap-1.5 font-extrabold">
-              <Info aria-hidden className="size-4" /> Demo only
-            </p>
-            <p className="mt-1">
-              {phase.allowedOnce
+          <ExecutionProofNote
+            className="mt-4"
+            proof={phase.result.proof}
+            approvalText={
+              phase.allowedOnce
                 ? `${state.profile.parentName} approved this one action. Your standing limits didn't change.`
-                : "Cresco checked your limits and this was allowed with no parent approval needed."}{" "}
-              Money Mode isn&apos;t connected to real money yet, so nothing was bought and no transaction was sent.
-            </p>
-          </div>
+                : "Cresco checked your limits and this was allowed with no parent approval needed."
+            }
+          />
         ) : null}
         <div className="mt-auto w-full space-y-3 pb-[calc(16px+env(safe-area-inset-bottom))] pt-8">
           <ActionButton href="/portfolio" arrow>
@@ -195,21 +248,45 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
             {phase.result.proof?.mandateVersion != null ? (
               <Row k="Limits version" v={`v${phase.result.proof.mandateVersion} · nonce ${phase.result.proof.mandateNonce}`} />
             ) : null}
-            <Row k="Decision" v={`${phase.result.evaluation.decision} · ${phase.result.evaluation.source === "keys-backend-draft" ? "KEYS backend (draft)" : "local preview"}`} />
-            <Row
-              k="On-chain"
-              v={
-                phase.result.proof?.status === "RUNTIME_CONFIRMED"
-                  ? phase.result.proof.signature ?? "Confirmed"
-                  : "Not sent. No transaction exists for this action."
-              }
-            />
+            <Row k="Decision" v={`${phase.result.evaluation.decision} · ${SOURCE_LABEL[phase.result.evaluation.source]}`} />
+            {phase.result.proof?.network ? <Row k="Network" v="Solana devnet (demo tokens)" /> : null}
+            <Row k="On-chain" v={onChainLabel(phase.result.proof)} />
           </dl>
-          <p className="mt-3 text-[12.5px] font-semibold text-ink-3">
-            When Money Mode is connected to the KEYS Solana program, this screen will show the network, transaction signature and a
-            link to view it on Solana.
-          </p>
+          {phase.result.proof?.status === "DEMO_NOT_EXECUTED" || phase.result.proof?.status === "PRACTICE_LOCAL" ? (
+            <p className="mt-3 text-[12.5px] font-semibold text-ink-3">
+              When Money Mode is connected to the KEYS Solana program, this screen shows the network, transaction signature and a
+              link to view it on Solana.
+            </p>
+          ) : null}
         </BottomSheet>
+      </div>
+    );
+  }
+
+  if (phase.kind === "unconfirmed") {
+    const pending = phase.result.outcome === "PENDING";
+    return (
+      <div className="animate-rise mt-10 flex flex-1 flex-col items-center text-center" role="status">
+        <span className="grid size-20 place-items-center rounded-full bg-blue-soft text-blue">
+          <Clock className="size-9" />
+        </span>
+        <h1 className="mt-5 text-[26px] font-black text-navy-strong">
+          {pending ? "Sent. Waiting for confirmation." : "We're still checking on this."}
+        </h1>
+        <p className="mt-2 max-w-[34ch] text-[15px] font-semibold text-ink-2">
+          {pending
+            ? `${formatAmount(amount)} in ${asset.companyName} was submitted to Solana devnet and isn't confirmed yet.`
+            : `We couldn't confirm whether ${formatAmount(amount)} in ${asset.companyName} went through.`}{" "}
+          Your balance won&apos;t change until it&apos;s confirmed, and checking again can never make it happen twice.
+        </p>
+        <div className="mt-auto w-full space-y-3 pb-[calc(16px+env(safe-area-inset-bottom))] pt-8">
+          <ActionButton onClick={recheck} disabled={phase.checking}>
+            {phase.checking ? "Checking…" : "Check again"}
+          </ActionButton>
+          <ActionButton variant="secondary" href="/home">
+            Back to Home
+          </ActionButton>
+        </div>
       </div>
     );
   }
@@ -407,6 +484,12 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
     </div>
   );
 }
+
+const SOURCE_LABEL: Record<ActionEvaluation["source"], string> = {
+  "keys-runtime": "KEYS runtime",
+  "keys-backend-draft": "KEYS backend (draft)",
+  "local-preview": "local preview",
+};
 
 function Row({ k, v }: { k: string; v: string }) {
   return (

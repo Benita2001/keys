@@ -49,3 +49,23 @@ describe("restoreState (Q008)", () => {
     expect(ok?.mandate).toEqual(initialState.mandate);
   });
 });
+
+describe("execution idempotency in state", () => {
+  const proof = { status: "RUNTIME_CONFIRMED" as const, executedAt: "2026-09-24T00:00:00Z", simulated: true };
+  it("applies one confirmed intent once, even if confirmed again", () => {
+    const buy = { type: "moneyBuy" as const, ticker: "AAPL", amount: 5, shares: 0.02, proof, idempotencyKey: "k1" };
+    const s1 = reducer(initialState, buy);
+    const s2 = reducer(s1, buy);
+    expect(s2.money.balance).toBe(initialState.money.balance - 5);
+    expect(s2.activity).toHaveLength(1);
+  });
+
+  it("tracks unconfirmed intents and clears them on confirmation", () => {
+    const pending = { idempotencyKey: "k2", ticker: "AAPL", amount: 5, createdAt: "2026-09-24T00:00:00Z" };
+    let s = reducer(initialState, { type: "trackPending", pending });
+    s = reducer(s, { type: "trackPending", pending });
+    expect(s.pendingExecutions).toHaveLength(1);
+    s = reducer(s, { type: "moneyBuy", ticker: "AAPL", amount: 5, shares: 0.02, proof, idempotencyKey: "k2" });
+    expect(s.pendingExecutions).toHaveLength(0);
+  });
+});

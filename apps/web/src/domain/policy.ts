@@ -211,6 +211,11 @@ export function explainEvaluation(
         title: `${name} isn't available in Money Mode.`,
         body: "You can still learn about it and practice with it.",
       };
+    case "EXECUTION_UNCONFIRMED":
+      return {
+        title: "We're still checking on this.",
+        body: "Your investment may still be going through. Check again: it will never happen twice.",
+      };
     case "DECISION_UNAVAILABLE":
       return {
         title: "We couldn't check your limits.",
