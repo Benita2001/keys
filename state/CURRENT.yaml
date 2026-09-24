@@ -104,6 +104,7 @@ collaboration:
   frontend_v0_2_contract_status: FROZEN
   frontend_guidance: "Integrate against docs/FRONTEND-BACKEND-CONTRACT-V0.2.md and the frozen /api/v0.2 semantics; do not use v0.1 proposal-per-action as the product target."
   backend_immediate_owner: Faadil
+  backend_role: proof_maintenance_and_integration_support
 
 security:
   devnet_keypair_secret_name: DEVNET_KEYPAIR_JSON
@@ -131,7 +132,8 @@ truth_boundary:
 
 active_step:
   name: BENITA_V0_2_FRONTEND_INTEGRATION
-  owner: Faadil
+  owner: Benita
+  support_owner: Faadil
   next:
     - "Benita integrates against docs/FRONTEND-BACKEND-CONTRACT-V0.2.md."
     - "Keep the judge-facing demo on the proven spine: in-bounds ALLOW -> out-of-bounds REFUSE -> Pyth condition REFUSE -> human widen -> same action ALLOW -> stale authorization REFUSE."
