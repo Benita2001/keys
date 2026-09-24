@@ -77,7 +77,12 @@ New Cresco devnet bridge (implemented; canonical smoke proof pending):
 
 The execution bridge is deliberately a **server-held devnet demo signer** over a demo/mock SPL token. It is not a production wallet/custody model. See `docs/CRESCO-BACKEND-DELTA-2026-09-24.md`.
 
-**Important frontend routing rule:** do not replace the normal Family Money Mode path with the TSLA runtime. The Family journey remains demo/policy-only for its broader asset set. The real TSLA runtime is an isolated judge-facing proof lane under **How Cresco works → Technical details → Run live devnet proof** until a user-bound multi-asset runtime exists.
+**Current proof asset:** AAPL / `Equity.US.AAPL/USD` / Pyth Pro feed `922`.
+Current entitlement proof: https://github.com/Faadil1/keys/actions/runs/36035283447
+Current HTTP→Solana devnet proof: https://github.com/Faadil1/keys/actions/runs/36034651466
+Historical TSLA proof remains valid evidence, but is no longer the current Cresco proof lane.
+
+**Important frontend routing rule:** do not replace the normal Family Money Mode path with the AAPL runtime. The Family journey remains demo/policy-only for its broader asset set. The real AAPL runtime is an isolated judge-facing proof lane under **How Cresco works → Technical details → Run live devnet proof** until a user-bound multi-asset runtime exists.
 
 The `/api/v0.1/*` routes and `/api/v0.2/draft/*` aliases are compatibility/history surfaces, not the frontend product target.
 
