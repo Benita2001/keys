@@ -40,9 +40,9 @@ current_truth:
   prestocks_live_proof: PASS
   cresco_frontend_pr_1: MERGED
   cresco_web_ci: PASS
-  cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36054614070"
+  cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36057960828"
   current_node_ci: PASS
-  current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36054828960"
+  current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36057960586"
   cresco_aapl_migration: PASS_FULL_STACK
   cresco_aapl_bridge_revalidation_run: "https://github.com/Faadil1/keys/actions/runs/36035543689"
   cresco_live_proof_lane_ui: IMPLEMENTED_WEB_CI_PASS
@@ -67,20 +67,26 @@ current_truth:
   cloudflare_public_rpc_status: PASS_ONFINALITY
   cloudflare_public_health: PASS
   cloudflare_demo_runtime: PASS_LIVE
-  backend_cloudflare_deployment: LIVE
+  backend_cloudflare_deployment: LIVE_OLDER_BUILD_REDEPLOY_REQUIRED_FOR_STATEFUL_SESSION_TOKEN
   backend_public_url: "https://keys-api-stocklana.faadil-casecraft.workers.dev"
+  hosted_stateful_smoke: BLOCKED_OLD_CLOUDFLARE_BUILD
+  hosted_stateful_smoke_run: "https://github.com/Faadil1/keys/actions/runs/36057734921"
+  devnet_allow_once_program_upgrade: IN_PROGRESS
+  devnet_allow_once_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/36055017447"
+  aapl_assetrule_toggle_code: IMPLEMENTED_ONCHAIN_INSTRUCTION_CLIENT
   family_state_durable_object: IMPLEMENTED_SQLITE
   family_role_sessions: IMPLEMENTED_DEMO_CHILD_GUARDIAN
   family_server_owned_mandate: IMPLEMENTED
   family_boundary_request_persistence: IMPLEMENTED
-  family_allow_once_exact_single_use: IMPLEMENTED
+  family_allow_once_exact_single_use: IMPLEMENTED_CODE_LOCAL_PROOF_DEVNET_UPGRADE_PENDING
   family_durable_idempotency_reservations: IMPLEMENTED
   family_test_funding: IMPLEMENTED_NO_REAL_PAYMENT
   family_learning_sync: IMPLEMENTED_AUTHORITY_EFFECT_NONE
   family_money_portfolio_sync: IMPLEMENTED
   family_market_quotes: IMPLEMENTED_FAIL_CLOSED
   family_market_history: EXPLICITLY_UNAVAILABLE_NO_FABRICATION
-  cresco_webkit_iphone_qa: IMPLEMENTED_CI_GATE
+  cresco_webkit_iphone_qa: PASS
+  cresco_webkit_iphone_qa_run: "https://github.com/Faadil1/keys/actions/runs/36057960806"
   backend_default_cors_origin: "https://cresco-lac.vercel.app"
   backend_deployment_guide: docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md
   tessera_bounty: HOLD_WATCH
@@ -205,8 +211,9 @@ active_step:
   owner: Faadil
   support_owner: Benita
   next:
-    - "Verify the latest web CI including iPhone WebKit QA is green."
-    - "Smoke-test the deployed Cloudflare health, market and Devnet runtime endpoints."
+    - "Redeploy the latest main commit to Cloudflare so the public Worker serves role-session tokens and the stateful Family API."
+    - "Complete the in-progress Solana Devnet program upgrade so grant_allowance_once exists in the deployed binary."
+    - "Re-run hosted Cloudflare + Devnet bridge smoke after those two deployment gates pass."
     - "Record the judge demo: My Key -> in-bounds Devnet action -> boundary -> guardian decision -> widen -> same action -> stale refusal."
     - "Surface the confirmed Devnet receipt/program/version/nonce/Pyth evidence without turning the UI into a protocol dashboard."
     - "Keep production auth/KYC, wallets, fiat rails, custody/mainnet and all-symbol history explicitly outside the hackathon truth boundary."
