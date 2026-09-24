@@ -40,6 +40,11 @@ current_truth:
   prestocks_live_proof: PASS
   cresco_frontend_pr_1: MERGED
   cresco_web_ci: PASS
+  cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36036451930"
+  current_node_ci: PASS
+  current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36036452042"
+  cresco_aapl_migration: PASS_FULL_STACK
+  cresco_aapl_bridge_revalidation_run: "https://github.com/Faadil1/keys/actions/runs/36035543689"
   cresco_live_proof_lane_ui: IMPLEMENTED_WEB_CI_PASS
   cresco_devnet_execution_bridge: PASS_PROVEN_HTTP_TO_SOLANA_DEVNET
   cresco_devnet_execution_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36034651466"
