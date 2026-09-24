@@ -186,15 +186,16 @@ describe("isolated runtime execute adapter (mock KEYS API)", () => {
   });
 });
 
-describe("Family Money lane stays demo-only even when a runtime URL exists", () => {
-  it("does not route the normal Family execution through the technical proof runtime", async () => {
+describe("Family Money lane uses the configured devnet-test runtime", () => {
+  it("routes an in-bounds Money action through the runtime and surfaces proof", async () => {
     const mock = await withScenario("confirm");
-    const res = await moneyExecution.execute(familyInput(5, "intent-family-demo"));
+    const res = await moneyExecution.execute(familyInput(5, "intent-family-runtime"));
 
     expect(res.outcome).toBe("EXECUTED");
-    expect(res.proof?.status).toBe("DEMO_NOT_EXECUTED");
-    expect(res.proof?.signature).toBeUndefined();
-    expect(mock.stats.executions).toBe(0);
+    expect(res.proof?.status).toBe("RUNTIME_CONFIRMED");
+    expect(res.proof?.simulated).toBe(true);
+    expect(res.proof?.signature?.startsWith("MOCK")).toBe(true);
+    expect(mock.stats.executions).toBe(1);
   });
 });
 
