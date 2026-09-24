@@ -126,7 +126,7 @@ jobs:
           address = "3rdJbqfnagQ4yx9HXJViD4zc4xpiSqmFsKpPuSCQVyQL"
 
           [[test.validator.clone]]
-          address = "Gx4MBPb1vqZLJajZmsKLg8fGw9ErhoKsR8LeKcCKFyak"
+          address = "opsLibxVY7Vz5eYMmSfX8cLFCFVYTtH6fr6MiifMpA7"
           EOF
 
           anchor test --skip-build
