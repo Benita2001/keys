@@ -371,7 +371,7 @@ test('v0.2 demo exposes frozen bounded-autonomy semantics', async () => {
   });
 
   assert.equal(result.status, 200);
-  assert.equal(result.body.contractVersion, '0.2-draft');
+  assert.equal(result.body.contractVersion, '0.2');
   assert.equal(result.body.currentMandate.status, 'ACTIVE');
   assert.equal(result.body.truthBoundary.realMinorSecuritiesExecution, false);
   assert.equal(result.body.truthBoundary.onchainPythVerification, false);
