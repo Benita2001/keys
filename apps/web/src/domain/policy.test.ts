@@ -61,3 +61,19 @@ describe("bounded autonomy semantics", () => {
     expect(maxAllowedNow({ ...mandate, status: "PAUSED" }, 50)).toBe(0);
   });
 });
+
+describe("request staleness and copy (Q006, Q010)", () => {
+  it("marks pending requests made under an older nonce as stale", async () => {
+    const { isRequestStale } = await import("./policy");
+    expect(isRequestStale({ status: "PENDING_HUMAN_DECISION", mandateNonce: mandate.nonce }, mandate)).toBe(false);
+    expect(isRequestStale({ status: "PENDING_HUMAN_DECISION", mandateNonce: mandate.nonce - 1 }, mandate)).toBe(true);
+    expect(isRequestStale({ status: "REFUSED", mandateNonce: mandate.nonce - 1 }, mandate)).toBe(false);
+  });
+
+  it("never tells a Practice user to ask a parent for money", async () => {
+    const { explainEvaluation } = await import("./policy");
+    const e = { decision: "REFUSE" as const, reasonCode: "INSUFFICIENT_BALANCE" as const, source: "local-preview" as const };
+    expect(explainEvaluation(e, mandate, "Apple", "practice").body).not.toMatch(/parent/i);
+    expect(explainEvaluation(e, mandate, "Apple", "money").title).toMatch(/Money balance/);
+  });
+});

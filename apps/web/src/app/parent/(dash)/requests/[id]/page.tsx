@@ -10,11 +10,13 @@ import { ActionButton, Card, Chip, IconCircle, PageHeader, cn } from "@/componen
 import { formatAmount } from "@/domain/format";
 import type { GuardianDecision } from "@/domain/types";
 import { allAssetSnapshots, boundaryRequests } from "@/services";
+import { useSingleFlight } from "@/hooks/single-flight";
 import { useStore } from "@/state/store";
 
 export default function RequestDecisionPage() {
   const { id } = useParams<{ id: string }>();
   const { state, dispatch } = useStore();
+  const guard = useSingleFlight();
   const toast = useToast();
   const request = state.requests.find((r) => r.id === id);
   const [choice, setChoice] = useState<GuardianDecision | null>(null);
@@ -36,7 +38,7 @@ export default function RequestDecisionPage() {
   const periodRequest = request.reasonCode === "PERIOD_LIMIT_EXCEEDED";
   const newPerPeriod = Math.max(m.maxPeriodNotional, periodRequest ? m.spentThisPeriod + request.requestedNotional : newPerAction);
 
-  const decide = async () => {
+  const decide = guard(async () => {
     if (!choice) return;
     setBusy(true);
     const res = await boundaryRequests.decide({
@@ -51,7 +53,7 @@ export default function RequestDecisionPage() {
     setWidenOpen(false);
     setChoice(null);
     toast(choice === "ALLOW_ONCE" ? "Allowed once" : choice === "WIDEN_MANDATE" ? "Limits widened" : "Request declined");
-  };
+  });
 
   const options: { id: GuardianDecision; title: string; body: string; icon: React.ReactNode; tone: "green" | "blue" | "navy" }[] = [
     {

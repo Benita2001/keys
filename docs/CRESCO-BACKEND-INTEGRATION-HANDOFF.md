@@ -153,7 +153,7 @@ Each entry: screen → purpose → existing support → missing → proposed end
 - No Pyth key, devnet keypair or signer material in `NEXT_PUBLIC_*` or client bundles (current adapter sends none).
 - Server must derive identity/role from session, not from request bodies (today's draft route trusts the client Mandate; acceptable for demo only).
 - CORS: dev API defaults to `*`. Set `KEYS_CORS_ORIGIN` to the deployed web origin.
-- Idempotency keys on execute/deposit.
+- Idempotency keys on execute/deposit. The frontend now blocks repeat submits in one tab (`useSingleFlight`), but only the server can stop concurrent requests from two tabs or devices from overspending a period limit. Evaluate-and-debit must be atomic server-side / in-program.
 - Minor's private reasoning stays off-chain.
 
 ---

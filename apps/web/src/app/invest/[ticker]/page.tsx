@@ -10,5 +10,6 @@ export default async function InvestPage({ params, searchParams }: PageProps<"/i
   const sp = await searchParams;
   const mode = sp.mode === "money" ? "money" : sp.mode === "practice" ? "practice" : undefined;
   const amount = typeof sp.amount === "string" ? Number(sp.amount) : undefined;
-  return <InvestFlow ticker={ticker.toUpperCase()} initialMode={mode} initialAmount={Number.isFinite(amount) ? amount : undefined} />;
+  const validAmount = amount != null && Number.isFinite(amount) && amount > 0 && amount <= 100_000 ? Math.round(amount * 100) / 100 : undefined;
+  return <InvestFlow ticker={ticker.toUpperCase()} initialMode={mode} initialAmount={validAmount} />;
 }

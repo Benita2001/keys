@@ -114,9 +114,9 @@ export function ModuleRow({
         <p className={cn("text-[15px] font-extrabold leading-tight", current ? "text-white" : state === "locked" ? "text-navy/70" : "text-navy-strong")}>
           {module.title}
         </p>
-        <p className={cn("mt-0.5 text-[12.5px] font-semibold", current ? "text-white/85" : "text-ink-2")}>{module.subtitle}</p>
-        <p className={cn("mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-extrabold", current ? "text-[#ffe08a]" : "text-orange")}>
-          <Star aria-hidden className={cn("size-3", current ? "fill-[#ffe08a]" : "fill-yellow text-yellow")} /> +{module.xp} XP
+        <p className={cn("mt-0.5 text-[12.5px] font-semibold", current ? "text-white" : "text-ink-2")}>{module.subtitle}</p>
+        <p className={cn("mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-extrabold", current ? "text-white" : "text-orange-text")}>
+          <Star aria-hidden className={cn("size-3", current ? "fill-[#ffe08a] text-[#ffe08a]" : "fill-yellow text-yellow")} /> +{module.xp} XP
         </p>
       </div>
       {state === "complete" ? (

@@ -21,11 +21,13 @@ import { MandateSummaryCard, MoneyBalanceCard } from "@/components/mode";
 import { ErrorState, Skeleton, useToast } from "@/components/ui/feedback";
 import { ActionButton, Avatar, Card, IconCircle, SectionHeader } from "@/components/ui/primitives";
 import { formatAmount } from "@/domain/format";
+import { isRequestStale } from "@/domain/policy";
 import type { PricePoint } from "@/domain/types";
 import { usePortfolio } from "@/hooks/data";
 import { WEEKLY_ACTIVITY } from "@/mocks/family";
 import { MODULES } from "@/mocks/learning";
 import { allAssetSnapshots, mandates, seriesFor } from "@/services";
+import { useSingleFlight } from "@/hooks/single-flight";
 import { useStore } from "@/state/store";
 
 const TOPIC_LABEL: Record<string, string> = {
@@ -39,10 +41,11 @@ const TOPIC_LABEL: Record<string, string> = {
 
 export default function ParentDashboard() {
   const { state, dispatch } = useStore();
+  const guard = useSingleFlight();
   const toast = useToast();
   const { assets, view } = usePortfolio("practice");
   const child = state.profile.childName;
-  const pending = state.requests.filter((r) => r.status === "PENDING_HUMAN_DECISION");
+  const pending = state.requests.filter((r) => r.status === "PENDING_HUMAN_DECISION" && !isRequestStale(r, state.mandate));
   const lessonsCompleted = state.priorLessonCount + state.completedLessons.length;
   const topics = MODULES.filter((m) => m.lessonIds.some((id) => state.completedLessons.includes(id))).map((m) => TOPIC_LABEL[m.id]);
   const nameOf = (t: string) => allAssetSnapshots().find((a) => a.ticker === t)?.companyName ?? t;
@@ -53,14 +56,14 @@ export default function ParentDashboard() {
     return series[0].s.map((p, i) => ({ t: p.t, v: series.reduce((sum, { h, s }) => sum + h.shares * s[i].v, 0) }));
   }, [view]);
 
-  const togglePause = async () => {
+  const togglePause = guard(async () => {
     const next = await mandates.update({
       mandate: state.mandate,
       changes: { status: state.mandate.status === "ACTIVE" ? "PAUSED" : "ACTIVE" },
     });
     dispatch({ type: "setMandate", mandate: next });
     toast(next.status === "PAUSED" ? "Money Mode paused" : "Money Mode resumed");
-  };
+  });
 
   const settings = [
     { href: "/parent/limits", icon: <CircleDollarSign className="size-5" />, tone: "blue" as const, title: "Funding & investment limits", sub: "Add money and set limits" },
@@ -100,7 +103,7 @@ export default function ParentDashboard() {
           {pending.length ? (
             <Card className="border-[#ffd9b8] bg-[#fff9f3] p-4">
               <p className="flex items-center gap-2 text-[15px] font-extrabold text-navy-strong">
-                <Inbox aria-hidden className="size-5 text-orange" /> {pending.length === 1 ? "1 request" : `${pending.length} requests`} for
+                <Inbox aria-hidden className="size-5 text-orange-text" /> {pending.length === 1 ? "1 request" : `${pending.length} requests`} for
                 more room
               </p>
               <ul className="mt-2 space-y-2">

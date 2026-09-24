@@ -88,7 +88,7 @@ Every data-driven section has loading (dimension-matched skeletons), success, em
 |---|---|---|
 | Typecheck | `npm run typecheck` (apps/web) | ✅ pass |
 | Lint | `npm run lint` (apps/web) | ✅ pass, 0 warnings |
-| Unit/component tests | `npm test` (apps/web) | ✅ 34/34 across 5 files |
+| Unit/component tests | `npm test` (apps/web) | ✅ 38/38 across 6 files |
 | Production build | `npm run build` (apps/web) | ✅ 52 static pages + 2 dynamic routes |
 | Root backend tests | `npm test` (repo root) | ✅ 56/56, unchanged |
 
@@ -123,6 +123,23 @@ Screenshots (500px-wide phone layout, production build): [`docs/cresco-screens/`
 | ![Boundary](cresco-screens/11-boundary.png) | | |
 
 ---
+
+## 7b. Hackathon Quality pass (fixes)
+
+| ID | Sev | Issue | Fix | Regression |
+|---|---|---|---|---|
+| Q001 | P1 | `typecheck` failed on a clean checkout (route types only exist after `next dev/build`), so the new CI workflow would fail | `typecheck` = `next typegen && tsc --noEmit` | Fresh clone + `npm ci` + full check |
+| Q002 | P2 | 11 text/background pairs failed WCAG AA (muted 2.9:1, XP orange 2.2:1, gains 3.9:1, loss 3.5:1, white on green 2.8:1) | Text-safe tokens; deeper Practice green | Contrast recomputed |
+| Q003 | P1 | Rapid repeat clicks executed a Money buy 3× and could overspend the period limit; same for requests, decisions, add money, limits | `useSingleFlight` synchronous guard on every side-effecting handler | Browser triple-click → 1 effect; unit test |
+| Q004 | P2 | Allow-once success said "no parent approval needed" (false); in-bounds buys also consumed a pending allowance | Truthful allow-once copy; allowance used only when the standing Mandate would refuse | Browser |
+| Q005 | P3 | Period-limit request sheet labeled remaining monthly room as "Your current limit" | "Left this month" | Browser |
+| Q006 | P2 | Requests made under an older Mandate stayed "pending" forever | `isRequestStale`; shows "Limits changed", excluded from parent queue | Unit test + browser |
+| Q008 | P2 | Malformed persisted state crashed the app on every load | `restoreState` validation + `app/error.tsx` with reset | Unit test + browser |
+| Q009 | P3 | Negative/huge URL amounts prefilled the input | Sanitized in the route | Browser |
+| Q010 | P2 | Practice over-balance showed Money copy ("ask your parent to add money") | Mode-aware copy | Unit test + browser |
+| Q011 | P3 | Sheet initial focus used rAF (paused in background tabs) | Focus synchronously | Component test |
+
+Known gap (accepted, P1): parent/child separation is demo-only. Anyone on the device can open the parent view. Real separation needs backend auth (handoff §3.7); the on-chain program already requires the guardian signature for widening.
 
 ## 8. Known limitations
 

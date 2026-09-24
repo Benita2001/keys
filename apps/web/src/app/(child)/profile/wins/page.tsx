@@ -72,7 +72,7 @@ export default function WinsPage() {
                   <p className="text-[15px] font-extrabold text-navy-strong">{c.title}</p>
                   <p className="text-[13px] font-semibold text-ink-2">{c.caption}</p>
                 </div>
-                <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-extrabold text-orange">
+                <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-extrabold text-orange-text">
                   <Star aria-hidden className="size-3.5 fill-yellow text-yellow" />+{c.xp}
                 </span>
               </div>

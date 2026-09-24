@@ -57,7 +57,7 @@ export function PriceChange({
   showIcon?: boolean;
 }) {
   const t = trendOf(percent);
-  const color = t === "up" ? "text-green-strong" : t === "down" ? "text-loss" : "text-ink-2";
+  const color = t === "up" ? "text-green-strong" : t === "down" ? "text-loss-text" : "text-ink-2";
   const Icon = t === "up" ? ArrowUpRight : t === "down" ? ArrowDownRight : Minus;
   const text = { sm: "text-[12.5px]", md: "text-[14px]", lg: "text-[16px]" }[size];
   return (

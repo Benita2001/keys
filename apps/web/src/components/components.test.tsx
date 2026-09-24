@@ -43,7 +43,9 @@ describe("ModeSwitch", () => {
     expect(screen.getByRole("radio", { name: "Practice" })).toHaveAttribute("aria-checked", "true");
     await userEvent.click(screen.getByRole("radio", { name: "Money" }));
     expect(screen.getByRole("radio", { name: "Money" })).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("dialog", { name: "Money Mode" })).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: "Money Mode" });
+    expect(dialog).toBeInTheDocument();
+    expect(dialog.contains(document.activeElement)).toBe(true); // Q011: focus moves into the sheet
     expect(screen.getByText(/no real money moves/i)).toBeInTheDocument();
   });
 });

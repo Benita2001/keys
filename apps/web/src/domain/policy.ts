@@ -143,6 +143,7 @@ export function explainEvaluation(
   evaluation: ActionEvaluation,
   mandate: CurrentMandate | null,
   companyName?: string,
+  mode: "practice" | "money" = "money",
 ): { title: string; body: string } {
   const name = companyName ?? "this company";
   switch (evaluation.reasonCode) {
@@ -195,6 +196,12 @@ export function explainEvaluation(
         body: "The price condition you set is no longer true, so this action stopped.",
       };
     case "INSUFFICIENT_BALANCE":
+      if (mode === "practice") {
+        return {
+          title: "Not enough practice money for that.",
+          body: "Choose a smaller amount. Practice money is virtual and resets only if you reset the demo.",
+        };
+      }
       return {
         title: "Not enough in your Money balance.",
         body: "Ask your parent or guardian to add money, or choose a smaller amount.",
@@ -237,4 +244,9 @@ export function learningContextFor(evaluation: ActionEvaluation): LearningContex
     default:
       return null;
   }
+}
+
+/** A pending request made under an older Mandate nonce can no longer be decided. */
+export function isRequestStale(request: { status: string; mandateNonce: number }, mandate: CurrentMandate): boolean {
+  return request.status === "PENDING_HUMAN_DECISION" && request.mandateNonce !== mandate.nonce;
 }

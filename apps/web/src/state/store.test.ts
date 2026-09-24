@@ -37,3 +37,15 @@ describe("demo state reducer", () => {
     expect(s.practice.cash).toBe(initialState.practice.cash - 100);
   });
 });
+
+describe("restoreState (Q008)", () => {
+  it("discards corrupt or outdated persisted state instead of crashing", async () => {
+    const { restoreState } = await import("./store");
+    expect(restoreState("{not json")).toBeNull();
+    expect(restoreState(JSON.stringify({ version: 1, mandate: null, profile: null }))).toBeNull();
+    expect(restoreState(JSON.stringify({ ...initialState, version: 2 }))).toBeNull();
+    const ok = restoreState(JSON.stringify({ ...initialState, xp: 1500 }));
+    expect(ok?.xp).toBe(1500);
+    expect(ok?.mandate).toEqual(initialState.mandate);
+  });
+});

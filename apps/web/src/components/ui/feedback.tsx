@@ -103,7 +103,7 @@ export function DataStatusTag({ status, className }: { status: DataStatus; class
 /** Truth label for Money Mode while no real funding/custody is integrated. */
 export function DemoMoneyTag({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full bg-yellow-soft px-2 py-0.5 text-[11px] font-extrabold text-[#a4640a]", className)}>
+    <span className={cn("inline-flex items-center gap-1 rounded-full bg-yellow-soft px-2 py-0.5 text-[11px] font-extrabold text-[#8a5406]", className)}>
       <Info aria-hidden className="size-3" /> Demo money
     </span>
   );

@@ -41,14 +41,16 @@ Defined once in `apps/web/src/app/globals.css` as CSS variables and exposed to T
 | `--cresco-blue-strong` | `#0f57e8` | `blue-strong` | Hover/pressed |
 | `--cresco-blue-soft` | `#eaf2ff` | `blue-soft` | Ghost buttons, info banners |
 | `--cresco-navy` / `-strong` | `#102b63` / `#08235b` | `navy`, `navy-strong` | Text, Money-mode surfaces |
-| `--cresco-text-secondary` | `#69778e` | `ink-2` | Secondary text |
-| `--cresco-text-muted` | `#8b96a8` | `ink-3` | Captions, metadata |
-| `--cresco-green` / `-strong` / `-soft` | `#21b66f` / `#139459` / `#e8f8ef` | `green*` | Gains, completion, healthy diversification, Practice hero |
+| `--cresco-text-secondary` | `#5d6a80` | `ink-2` | Secondary text (5.2:1 on cream) |
+| `--cresco-text-muted` | `#637084` | `ink-3` | Captions, metadata (4.8:1 on cream) |
+| `--cresco-green` / `-strong` / `-soft` | `#21b66f` / `#0c7a47` / `#e8f8ef` | `green*` | Gains, completion, healthy diversification, Practice hero |
 | `--cresco-yellow` / `--cresco-orange` / `-soft` | `#ffbc32` / `#ff8a3d` / `#fff5d8` | `yellow`, `orange`, `yellow-soft` | XP, streaks, missions, rewards, demo labels |
 | `--cresco-lavender` / `-soft` | `#8b75f7` / `#f0edff` | `lavender*` | Learning categories |
 | `--cresco-aqua` / `-soft` | `#55cfc6` / `#e8faf8` | `aqua*` | Learning categories |
 | `--cresco-pink` / `-soft` | `#ff7aa8` / `#ffeef4` | `pink*` | Goal cards, "Things to know" |
-| `--cresco-loss` / `-soft` | `#eb5757` / `#fff0f0` | `loss*` | Losses, real errors only |
+| `--cresco-loss` / `-soft` | `#eb5757` / `#fff0f0` | `loss*` | Loss fills, real errors only |
+| `--cresco-orange-text` | `#a64d0b` | `orange-text` | XP / reward **text** (4.6:1+ on yellow-soft) |
+| `--cresco-loss-text` | `#c8373a` | `loss-text` | Loss **text** (5.2:1 on white) |
 | `--cresco-warning` | `#d98a13` | `warning` | Stale / delayed |
 | `--cresco-border` / `-soft` | `#dce6f2` / `#ebf0f6` | `line`, `line-soft` | Borders |
 
@@ -74,7 +76,7 @@ Why: rounded terminals read friendly without being childish, heavy weights hold 
 | Primary money value | 30–34px / 800–900, tabular |
 | Secondary money value | 16–22px / 800, tabular |
 
-No text below 11px. Muted text uses `ink-2`/`ink-3`, both AA on white/cream at their sizes.
+No text below 11px. Text colors were measured (hackathon-quality pass): `ink-2`, `ink-3`, `green-strong`, `orange-text`, `loss-text` and white-on-hero all meet WCAG AA 4.5:1 on the surfaces they are used on. Brand **fills** keep the spec values; darker **text** variants exist where the fill color is too light for text. The spec allowed slight token adjustment for contrast (§7). The Practice hero green is deeper than the mockup (`#10864f → #0b6e40`) so its white text passes AA.
 
 ### Spacing and geometry
 

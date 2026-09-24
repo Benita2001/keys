@@ -209,6 +209,43 @@ export function reducer(state: AppState, action: Action): AppState {
 
 const STORAGE_KEY = "cresco-demo-v1";
 
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+const isNum = (v: unknown) => typeof v === "number" && Number.isFinite(v);
+
+/**
+ * Persisted demo state is untrusted (older app versions, manual edits).
+ * Anything that doesn't match the current shape is discarded rather than
+ * crashing the app on every load.
+ */
+export function restoreState(raw: string | null): AppState | null {
+  if (!raw) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!isObj(parsed) || parsed.version !== 1) return null;
+  const m = parsed.mandate;
+  const ok =
+    isObj(parsed.profile) &&
+    typeof parsed.profile.childName === "string" &&
+    isObj(m) &&
+    ["ACTIVE", "PAUSED", "REVOKED"].includes(m.status as string) &&
+    isNum(m.version) && isNum(m.nonce) && isNum(m.maxActionNotional) && isNum(m.maxPeriodNotional) && isNum(m.spentThisPeriod) &&
+    Array.isArray(m.allowedAssets) &&
+    isObj(parsed.practice) && Array.isArray(parsed.practice.holdings) && isNum(parsed.practice.cash) &&
+    isObj(parsed.money) && Array.isArray(parsed.money.holdings) && isNum(parsed.money.balance) &&
+    Array.isArray(parsed.requests) && Array.isArray(parsed.completedLessons) && isNum(parsed.xp);
+  if (!ok) return null;
+  return {
+    ...initialState,
+    ...(parsed as Partial<AppState>),
+    settings: { ...initialState.settings, ...(isObj(parsed.settings) ? parsed.settings : {}) },
+    demoFlags: { ...initialState.demoFlags, ...(isObj(parsed.demoFlags) ? parsed.demoFlags : {}) },
+  } as AppState;
+}
+
 type Store = {
   state: AppState;
   hydrated: boolean;
@@ -223,11 +260,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as AppState;
-        if (parsed?.version === 1) dispatch({ type: "hydrate", state: { ...initialState, ...parsed } });
-      }
+      const restored = restoreState(window.localStorage.getItem(STORAGE_KEY));
+      if (restored) dispatch({ type: "hydrate", state: restored });
+      else window.localStorage.removeItem(STORAGE_KEY);
     } catch {
       /* storage unavailable: run with in-memory demo state */
     }

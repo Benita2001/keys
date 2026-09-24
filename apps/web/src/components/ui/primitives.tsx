@@ -22,9 +22,9 @@ const buttonBase =
 const buttonVariants: Record<ButtonVariant, string> = {
   primary: "bg-blue text-white shadow-button hover:bg-blue-strong",
   secondary: "bg-surface text-blue border-2 border-blue hover:bg-blue-soft",
-  ghost: "bg-blue-soft text-blue hover:bg-[#dce9ff]",
+  ghost: "bg-blue-soft text-blue-strong hover:bg-[#dce9ff]",
   quiet: "bg-surface text-navy border border-line hover:bg-surface-soft",
-  success: "bg-green text-white hover:bg-green-strong",
+  success: "bg-green-strong text-white hover:bg-[#0a6a3d]",
 };
 
 const buttonSizes = {
@@ -308,7 +308,7 @@ export function Avatar({ who = "child", size = 48, className, label }: { who?: "
 
 export function XPBadge({ xp, className }: { xp: number; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 text-[13px] font-extrabold text-orange tabular", className)}>
+    <span className={cn("inline-flex items-center gap-1 text-[13px] font-extrabold text-orange-text tabular", className)}>
       <Star aria-hidden className="size-3.5 fill-yellow text-yellow" />+{xp} XP
     </span>
   );
@@ -343,12 +343,12 @@ export function IconCircle({
   const tones = {
     blue: "bg-blue-soft text-blue",
     green: "bg-green-soft text-green-strong",
-    orange: "bg-[#fff0e6] text-orange",
+    orange: "bg-[#fff0e6] text-orange-text",
     lavender: "bg-lavender-soft text-lavender",
     aqua: "bg-aqua-soft text-[#1ea79c]",
     pink: "bg-pink-soft text-[#e44f86]",
     yellow: "bg-yellow-soft text-warning",
-    loss: "bg-loss-soft text-loss",
+    loss: "bg-loss-soft text-loss-text",
     navy: "bg-[#e8edf7] text-navy",
   };
   return (

@@ -14,7 +14,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useState } from "react";
-import { explainEvaluation, learningContextFor, remainingThisPeriod } from "@/domain/policy";
+import { explainEvaluation, isRequestStale, learningContextFor, remainingThisPeriod } from "@/domain/policy";
 import { formatAmount, formatPercent, formatUsd } from "@/domain/format";
 import type { ActionEvaluation, BoundaryRequest, CurrentMandate, Mode, PortfolioView } from "@/domain/types";
 import { useStore } from "@/state/store";
@@ -138,14 +138,14 @@ export function PracticeHeroCard({ view, href = "/portfolio" }: { view: Portfoli
   return (
     <Link
       href={href}
-      className="relative block overflow-hidden rounded-[24px] bg-gradient-to-br from-[#2cc27a] via-[#1fb06c] to-[#12955a] p-5 text-white shadow-[0_10px_24px_rgba(33,182,111,0.28)]"
+      className="relative block overflow-hidden rounded-[24px] bg-gradient-to-br from-[#10864f] via-[#0d7d49] to-[#0b6e40] p-5 text-white shadow-[0_10px_24px_rgba(33,182,111,0.28)]"
     >
       <svg aria-hidden viewBox="0 0 300 90" preserveAspectRatio="none" className="absolute inset-x-0 bottom-0 h-[70px] w-full opacity-40">
         <path d="M0 80 L40 64 L80 70 L120 46 L160 54 L200 30 L240 36 L300 8" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
         <path d="M0 80 L40 64 L80 70 L120 46 L160 54 L200 30 L240 36 L300 8 V90 H0 Z" fill="#fff" opacity=".12" />
       </svg>
       <PlantPot className="absolute -bottom-1 right-2 size-[92px]" />
-      <p className="relative text-[15px] font-bold text-white/90">Practice Portfolio</p>
+      <p className="relative text-[15px] font-bold text-white">Practice Portfolio</p>
       {view ? (
         <>
           <p className="relative mt-1 text-[34px] font-extrabold leading-none tracking-[-0.01em] tabular">{formatUsd(view.totalValue)}</p>
@@ -159,7 +159,7 @@ export function PracticeHeroCard({ view, href = "/portfolio" }: { view: Portfoli
           <div className="h-5 w-16 rounded-full bg-white/25" />
         </div>
       )}
-      <p className="relative mt-3 text-[11.5px] font-bold text-white/80">Virtual money · sample prices</p>
+      <p className="relative mt-3 text-[11.5px] font-bold text-white">Virtual money · sample prices</p>
     </Link>
   );
 }
@@ -172,11 +172,11 @@ export function MoneyHeroCard({ view, mandate, balance }: { view: PortfolioView 
       className="relative block overflow-hidden rounded-[24px] bg-gradient-to-br from-[#16357a] via-[#102b63] to-[#0b2152] p-5 text-white shadow-[0_10px_24px_rgba(16,43,99,0.28)]"
     >
       <div className="flex items-center justify-between">
-        <p className="text-[15px] font-bold text-white/90">Money Portfolio</p>
+        <p className="text-[15px] font-bold text-white">Money Portfolio</p>
         <DemoMoneyTag />
       </div>
       <p className="mt-1 text-[34px] font-extrabold leading-none tracking-[-0.01em] tabular">{formatUsd(invested + balance)}</p>
-      <p className="mt-1.5 text-[13px] font-semibold text-white/80">
+      <p className="mt-1.5 text-[13px] font-semibold text-white">
         {formatUsd(balance)} available to invest · {formatUsd(invested)} invested
       </p>
       <div className="mt-4 flex items-center gap-2 rounded-[14px] bg-white/10 px-3 py-2 text-[12.5px] font-bold">
@@ -283,8 +283,10 @@ export function BoundaryMessage({
   onAdjust,
   practiceHref,
   onAsk,
+  mode = "money",
   className,
 }: {
+  mode?: Mode;
   evaluation: ActionEvaluation;
   mandate: CurrentMandate;
   companyName?: string;
@@ -293,7 +295,7 @@ export function BoundaryMessage({
   onAsk?: () => void;
   className?: string;
 }) {
-  const { title, body } = explainEvaluation(evaluation, mandate, companyName);
+  const { title, body } = explainEvaluation(evaluation, mandate, companyName, mode);
   const ctx = learningContextFor(evaluation);
   return (
     <div role="status" className={cn("rounded-[20px] border border-[#ffd9b8] bg-[#fff7ef] p-4", className)}>
@@ -344,7 +346,9 @@ export function BoundaryRequestSheet({
   limit,
   parentName,
   submitting,
+  limitLabel = "Your current limit",
 }: {
+  limitLabel?: string;
   open: boolean;
   onClose: () => void;
   onSubmit: (reason: string) => void;
@@ -366,7 +370,7 @@ export function BoundaryRequestSheet({
           </span>
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[14px] font-semibold text-ink-2">
-          <span>Your current limit</span>
+          <span>{limitLabel}</span>
           <span className="font-extrabold text-navy-strong tabular">{formatAmount(limit)}</span>
         </div>
       </div>
@@ -394,13 +398,17 @@ export function BoundaryRequestSheet({
 }
 
 export function RequestStatusCard({ request, companyName }: { request: BoundaryRequest; companyName: string }) {
-  const map = {
+  const { state } = useStore();
+  const stale = isRequestStale(request, state.mandate);
+  const map = stale
+    ? { text: "Limits changed", tone: "bg-surface-soft text-ink-2" }
+    : {
     PENDING_HUMAN_DECISION: { text: "Waiting for your parent", tone: "bg-yellow-soft text-[#8a5a07]" },
     ALLOWED_ONCE: { text: "Allowed once", tone: "bg-green-soft text-green-strong" },
     ALLOWED_ONCE_USED: { text: "Used", tone: "bg-surface-soft text-ink-2" },
     WIDENED: { text: "Limits widened", tone: "bg-green-soft text-green-strong" },
     REFUSED: { text: "Not this time", tone: "bg-surface-soft text-ink-2" },
-  }[request.status];
+      }[request.status];
   const body = (
     <>
       <IconCircle tone="blue" size={38}>
@@ -411,7 +419,9 @@ export function RequestStatusCard({ request, companyName }: { request: BoundaryR
           {formatAmount(request.requestedNotional)} in {companyName}
         </p>
         <p className="truncate text-[12.5px] font-semibold text-ink-2">
-          {request.status === "ALLOWED_ONCE"
+          {stale
+            ? "Your limits changed. Check them and try again."
+            : request.status === "ALLOWED_ONCE"
             ? "Tap to invest now"
             : request.guardianNote
               ? `Note: ${request.guardianNote}`

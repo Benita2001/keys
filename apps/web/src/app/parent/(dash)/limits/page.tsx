@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/overlay";
 import { ActionButton, Card, Chip, PageHeader, SectionHeader, Toggle } from "@/components/ui/primitives";
 import { formatAmount } from "@/domain/format";
 import { allAssetSnapshots, mandates } from "@/services";
+import { useSingleFlight } from "@/hooks/single-flight";
 import { useStore } from "@/state/store";
 
 const PER_ACTION = [5, 10, 20, 25, 50];
@@ -15,6 +16,7 @@ const PER_PERIOD = [25, 50, 100, 200];
 
 export default function ParentLimitsPage() {
   const { state, dispatch } = useStore();
+  const guard = useSingleFlight();
   const toast = useToast();
   const m = state.mandate;
   const [perAction, setPerAction] = useState(m.maxActionNotional);
@@ -32,7 +34,7 @@ export default function ParentLimitsPage() {
     paused !== (m.status === "PAUSED") ||
     allowed.slice().sort().join() !== m.allowedAssets.slice().sort().join();
 
-  const save = async () => {
+  const save = guard(async () => {
     setSaving(true);
     const next = await mandates.update({
       mandate: m,
@@ -42,7 +44,7 @@ export default function ParentLimitsPage() {
     setSaving(false);
     setConfirm(false);
     toast(`${child}'s limits updated`);
-  };
+  });
 
   const added = allowed.filter((t) => !m.allowedAssets.includes(t));
   const removed = m.allowedAssets.filter((t) => !allowed.includes(t));

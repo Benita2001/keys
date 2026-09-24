@@ -31,10 +31,10 @@ function useDialogBehavior(open: boolean, onClose: () => void) {
     document.addEventListener("keydown", onKey);
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    requestAnimationFrame(() => {
-      const target = panelRef.current?.querySelector<HTMLElement>("[data-autofocus]") ?? panelRef.current;
-      target?.focus();
-    });
+    // The panel is mounted by the time this effect runs; focus synchronously
+    // (rAF is paused in background tabs, which left focus behind the sheet).
+    const target = panelRef.current?.querySelector<HTMLElement>("[data-autofocus]") ?? panelRef.current;
+    target?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = overflow;

@@ -15,16 +15,18 @@
 
   --cresco-navy: #102b63;
   --cresco-navy-strong: #08235b;
-  --cresco-text-secondary: #69778e;
-  --cresco-text-muted: #8b96a8;
+  --cresco-text-secondary: #5d6a80;
+  --cresco-text-muted: #637084;
 
   --cresco-green: #21b66f;
-  --cresco-green-strong: #139459;
+  --cresco-green-strong: #0c7a47;
   --cresco-green-soft: #e8f8ef;
 
   --cresco-yellow: #ffbc32;
   --cresco-orange: #ff8a3d;
   --cresco-yellow-soft: #fff5d8;
+  /* Text-safe variants (WCAG AA 4.5:1 on light surfaces). Fills keep the brand values. */
+  --cresco-orange-text: #a64d0b;
 
   --cresco-lavender: #8b75f7;
   --cresco-lavender-soft: #f0edff;
@@ -37,6 +39,7 @@
 
   --cresco-loss: #eb5757;
   --cresco-loss-soft: #fff0f0;
+  --cresco-loss-text: #c8373a;
   --cresco-warning: #d98a13;
 
   --cresco-border: #dce6f2;
@@ -67,6 +70,7 @@
   --color-yellow: var(--cresco-yellow);
   --color-orange: var(--cresco-orange);
   --color-yellow-soft: var(--cresco-yellow-soft);
+  --color-orange-text: var(--cresco-orange-text);
   --color-lavender: var(--cresco-lavender);
   --color-lavender-soft: var(--cresco-lavender-soft);
   --color-aqua: var(--cresco-aqua);
@@ -75,6 +79,7 @@
   --color-pink-soft: var(--cresco-pink-soft);
   --color-loss: var(--cresco-loss);
   --color-loss-soft: var(--cresco-loss-soft);
+  --color-loss-text: var(--cresco-loss-text);
   --color-warning: var(--cresco-warning);
   --color-line: var(--cresco-border);
   --color-line-soft: var(--cresco-border-soft);

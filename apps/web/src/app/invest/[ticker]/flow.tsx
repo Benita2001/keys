@@ -13,12 +13,13 @@ import { assetRuleFor, evaluateBoundedAction, explainEvaluation, maxAllowedNow, 
 import type { ActionEvaluation, ExecutionResult, MarketAsset, Mode } from "@/domain/types";
 import { useAsset } from "@/hooks/data";
 import { boundaryRequests, moneyExecution, practiceExecution } from "@/services";
+import { useSingleFlight } from "@/hooks/single-flight";
 import { useStore } from "@/state/store";
 
 type Phase =
   | { kind: "edit" }
   | { kind: "submitting" }
-  | { kind: "done"; result: ExecutionResult }
+  | { kind: "done"; result: ExecutionResult; allowedOnce: boolean }
   | { kind: "boundary"; evaluation: ActionEvaluation }
   | { kind: "requested" };
 
@@ -58,6 +59,7 @@ export function InvestFlow({ ticker, initialMode, initialAmount }: { ticker: str
 
 function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; initialAmount?: number }) {
   const { state, dispatch } = useStore();
+  const guard = useSingleFlight();
   const toast = useToast();
   const { mandate } = state;
 
@@ -88,14 +90,14 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
 
   const coveredByAllowOnce = !!allowOnce && validAmount && amount <= allowOnce.requestedNotional;
 
-  const submit = async () => {
+  const submit = guard(async () => {
     if (!validAmount) return;
     setPhase({ kind: "submitting" });
     if (mode === "practice") {
       const result = await practiceExecution.buy({ asset, amount, cash });
       if (result.ok && result.shares != null && result.proof) {
         dispatch({ type: "practiceBuy", ticker: asset.ticker, amount, shares: result.shares, reason: reason.trim() || undefined, proof: result.proof });
-        setPhase({ kind: "done", result });
+        setPhase({ kind: "done", result, allowedOnce: false });
       } else {
         setPhase({ kind: "boundary", evaluation: result.evaluation });
       }
@@ -110,6 +112,8 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
       balance: state.money.balance,
       allowOnce: allowOnce ?? null,
     });
+    // The allowance is only "used" when the standing Mandate alone would have refused.
+    const usedAllowOnce = coveredByAllowOnce && preview?.decision !== "ALLOW";
     if (result.ok && result.shares != null && result.proof) {
       dispatch({
         type: "moneyBuy",
@@ -118,15 +122,15 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
         shares: result.shares,
         reason: reason.trim() || undefined,
         proof: result.proof,
-        usedRequestId: coveredByAllowOnce ? allowOnce?.id : undefined,
+        usedRequestId: usedAllowOnce ? allowOnce?.id : undefined,
       });
-      setPhase({ kind: "done", result });
+      setPhase({ kind: "done", result, allowedOnce: usedAllowOnce });
     } else {
       setPhase({ kind: "boundary", evaluation: result.evaluation });
     }
-  };
+  });
 
-  const sendRequest = async (why: string) => {
+  const sendRequest = guard(async (why: string) => {
     if (phase.kind !== "boundary") return;
     setAsking(true);
     const request = await boundaryRequests.create({
@@ -142,7 +146,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
     setAskOpen(false);
     setPhase({ kind: "requested" });
     toast(`Request sent to ${state.profile.parentName}`);
-  };
+  });
 
   /* ---------------- Results ---------------- */
 
@@ -152,7 +156,11 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
       <div className="animate-rise mt-8 flex flex-1 flex-col items-center text-center">
         <PlantPot className="animate-bloom size-28" />
         <h1 className="mt-4 text-[26px] font-black text-navy-strong">
-          {mode === "practice" ? "Added to your Practice Portfolio" : "Done. Inside your limits."}
+          {mode === "practice"
+            ? "Added to your Practice Portfolio"
+            : phase.allowedOnce
+              ? `Done. ${state.profile.parentName} allowed this once.`
+              : "Done. Inside your limits."}
         </h1>
         <p className="mt-2 max-w-[34ch] text-[15px] font-semibold text-ink-2">
           {formatAmount(amount)} in {asset.companyName} · about {formatShares(shares)} shares at a {asset.dataStatus === "live" ? "live" : "sample"} price of {formatUsd(asset.price)}.
@@ -163,8 +171,10 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
               <Info aria-hidden className="size-4" /> Demo only
             </p>
             <p className="mt-1">
-              Cresco checked your limits and this was allowed with no parent approval needed. Money Mode isn&apos;t connected to real
-              money yet, so nothing was bought and no transaction was sent.
+              {phase.allowedOnce
+                ? `${state.profile.parentName} approved this one action. Your standing limits didn't change.`
+                : "Cresco checked your limits and this was allowed with no parent approval needed."}{" "}
+              Money Mode isn&apos;t connected to real money yet, so nothing was bought and no transaction was sent.
             </p>
           </div>
         ) : null}
@@ -265,6 +275,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
               <span className="text-[40px] font-black text-ink-3">$</span>
               <input
                 inputMode="decimal"
+                maxLength={7}
                 value={amountText}
                 onChange={(e) => {
                   setAmountText(e.target.value.replace(/[^0-9.]/g, ""));
@@ -321,13 +332,14 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
               }}
               practiceHref={mode === "money" ? `/invest/${asset.ticker}?mode=practice&amount=${amount}` : undefined}
               onAsk={mode === "money" ? () => setAskOpen(true) : undefined}
+              mode={mode}
             />
           ) : (
             <>
               {moneyBlockedPreview && preview ? (
                 <p role="status" className="mt-3 flex items-start gap-2 rounded-[14px] bg-[#fff7ef] px-3.5 py-3 text-[13px] font-semibold text-navy">
-                  <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-orange" />
-                  {explainEvaluation(preview, mandate, asset.companyName).body}
+                  <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-orange-text" />
+                  {explainEvaluation(preview, mandate, asset.companyName, mode).body}
                 </p>
               ) : null}
 
@@ -386,6 +398,11 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
         }
         parentName={state.profile.parentName}
         submitting={asking}
+        limitLabel={
+          phase.kind === "boundary" && phase.evaluation.reasonCode === "PERIOD_LIMIT_EXCEEDED"
+            ? `Left ${mandate.periodLabel}`
+            : "Your limit per action"
+        }
       />
     </div>
   );

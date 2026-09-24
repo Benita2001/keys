@@ -7,12 +7,14 @@ import { useToast } from "@/components/ui/feedback";
 import { ActionButton, Card, Chip, PageHeader } from "@/components/ui/primitives";
 import { formatAmount } from "@/domain/format";
 import { funding } from "@/services";
+import { useSingleFlight } from "@/hooks/single-flight";
 import { useStore } from "@/state/store";
 
 const AMOUNTS = [10, 25, 50, 100];
 
 export default function AddMoneyPage() {
   const { state, dispatch } = useStore();
+  const guard = useSingleFlight();
   const toast = useToast();
   const [amount, setAmount] = useState<number | "custom">(25);
   const [custom, setCustom] = useState("");
@@ -21,14 +23,14 @@ export default function AddMoneyPage() {
   const value = amount === "custom" ? Number(custom) : amount;
   const valid = Number.isFinite(value) && value > 0 && value <= 500;
 
-  const add = async () => {
+  const add = guard(async () => {
     setBusy(true);
     const res = await funding.addMoney({ amount: value });
     dispatch({ type: "addFunds", amount: res.amount });
     setBusy(false);
     setDone(res.amount);
     toast(`${formatAmount(res.amount)} demo money added`);
-  };
+  });
 
   return (
     <div className="animate-rise mx-auto max-w-[560px]">

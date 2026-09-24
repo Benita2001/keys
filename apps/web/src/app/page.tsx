@@ -7,7 +7,7 @@ const PILLARS = [
   { icon: BookOpen, title: "Learn", body: "Real-world money skills", tone: "text-blue bg-blue-soft" },
   { icon: Gamepad2, title: "Play", body: "Complete challenges", tone: "text-lavender bg-lavender-soft" },
   { icon: Sprout, title: "Invest", body: "Build a practice portfolio", tone: "text-green-strong bg-green-soft" },
-  { icon: Trophy, title: "Grow", body: "Earn rewards and new levels", tone: "text-orange bg-[#fff0e6]" },
+  { icon: Trophy, title: "Grow", body: "Earn rewards and new levels", tone: "text-orange-text bg-[#fff0e6]" },
 ];
 
 export default function WelcomePage() {
