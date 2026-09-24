@@ -42,11 +42,17 @@ Runtime proof now covers:
 - pause/downward authority blocking execution;
 - signed Pyth Pro Solana-payload availability at the backend evidence boundary.
 
-Still **specified / not yet proven on-chain**:
+Now additionally **proven on a local Solana validator with live authenticated Pyth TSLA evidence**:
 
-- Pyth signature/payload verification inside `execute_within_mandate`;
+- Pyth signature/message verification inside the KEYS capital execution path;
 - Pyth-derived USD/notional enforcement;
-- Pyth-enforced precommitted price conditions;
+- fail-closed refusal when notional exceeds the standing Mandate;
+- fail-closed refusal when a precommitted max-price condition is invalidated;
+- market evidence has no authority-widening effect.
+
+Still pending:
+
+- canonical devnet confirmation of the Pyth-integrated path;
 - frozen frontend/backend contract v0.2.
 
 ## Not claimed
