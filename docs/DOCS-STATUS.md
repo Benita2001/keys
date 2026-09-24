@@ -1,7 +1,7 @@
 # KEYS — Documentation Status
 
 Date: 2026-09-24  
-Status: **CANONICAL DOCS SYNCHRONIZED TO BOUNDED-AUTONOMY RELOCK**
+Status: **CANONICAL DOCS SYNCHRONIZED TO STATEFUL DEVNET FAMILY INTEGRATION**
 
 ## Current canonical truth
 
@@ -21,6 +21,21 @@ Status: **CANONICAL DOCS SYNCHRONIZED TO BOUNDED-AUTONOMY RELOCK**
 - Pyth-derived USD/notional enforcement: **PASS — devnet**
 - precommitted max-price refusal: **PASS — devnet**
 - frontend/backend contract v0.2: **FROZEN**
+- Cloudflare stateful Family API: **IMPLEMENTED / LIVE DEPLOYMENT TARGET**
+- Durable Object Family state + cross-device sync: **IMPLEMENTED**
+- server-owned Mandate evaluation: **IMPLEMENTED**
+- role-scoped child/guardian demo sessions: **IMPLEMENTED**
+- guardian Mandate transitions: **IMPLEMENTED ON SOLANA DEVNET**
+- persistent boundary requests / decisions: **IMPLEMENTED**
+- exact single-use ALLOW_ONCE: **IMPLEMENTED**
+- durable idempotency / anti-double-spend reservations: **IMPLEMENTED**
+- test funding: **IMPLEMENTED — NO REAL PAYMENT**
+- learning + Money portfolio sync: **IMPLEMENTED**
+- market quote API: **IMPLEMENTED / FAIL-CLOSED**
+- market history provider: **NOT CONNECTED / NO FABRICATION**
+- iPhone WebKit QA: **PASS — run 36054614070**
+- current Node/API CI: **PASS — run 36054828960**
+- Cloudflare Worker dry-run: **PASS — run 36054015677**
 - real minor securities execution: **OUT OF SCOPE**
 - frontend owner: **Benita**
 - backend v0.2 owner: **Faadil**
@@ -64,7 +79,7 @@ Canonical live Pyth proof feed:
 | `docs/FRONTEND-START-HERE.md` | Benita transition guide | CURRENT |
 | `docs/BENITA-FRONTEND-HANDOFF.md` | ownership/handoff | CURRENT |
 | `state/CURRENT.yaml` | machine-readable current truth | CURRENT |
-| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v12 |
+| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v13 |
 
 ## v0.1 evidence remains evidence
 
@@ -87,11 +102,15 @@ Now additionally proven on canonical devnet:
 - Pyth-derived USD/notional enforcement;
 - precommitted max-price refusal.
 
-Still not proven / not claimed:
+Production-only / intentionally not claimed:
 
+- production authentication / identity verification / KYC;
+- embedded production wallet or custody model;
+- real bank/card funding;
 - real tokenized-stock/minor execution;
 - brokerage/custody;
-- mainnet execution.
+- mainnet execution;
+- live entitlement/history for every Explore symbol.
 
 ## Ownership
 
