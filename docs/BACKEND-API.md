@@ -136,6 +136,51 @@ The result is a boundary-request object awaiting a human decision.
 
 A boundary request never widens authority by itself.
 
+## GET /api/v0.2/integrations/prestocks
+
+Returns the live normalized PreStocks catalog from the official public PreStocks token API.
+
+Each item exposes frontend-safe representation context including:
+
+- source / symbol / name;
+- Solana contract address;
+- product URL;
+- representation semantics;
+- live mark/token pricing when available;
+- eligibility state;
+- KEYS policy metadata.
+
+Default policy is deliberately fail-closed:
+
+```json
+{
+  "eligibility": {
+    "status": "UNKNOWN",
+    "executionEligible": false
+  },
+  "keysPolicy": {
+    "practiceAvailable": true,
+    "authorityEffect": "NONE"
+  }
+}
+```
+
+This route is suitable for contextual Learn / Practice and representation details.
+
+It must not be interpreted as proof of live minor securities execution.
+
+## GET /api/v0.2/integrations/prestocks/:symbol
+
+Returns one normalized PreStocks representation by symbol, for example:
+
+`GET /api/v0.2/integrations/prestocks/openai`
+
+The same eligibility and authority boundaries apply.
+
+Canonical live integration proof:
+
+https://github.com/Faadil1/keys/actions/runs/35969672666
+
 ## Guardian decisions and authority transitions
 
 The v0.2 product semantics require:
