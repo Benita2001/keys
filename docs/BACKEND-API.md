@@ -181,7 +181,7 @@ When configured, the server:
 
 1. loads the stable on-chain demo Mandate and AssetRule;
 2. rejects stale nonce / inactive Mandate / unsupported asset or action;
-3. fetches a fresh signed Pyth TSLA Solana payload server-side;
+3. fetches a fresh signed Pyth AAPL Solana payload server-side;
 4. constructs the Ed25519 + `execute_within_mandate_with_pyth` transaction;
 5. sends it to the canonical KEYS devnet program;
 6. returns the actual devnet signature only after confirmation.
@@ -327,7 +327,7 @@ The repository includes a tested Vercel adapter:
 
 A public hosted HTTP base URL is not currently claimed.
 
-Benita owns final frontend/runtime deployment.
+Benita owns the current Cresco frontend deployment. Faadil owns the separate KEYS backend deployment and runtime secrets.
 
 ## Legacy compatibility
 
