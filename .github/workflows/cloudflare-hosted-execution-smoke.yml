@@ -1,0 +1,99 @@
+name: cloudflare-hosted-execution-smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cloudflare-hosted-execution-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  hosted-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      KEYS_API_URL: https://keys-api-stocklana.faadil-casecraft.workers.dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify hosted health
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "$KEYS_API_URL/" | tee /tmp/health.json
+          node -e '
+            const fs = require("fs");
+            const x = JSON.parse(fs.readFileSync("/tmp/health.json","utf8"));
+            if (x.ok !== true || x.service !== "keys-backend" || x.contractVersion !== "0.2") {
+              console.error(x);
+              process.exit(1);
+            }
+          '
+          echo "CLOUDFLARE_HOSTED_HEALTH=PASS"
+
+      - name: Resolve hosted AAPL runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "$KEYS_API_URL/api/v0.2/demo/runtime" | tee /tmp/runtime.json
+          node - <<'NODE'
+          const fs = require("fs");
+          const x = JSON.parse(fs.readFileSync("/tmp/runtime.json","utf8"));
+          if (
+            x.mode !== "SERVER_HELD_DEVNET_DEMO" ||
+            x.network !== "solana-devnet" ||
+            x.asset !== "AAPL" ||
+            x.programId !== "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk" ||
+            x.assetRule?.pythFeedId !== 922 ||
+            x.truthBoundary?.executionAsset !== "DEMO_TOKEN" ||
+            x.truthBoundary?.realMinorSecuritiesExecution !== false
+          ) {
+            console.error(x);
+            process.exit(1);
+          }
+          fs.appendFileSync(process.env.GITHUB_ENV, `MANDATE_NONCE=${x.mandate.nonce}\n`);
+          console.log(`HOSTED_RUNTIME mandate=${x.mandateAddress} version=${x.mandate.version} nonce=${x.mandate.nonce} feed=${x.assetRule.pythFeedId}`);
+          NODE
+          echo "CLOUDFLARE_HOSTED_RUNTIME=PASS"
+
+      - name: Execute hosted AAPL action
+        shell: bash
+        run: |
+          set -euo pipefail
+          IDEMPOTENCY_KEY="cloudflare-hosted-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cat > /tmp/request.json <<JSON
+          {
+            "asset": "AAPL",
+            "type": "BUY",
+            "notional": 5,
+            "expectedNonce": ${MANDATE_NONCE},
+            "idempotencyKey": "${IDEMPOTENCY_KEY}"
+          }
+          JSON
+
+          curl --fail-with-body --silent --show-error             -X POST             -H "content-type: application/json"             -H "idempotency-key: ${IDEMPOTENCY_KEY}"             --data-binary @/tmp/request.json             "$KEYS_API_URL/api/v0.2/actions/execute"             | tee /tmp/execute.json
+
+          node - <<'NODE'
+          const fs = require("fs");
+          const x = JSON.parse(fs.readFileSync("/tmp/execute.json","utf8"));
+          if (
+            x.evaluation?.decision !== "ALLOW" ||
+            x.evaluation?.reasonCode !== "WITHIN_MANDATE" ||
+            x.executionProof?.status !== "CONFIRMED" ||
+            x.executionProof?.simulated !== false ||
+            !x.executionProof?.signature ||
+            x.executionProof?.network !== "solana-devnet" ||
+            x.executionProof?.executionAsset !== "DEMO_TOKEN" ||
+            x.executionProof?.pyth?.feedId !== 922 ||
+            x.executionProof?.pyth?.verification !== "ONCHAIN_PYTH_LAZER" ||
+            x.executionProof?.pyth?.authorityEffect !== "NONE"
+          ) {
+            console.error(x);
+            process.exit(1);
+          }
+          console.log(`HOSTED_SIGNATURE=${x.executionProof.signature}`);
+          console.log(`HOSTED_EXPLORER=https://explorer.solana.com/tx/${x.executionProof.signature}?cluster=devnet`);
+          NODE
+
+          echo "CLOUDFLARE_HOSTED_HTTP_TO_SOLANA=PASS"
