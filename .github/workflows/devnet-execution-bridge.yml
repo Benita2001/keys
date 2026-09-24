@@ -1,5 +1,9 @@
 name: devnet-execution-bridge
 
+concurrency:
+  group: keys-devnet-execution-bridge
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
