@@ -1,136 +1,81 @@
-# Benita — Frontend Start Here (v0.2 transition)
+# Benita — Frontend Start Here
 
 Date: 2026-09-24  
-Status: **V0.2 CONTRACT FROZEN; INTEGRATION READY**
+Status: **V0.2 FROZEN / DEVNET FAMILY INTEGRATION READY**
 
-You still own the KEYS frontend and product experience.
+KEYS Family is bounded autonomy:
 
-However, the product strategy has changed after hostile review + Stocklana re-scoring. Do **not** lock the new experience to the old v0.1 proposal-per-action contract.
+> **Learn in context. Act freely inside bounds. Ask for more freedom only at the boundary.**
 
-## New product direction
+## Start from these truths
 
-KEYS Family is now **bounded autonomy**:
+- the guardian defines the boundary;
+- the young person acts freely inside it;
+- out-of-bounds actions refuse or create a request;
+- only a guardian can widen standing authority;
+- Pyth can restrict/stop, never expand authority;
+- learning/XP/P&L never expand authority.
 
-> Learn in context. Act freely inside bounds. Ask for more freedom only at the boundary.
+## Backend is now connected
 
-The guardian sets the boundary.
+Production API:
 
-Maya acts freely inside it.
+`https://keys-api-stocklana.faadil-casecraft.workers.dev`
 
-## What remains fixed
+Cresco production fallback already points to it.
 
-- ALLOW / ESCALATE / REFUSE semantics;
-- explicit human authority changes;
-- version/nonce stale-authorization refusal;
-- UNKNOWN fails closed;
-- market evidence does not create authority;
-- no competence score;
-- no brokerage/custody claim;
-- no real minor securities execution claim;
-- private minor reasoning stays off public chain.
+Use `apps/web/src/services/keys-backend.ts`; do not create parallel fetch logic.
 
-## What changed
+The Family demo now supports backend sessions, shared state, current Mandate, evaluate, Devnet execute/proof, requests/guardian decisions, test funding, learning sync, Money portfolio and market quotes.
 
-Old v0.1 happy path:
-
-`Proposal → Guardian Review → Transition`
-
-New v0.2 happy path:
-
-`In-bounds Action → ALLOW immediately`
-
-Boundary path:
-
-`Out-of-bounds Action → REFUSE or Boundary Request → Guardian decision → optional explicit Mandate transition`
-
-The five-stage Family progression may remain visible as a narrative, but the Mandate permission envelope is the technical truth.
-
-## Learning / Practice
-
-Do not remove learning.
-
-Learning should be:
-
-- short and contextual;
-- tied to first-use, unfamiliar asset/action, boundary refusal, market change or review;
-- available in Practice;
-- age-respectful;
-- never a score that automatically widens authority.
-
-See `FAMILY-LEARNING-LAYER.md`.
+See:
+- `docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md`
+- `docs/BACKEND-API.md`
+- `docs/LIVE-DEMO-INTEGRATION.md`
+- `docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
 
 ## Experience target
 
-Primary surfaces should now communicate:
+1. My Key
+2. Contextual Learn / Practice
+3. In-bounds action
+4. Boundary refusal
+5. Market evidence/change
+6. Ask for more room
+7. Guardian allow once / widen / refuse
+8. Same action after widen
+9. Stale authorization refusal
+10. Proof/receipt
 
-1. **My Key / Current Mandate** — what Maya can do right now.
-2. **Practice / Learn** — contextual market understanding without making every action homework.
-3. **Action** — instant if inside bounds.
-4. **Boundary** — why an action cannot execute.
-5. **Ask for more room** — short boundary request.
-6. **Guardian decision** — allow once / widen / refuse.
-7. **Market evidence** — what changed, in human language.
-8. **History / receipts** — transitions and meaningful reviews, not a surveillance feed.
+Do not expose protocol jargon as the main UX.
 
-## Backend coordination
+## Current test-money truth
 
-The old v0.1 fixture/API remains historical proof only.
+Money Mode’s proven AAPL lane uses:
+- Solana Devnet;
+- a demo SPL token;
+- live Pyth market truth;
+- a server-held Devnet demo signer.
 
-The current frozen integration contract is:
+It does not buy real AAPL/AAPLx shares and is not brokerage/custody.
 
-`docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
+## Market
 
-Use these product routes:
+The Explore universe may mix Pyth-backed and sample values. Only `FRESH` Pyth is “Live · Pyth”. Historical charts remain sample until a history provider is connected.
 
-- `GET /api/v0.2/demo/maya`
-- `POST /api/v0.2/actions/evaluate`
-- `POST /api/v0.2/boundary-requests`
+## Sponsor extension
 
-Cresco devnet bridge now implemented in backend code:
+Pyth is load-bearing proof.
 
-- `GET /api/v0.2/demo/runtime`
-- `POST /api/v0.2/actions/execute`
+PreStocks is a secondary Learn/Practice representation surface:
+- eligibility unknown by default;
+- execution ineligible by default;
+- Practice available;
+- authority effect NONE.
 
-Those routes are **PASS / PROVEN** on the current AAPL devnet proof lane. The runtime uses a server-held devnet demo signer and a demo/mock SPL token.
+Do not make a sponsor dashboard the product.
 
-Current delta for PR #1:
+## Do not block on production-only scope
 
-`docs/CRESCO-BACKEND-DELTA-2026-09-24.md`
-
-Do not build the new product around `/api/v0.1/*` or `/api/v0.2/draft/*`; those remain compatibility/history surfaces only.
-
-The current AAPL live-entitlement proof is:
-
-https://github.com/Faadil1/keys/actions/runs/36035283447
-
-The current AAPL HTTP→Solana devnet proof is:
-
-https://github.com/Faadil1/keys/actions/runs/36034651466
-
-Faadil now maintains the backend/proof and supports integration issues. Benita can integrate against the frozen v0.2 semantics.
-
-## Sponsor extension available now
-
-Pyth remains part of the core proof.
-
-PreStocks is available as an optional secondary Learn / Practice representation surface:
-
-- `GET /api/v0.2/integrations/prestocks`
-- `GET /api/v0.2/integrations/prestocks/:symbol`
-
-Use PreStocks to help Maya understand **what the on-chain representation actually is**, not as a new homepage hero or as proof of live minor securities execution.
-
-Default PreStocks truth:
-
-- `eligibility.status = UNKNOWN`
-- `executionEligible = false`
-- `practiceAvailable = true`
-- `authorityEffect = NONE`
-
-Canonical PreStocks live proof:
-
-https://github.com/Faadil1/keys/actions/runs/35969672666
-
-Sponsor integrations must extend KEYS without redefining the Family journey.
-
-Do not redesign around TSLA, AAPL or any single sponsor asset. The mechanism remains asset-independent and actual live assets must always be labeled truthfully.
+The current hackathon demo does not require us to fake:
+production KYC/auth, embedded wallets, bank/card rails, custody/brokerage, mainnet, all-symbol market entitlements/history, or jurisdiction-specific minor-account rollout.
