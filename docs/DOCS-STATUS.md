@@ -46,7 +46,6 @@ Canonical live Pyth proof feed:
 | `docs/FAMILY-LEARNING-LAYER.md` | learning/practice rules | CURRENT |
 | `docs/TECHNICAL-REALITY-CHECK.md` | short technical boundary | CURRENT v0.2 |
 | `docs/BUILD-PLAN.md` | gate progression | CURRENT |
-| `docs/STOCKLANA-BOUNTY-INTEGRATION-GATE.md` | sponsor bounty fit + activation rules | CURRENT |
 | `docs/DEMO-FIRST-ARCHITECTURE.md` | judge/demo narrative | CURRENT v0.2 |
 | `docs/TRUTH-BOUNDARY.md` | claim/no-claim boundary | CURRENT |
 | `docs/SOLANA-AUTHORITY-PROOF.md` | v0.1 Solana evidence | HISTORICAL VALID PROOF |
