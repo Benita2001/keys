@@ -103,7 +103,7 @@ Expected truth:
 
 - network = Solana devnet;
 - program = canonical KEYS program;
-- asset = TSLA market truth;
+- asset = AAPL market truth;
 - capital asset = demo/mock SPL token;
 - signer mode = server-held devnet demo signer;
 - real minor securities execution = false.
@@ -158,9 +158,18 @@ The route is now implemented in backend code.
 
 Current proof state at the time of this document:
 
-**CI devnet stable-runtime bootstrap + HTTP execution smoke is running.**
+**PASS / PROVEN.** The current AAPL stable-runtime bootstrap and HTTP→Solana execution smoke succeeded in GitHub Actions run `36034651466`.
 
-Do not label the bridge canonically proven until that workflow returns PASS.
+## Current AAPL proof
+
+- Pyth symbol: `Equity.US.AAPL/USD`
+- Pyth feed id: `922`
+- entitlement + signed payload proof: https://github.com/Faadil1/keys/actions/runs/36035283447
+- HTTP→Solana devnet proof: https://github.com/Faadil1/keys/actions/runs/36034651466
+- confirmed signature: `3pFf5gFTQANbeJkxdLLdZho2iwgtsmXS36WdQroGPoUwuF7txaxRzQrJf2mcMajBj7BsnvrAEj5a148erm6TboP1`
+- evidence: `evidence/solana/CRESCO-AAPL-HTTP-DEVNET-EXECUTION-PROOF-2026-09-24.md`
+
+Historical TSLA proof remains valid evidence but is no longer the current Cresco proof asset.
 
 ## Demo signer model
 
@@ -232,12 +241,12 @@ The normal Cresco Family flow and the live Solana proof lane are intentionally s
 
 **Technical proof lane**
 - lives under `How Cresco works → Technical details`;
-- resolves the stable TSLA demo runtime from `GET /api/v0.2/demo/runtime`;
+- resolves the stable AAPL demo runtime from `GET /api/v0.2/demo/runtime`;
 - calls `POST /api/v0.2/actions/execute`;
 - shows success only for `CONFIRMED + simulated:false + real signature`;
 - links directly to the devnet transaction.
 
-Do not globally route Apple/NVDA/etc. Money Mode into the TSLA proof runtime.
+Do not globally route Apple/NVDA/etc. Money Mode into the AAPL proof runtime.
 
 ## Judge-facing target
 
