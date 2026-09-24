@@ -36,8 +36,8 @@ export const PYTH_LAZER_STORAGE_ID = new PublicKey(
 );
 
 const ASSET_RULE_ACCOUNT_SIZE = 135;
-const DEMO_ASSET = 'TSLA';
-const DEMO_FEED_ID = 1435;
+const DEMO_ASSET = 'AAPL';
+const DEMO_FEED_ID = 922;
 
 const executionPromises = new Map();
 const executionResults = new Map();
@@ -414,7 +414,7 @@ export function createDevnetExecutionProvider({
 
       const snapshot = await fetchPythProSolanaPayload({
         apiKey: pythApiKey,
-        feed: PYTH_PRO_EQUITY_FEEDS.TSLA,
+        feed: PYTH_PRO_EQUITY_FEEDS.AAPL,
         maxAgeSeconds: mandate.maxMarketAgeSeconds || 30,
         maxConfidenceBps: mandate.maxConfidenceBps || 100
       });
