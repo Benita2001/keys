@@ -55,6 +55,7 @@ Canonical live Pyth proof feed:
 | `docs/FRONTEND-BACKEND-CONTRACT-V0.2.md` | bounded-autonomy integration contract | CURRENT / FROZEN |
 | `docs/BACKEND-API.md` | current v0.2 HTTP integration surface | CURRENT / FROZEN TARGET |
 | `docs/LIVE-DEMO-INTEGRATION.md` | Benita live/demo integration guide | CURRENT v0.2 |
+| `docs/CRESCO-BACKEND-DELTA-2026-09-24.md` | corrections/delta for Benita PR #1 backend assumptions | CURRENT |
 | `docs/BOUNTY-INTEGRATION-GATE-2026-09-24.md` | sponsor-track activation / anti-bounty-chasing gate | CURRENT |
 | `evidence/pyth/DEVNET-ONCHAIN-PYTH-BOUNDARY-PROOF-2026-09-24.md` | canonical devnet live Pyth capital proof | CURRENT EVIDENCE |
 | `evidence/solana/LOCAL-BOUNDED-AUTONOMY-RUNTIME-PROOF-2026-09-23.md` | v0.2 local capital proof | CURRENT EVIDENCE |
