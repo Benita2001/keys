@@ -77,7 +77,7 @@ export default function ExplorePage() {
         )}
       </div>
       <p className="mt-4 text-center text-[12px] font-semibold text-ink-3">
-        Fresh entitled Pyth quotes are labeled Live · Pyth. Other prices and all chart history remain clearly labeled sample data for learning.
+        Fresh entitled Pyth quotes are labeled Live · Pyth. Configured entitled feeds also use Pyth history; unavailable prices or history stay clearly sample for learning.
       </p>
     </div>
   );
