@@ -4,7 +4,7 @@
 
 KEYS Family is a bounded-autonomy experience for young people learning to use tokenized stocks.
 
-A guardian defines an explicit **Mandate**. Inside it, the young person can act freely without asking for permission on every action. Outside it, the action is refused or becomes a boundary request. Wider authority requires an explicit authorized human transition.
+A guardian defines an explicit **Mandate**. Inside it, the young person can act freely without asking permission on every action. Outside it, the action is refused or becomes a boundary request. Wider standing authority requires an explicit authorized human transition.
 
 > **Learn in context. Act freely inside bounds. Ask for more freedom only at the boundary.**
 
@@ -28,9 +28,7 @@ The familiar `LEARN → PRACTICE → PROPOSE → BOUNDED → INDEPENDENT` progre
 
 ## Learning stays
 
-KEYS is not removing financial learning.
-
-Learning becomes contextual:
+Learning is contextual rather than bureaucratic:
 
 - first use of a new asset/action;
 - Practice mode;
@@ -42,70 +40,81 @@ Learning completion, quizzes, P&L or AI scoring never auto-grant authority.
 
 See [docs/FAMILY-LEARNING-LAYER.md](docs/FAMILY-LEARNING-LAYER.md).
 
-## v0.1 proof — complete
+## v0.2 bounded autonomy — canonical devnet proof PASS
 
-This repository already proves:
+KEYS now proves the core product mechanism on local Solana and the canonical devnet program.
 
-- Charter / Mandate / Proposal / Review state;
-- explicit guardian-signed authority transition;
-- version/nonce advance;
-- stale replay refusal;
-- local and devnet Solana runtime;
-- authenticated live Pyth Pro US-equity evidence through a server-side boundary.
-
-Canonical devnet program:
+Canonical program:
 
 `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
 
-Current verified live Pyth trial feed:
+Canonical devnet run:
 
-`Equity.US.TSLA/USD`
+https://github.com/Faadil1/keys/actions/runs/35959137364
 
-## v0.2 bounded autonomy — capital path proven
+Result:
 
-The new Technical Reality Gate passed and the first runtime delta is now real.
+**12 passing**
 
-On local Solana and on the canonical devnet program, KEYS now proves:
+The runtime proves:
 
-1. a program-controlled demo-token vault;
-2. explicit per-asset/per-action and per-period boundaries;
-3. an in-bounds action executes without guardian approval;
-4. an out-of-bounds action fails inside the Solana program;
-5. an explicit guardian widen advances version/nonce;
+1. program-controlled demo-token vault;
+2. explicit AssetRule / permission boundary;
+3. in-bounds action executes without guardian approval;
+4. out-of-bounds action refuses inside the Solana program;
+5. explicit guardian widening advances version/nonce;
 6. stale execution material refuses;
-7. the same larger action succeeds after the widen;
-8. pause/downward authority blocks execution.
+7. the same larger action succeeds after widening;
+8. pause/downward authority blocks execution;
+9. live signed Pyth Pro/Lazer TSLA evidence is verified inside the Solana capital path;
+10. Pyth-derived USD/notional limits are load-bearing;
+11. a notional breach refuses;
+12. a precommitted max-price condition refuses;
+13. Pyth has **no authority-widening effect**.
 
-Canonical v0.2 devnet proof:
+Canonical Pyth proof feed:
 
-https://github.com/Faadil1/keys/actions/runs/35931280449
+`Equity.US.TSLA/USD` — feed id `1435`.
 
-Pyth also now returns a signed Solana-format payload in the authenticated proof path:
+Evidence:
 
-https://github.com/Faadil1/keys/actions/runs/35930425544
+- [Devnet Pyth bounded-autonomy proof](evidence/pyth/DEVNET-ONCHAIN-PYTH-BOUNDARY-PROOF-2026-09-24.md)
+- [Local Pyth bounded-autonomy proof](evidence/pyth/LOCAL-ONCHAIN-PYTH-BOUNDARY-PROOF-2026-09-24.md)
+- [Earlier bounded-capital devnet proof](evidence/solana/DEVNET-BOUNDED-AUTONOMY-RUNTIME-PROOF-2026-09-23.md)
 
-**Remaining backend proof:** verify that signed Pyth payload inside the Anchor execution path and use verified prices for USD/notional and user-precommitted market conditions.
+## Frozen v0.2 integration contract
 
-See:
+The current frontend/backend semantic contract is:
 
-- [Technical Reality Gate](docs/TECHNICAL-REALITY-GATE-BOUNDED-AUTONOMY.md)
-- [Architecture Delta](docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md)
-- [Concept Lock](docs/CONCEPT-LOCK.md)
-- [Truth Boundary](docs/TRUTH-BOUNDARY.md)
+[docs/FRONTEND-BACKEND-CONTRACT-V0.2.md](docs/FRONTEND-BACKEND-CONTRACT-V0.2.md)
+
+Current v0.2 API semantics:
+
+- `GET /api/v0.2/demo/maya`
+- `POST /api/v0.2/actions/evaluate`
+- `POST /api/v0.2/boundary-requests`
+
+The old v0.1 contract remains historical proof only.
 
 ## Truth boundary
 
-Real minor securities execution is **not** currently claimed.
+The current capital proof uses an explicitly labeled **demo/mock SPL token** with real live Pyth market evidence.
 
-KEYS is not claiming to be a broker or custodian.
+KEYS does **not** currently claim:
 
-The current live Pyth path proves authenticated equity evidence and signed Solana-payload availability. The signed payload is **not yet verified inside the KEYS Anchor execution instruction**, so on-chain Pyth enforcement must not be presented as completed yet.
+- real minor securities execution;
+- brokerage or custodial service;
+- legal conventional-share ownership from a token balance;
+- Solana mainnet deployment;
+- universal issuer/venue/jurisdiction eligibility.
+
+The current Pyth trial proves TSLA live evidence; it does not establish live AAPL entitlement.
 
 ## Collaboration
 
-- Frontend / product experience: Benita
-- Backend / Solana / Pyth / proof: Faadil
+- Frontend / product experience: **Benita**
+- Backend / Solana / Pyth / proof: **Faadil**
 
-The old v0.1 frontend contract remains historical proof. A v0.2 draft contract now exists and will be frozen after the Pyth-integrated runtime proof.
+Backend v0.2 is now in proof-maintenance/integration-support mode. Benita can integrate against the frozen v0.2 contract.
 
 See [docs/BENITA-FRONTEND-HANDOFF.md](docs/BENITA-FRONTEND-HANDOFF.md).
