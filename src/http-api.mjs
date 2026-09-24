@@ -54,7 +54,7 @@ export const CANONICAL_DEVNET_PROOF_RUN =
   'https://github.com/Faadil1/keys/actions/runs/35959137364';
 
 export const CANONICAL_PYTH_PROOF_RUN =
-  'https://github.com/Faadil1/keys/actions/runs/35959137364';
+  'https://github.com/Faadil1/keys/actions/runs/36034651466';
 
 async function defaultMarketEvidenceProvider({ asset, now }) {
   const feed = PYTH_PRO_EQUITY_FEEDS[asset];
@@ -81,8 +81,8 @@ async function defaultEligibilityProvider() {
 }
 
 function liveDemoAsset() {
-  const requested = process.env.KEYS_DEMO_LIVE_EQUITY || 'TSLA';
-  return PYTH_PRO_EQUITY_FEEDS[requested] ? requested : 'TSLA';
+  const requested = process.env.KEYS_DEMO_LIVE_EQUITY || 'AAPL';
+  return PYTH_PRO_EQUITY_FEEDS[requested] ? requested : 'AAPL';
 }
 
 function buildMayaLiveScenario(asset) {
