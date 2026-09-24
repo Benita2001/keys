@@ -63,6 +63,18 @@ function encodeU64(value) {
   return out;
 }
 
+function encodeI64(value) {
+  const out = Buffer.alloc(8);
+  out.writeBigInt64LE(BigInt(value));
+  return out;
+}
+
+function encodeU32(value) {
+  const out = Buffer.alloc(4);
+  out.writeUInt32LE(Number(value));
+  return out;
+}
+
 function parseKeypair(json) {
   const values = JSON.parse(json);
   if (!Array.isArray(values) || values.length !== 64) {
@@ -279,6 +291,89 @@ export function createDevnetExecutionProvider({
       vaultTokenAccount,
       delegateTokenAccount
     };
+  }
+
+  async function sendManageMandateInstruction(name, args = []) {
+    const runtime = await loadRuntime();
+    const data = Buffer.concat([discriminator(name), ...args]);
+
+    const ix = new TransactionInstruction({
+      programId: DEVNET_KEYS_PROGRAM_ID,
+      keys: [
+        { pubkey: runtime.charter, isSigner: false, isWritable: false },
+        { pubkey: runtime.mandateAddress, isSigner: false, isWritable: true },
+        { pubkey: signer.publicKey, isSigner: true, isWritable: false }
+      ],
+      data
+    });
+
+    const latest = await rpc.getLatestBlockhash('confirmed');
+    const tx = new Transaction({
+      feePayer: signer.publicKey,
+      recentBlockhash: latest.blockhash
+    }).add(ix);
+    tx.sign(signer);
+
+    const signature = await rpc.sendRawTransaction(tx.serialize(), {
+      skipPreflight: false,
+      maxRetries: 3
+    });
+
+    await confirmSignatureOverRpc({
+      rpc,
+      signature,
+      lastValidBlockHeight: latest.lastValidBlockHeight
+    });
+
+    return { signature, state: await getState() };
+  }
+
+  async function configureMandatePolicy({
+    expectedNonce,
+    maxActionNotional,
+    maxPeriodNotional,
+    expiresAt = 0,
+    maxMarketAgeSeconds = 30,
+    maxConfidenceBps = 100
+  }) {
+    const actionMicro = Math.round(Number(maxActionNotional) * 1_000_000);
+    const periodMicro = Math.round(Number(maxPeriodNotional) * 1_000_000);
+
+    if (
+      !Number.isFinite(actionMicro) ||
+      !Number.isFinite(periodMicro) ||
+      actionMicro <= 0 ||
+      periodMicro < actionMicro
+    ) {
+      throw new Error('INVALID_MANDATE_LIMITS');
+    }
+
+    return sendManageMandateInstruction('configure_mandate_policy', [
+      encodeU64(expectedNonce),
+      encodeU64(actionMicro),
+      encodeU64(periodMicro),
+      encodeI64(expiresAt),
+      encodeU32(maxMarketAgeSeconds),
+      encodeU32(maxConfidenceBps)
+    ]);
+  }
+
+  async function setMandateStatus({ expectedNonce, status }) {
+    const code =
+      status === 'ACTIVE'
+        ? 0
+        : status === 'PAUSED'
+          ? 1
+          : status === 'REVOKED'
+            ? 2
+            : null;
+
+    if (code == null) throw new Error('INVALID_MANDATE_STATUS');
+
+    return sendManageMandateInstruction('set_mandate_status', [
+      encodeU64(expectedNonce),
+      Buffer.from([code])
+    ]);
   }
 
   async function getState() {
@@ -663,6 +758,8 @@ export function createDevnetExecutionProvider({
   return {
     getState,
     execute,
+    configureMandatePolicy,
+    setMandateStatus,
     idempotencyScope: 'PROCESS_LOCAL_DEMO'
   };
 }
