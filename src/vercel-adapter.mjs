@@ -1,6 +1,9 @@
 import { routeKeysHttp } from './http-api.mjs';
 
-const DEFAULT_CORS_ORIGIN = '*';
+const DEFAULT_CORS_ORIGIN =
+  process.env.NODE_ENV === 'production'
+    ? 'https://cresco-lac.vercel.app'
+    : '*';
 
 async function readRequestBody(req) {
   if (!['POST', 'PUT', 'PATCH'].includes(req?.method)) return null;
