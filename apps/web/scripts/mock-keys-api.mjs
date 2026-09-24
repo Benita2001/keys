@@ -11,7 +11,8 @@
  *   GET  /api/v0.1/capabilities
  *   GET  /api/v0.1/demo/live-proof          never FRESH (no Pyth here)
  *
- * Policy decisions use the repository's real src/bounded-autonomy.mjs.
+ * Policy decisions use the repository's real src/bounded-autonomy.mjs and
+ * server-owned mock Mandate/AssetRule state. Client authority state is ignored.
  * Nothing touches Solana. Every proof has `simulated: true` and a signature
  * starting with "MOCK", which cannot be a real base58 Solana signature
  * (base58 has no "O"), so it can never be mistaken for on-chain proof.
@@ -29,6 +30,25 @@ import { evaluateBoundedAction } from "../../../src/bounded-autonomy.mjs";
 
 export const MOCK_PROGRAM_ID = "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk";
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+const SERVER_MANDATE = Object.freeze({
+  status: "ACTIVE",
+  version: 4,
+  nonce: 3,
+  maxActionNotional: 10,
+  maxPeriodNotional: 50,
+  spentThisPeriod: 0,
+});
+
+const SERVER_ASSET_RULE = Object.freeze({
+  asset: "AAPL",
+  enabled: true,
+  allowedActions: ["BUY"],
+  maxActionNotional: 10,
+  maxPeriodNotional: 50,
+  spentThisPeriod: 0,
+  requiresMarketEvidence: false,
+});
 
 function mockSignature() {
   let s = "MOCK";
@@ -57,10 +77,9 @@ async function readJson(req) {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function evaluate(body) {
-  const draft = body?.draft ?? {};
   const evaluation = evaluateBoundedAction({
-    mandate: draft.mandate,
-    assetRule: draft.assetRule,
+    mandate: SERVER_MANDATE,
+    assetRule: SERVER_ASSET_RULE,
     action: {
       asset: body?.asset,
       type: body?.type,
@@ -107,8 +126,8 @@ export function createMockKeysServer({ scenario = process.env.MOCK_EXECUTE_SCENA
       if (req.method === "POST" && ["/api/v0.2/actions/evaluate", "/api/v0.2/draft/actions/evaluate"].includes(url.pathname)) {
         const body = await readJson(req);
         const evaluation = evaluateBoundedAction({
-          mandate: body?.mandate,
-          assetRule: body?.assetRule,
+          mandate: SERVER_MANDATE,
+          assetRule: SERVER_ASSET_RULE,
           action: body?.action,
         });
         return send(res, 200, { ...evaluation, type: "V0_2_ACTION_EVALUATION", runtimeProofStatus: "MOCK" });
@@ -133,8 +152,8 @@ export function createMockKeysServer({ scenario = process.env.MOCK_EXECUTE_SCENA
               network: "solana-devnet",
               signature: mockSignature(),
               programId: MOCK_PROGRAM_ID,
-              mandateVersion: body.draft?.mandate?.version,
-              mandateNonce: body.draft?.mandate?.nonce,
+              mandateVersion: SERVER_MANDATE.version,
+              mandateNonce: SERVER_MANDATE.nonce,
               executedAt: new Date().toISOString(),
               idempotencyKey: key,
               simulated: true,
