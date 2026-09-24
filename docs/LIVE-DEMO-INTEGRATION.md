@@ -1,177 +1,181 @@
-# KEYS — Live Demo Integration Contract
+# KEYS — Live Demo Integration Contract v0.2
 
-Status: **BACKEND CONTRACT READY / FRONTEND OWNED BY BENITA**
+Date: 2026-09-24  
+Status: **FROZEN V0.2 PRODUCT SURFACE / FRONTEND OWNED BY BENITA**
 
-This document is the handoff between Faadil's verified backend proof surfaces and Benita's frontend.
+This is the handoff between the verified KEYS backend/runtime proof and Benita's frontend.
 
 It does **not** prescribe visual design.
 
-## Frontend rule
+## Current frontend target
 
-The existing deterministic Maya fixture remains valid:
+Use the frozen v0.2 contract:
 
-`GET /api/v0.1/demo/maya`
+`docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
 
-Benita may continue building against it without waiting for a live runtime.
+Primary product routes:
 
-The new live-backed surface is:
+- `GET /api/v0.2/demo/maya`
+- `POST /api/v0.2/actions/evaluate`
+- `POST /api/v0.2/boundary-requests`
 
-`GET /api/v0.1/demo/live-proof`
+The old `/api/v0.1/*` routes remain historical/compatibility surfaces.  
+The `/api/v0.2/draft/*` aliases remain compatibility aliases only.
 
-The frontend may progressively switch or offer a judge/demo proof mode using this route.
+Do not use either as the product integration target.
 
-## What the live route does
+## Route 1 — Maya demo contract
 
-The backend:
+### GET /api/v0.2/demo/maya
 
-1. derives the Maya proposal scenario;
-2. selects a configured live US-equity feed;
-3. fetches Pyth Pro market evidence server-side;
-4. evaluates the proposal through the same KEYS policy engine;
-5. returns display-safe market evidence;
-6. attaches public Solana devnet proof metadata;
-7. never exposes the Pyth API key or Solana private key.
+Returns the canonical Maya bounded-autonomy fixture.
 
-Current default live equity:
+The fixture communicates:
 
-`TSLA`
+- contract version `0.2`;
+- active Mandate version/nonce;
+- current key/bounds;
+- contextual learning/Practice;
+- in-bounds ALLOW;
+- boundary REFUSE;
+- Pyth market-condition refusal;
+- guardian widen as the only authority-expanding source;
+- same action ALLOW after widen;
+- stale authorization REFUSE;
+- `onchainPythVerification: true`;
+- `realMinorSecuritiesExecution: false`.
 
-The default is configurable with:
+This is the preferred bootstrap surface for Benita.
 
-`KEYS_DEMO_LIVE_EQUITY`
+## Route 2 — Action evaluation
 
-The product is not semantically tied to TSLA or AAPL.
+### POST /api/v0.2/actions/evaluate
 
-## Stable response shape
-
-Illustrative envelope:
+Body shape:
 
 ```json
 {
-  "contractVersion": "0.1",
-  "type": "LIVE_DEMO_PROOF",
-  "mode": "LIVE_BACKEND_EVIDENCE",
-  "beneficiary": {
-    "displayName": "Maya"
-  },
-  "scenario": {
-    "asset": "TSLA",
-    "proposal": {},
-    "mandate": {
-      "stage": "PROPOSE",
-      "version": 1,
-      "nonce": 0
-    }
-  },
-  "evaluation": {
-    "marketEvidence": {
-      "source": "PYTH_PRO",
-      "status": "FRESH",
-      "price": 379.696,
-      "confidence": 0.019,
-      "confidenceBps": 0.5004,
-      "publishTime": "2026-09-23T19:36:42.000Z",
-      "marketSession": "regular",
-      "publisherCount": 19
-    },
-    "decision": "ESCALATE",
-    "reasonCode": "GUARDIAN_REVIEW_REQUIRED"
-  },
-  "proofs": {
-    "solana": {
-      "network": "devnet",
-      "status": "VERIFIED",
-      "programId": "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk",
-      "explorerUrl": "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
-    },
-    "pyth": {
-      "status": "VERIFIED_LIVE_EQUITY",
-      "secretExposedToFrontend": false
-    }
-  },
-  "truthBoundary": {
-    "marketEvidenceCreatesAuthority": false,
-    "executionEligibility": "UNKNOWN",
-    "realSecuritiesExecution": false,
-    "liveEvidenceAsset": "TSLA"
-  }
+  "mandate": {},
+  "assetRule": {},
+  "action": {},
+  "now": "ISO-8601 timestamp"
 }
 ```
 
-Exact live price values change on every request and must never be hardcoded into the frontend.
+If `assetRule.requiresMarketEvidence === true`, market evidence is resolved server-side.
 
-## Capabilities discovery
+The browser must never supply or receive `PYTH_PRO_API_KEY`.
 
-The frontend can first call:
+The response includes the bounded-autonomy evaluation and:
 
-`GET /api/v0.1/capabilities`
+```json
+{
+  "type": "V0_2_ACTION_EVALUATION",
+  "runtimeProofStatus": "CANONICAL_DEVNET_RUNTIME_PROVEN"
+}
+```
 
-The `liveDemoProof` field exposes:
+Primary UX mapping:
 
-- readiness status;
-- selected live equity;
-- live route;
-- canonical Solana devnet program id.
+- inside bounds → `ALLOW`;
+- outside bounds → `REFUSE` / boundary request available;
+- stale/invalid market evidence → fail closed;
+- invalid precommitted market condition → `REFUSE`;
+- Pyth authority effect → `NONE`.
 
-This lets the UI fail gracefully rather than guessing whether live evidence exists.
+## Route 3 — Boundary request
 
-## Recommended frontend behavior
+### POST /api/v0.2/boundary-requests
 
-If `liveDemoProof.status` is ready:
+Body shape:
 
-- show the live proof state;
-- label market evidence as live;
-- allow the user/judge to inspect freshness/confidence;
-- expose the Solana Explorer link as proof;
-- keep the decision language as `ESCALATE / GUARDIAN_REVIEW_REQUIRED`.
+```json
+{
+  "mandate": {},
+  "assetRule": {},
+  "action": {},
+  "reasoningCommitmentHash": "...",
+  "condition": null,
+  "now": "ISO-8601 timestamp"
+}
+```
 
-If live evidence is unavailable:
+The response remains a pending human-decision object.
 
-- do not fake a live price;
-- fall back to the deterministic Maya fixture;
-- label the fallback as simulation/demo;
-- preserve the reason code.
+A boundary request is **not authority**.
 
-## Product invariants
+## Guardian decision / widen truth
 
-The UI must preserve:
+The current frozen v0.2 HTTP product surface covers the Maya fixture, bounded-action evaluation and boundary-request creation.
 
-`MARKET EVIDENCE != AUTHORITY`
+The authorized guardian widen, version/nonce advance, same-action-after-widen success and stale-authorization refusal are proven by the canonical Solana runtime and represented in the frozen fixture/demo spine.
 
-and:
+Frontend rule:
 
-`EVIDENCE -> ELIGIBLE FOR REVIEW -> EXPLICIT AUTHORIZED TRANSITION`
+- do not display a simulated UI transition as a new on-chain transaction unless an actual runtime proof/signature is attached;
+- do not invent a new guardian mutation endpoint;
+- keep the UI semantics aligned with the proven human-authority transition.
 
-Do not translate market quality, returns, or review history into a competence score.
+## Judge-facing demo spine
 
-## Current verified backend evidence
+Build the product experience in this order:
 
-Solana devnet:
+1. **My Key** — Maya understands her current freedom.
+2. **Learn / Practice** — short contextual learning.
+3. **In-bounds action** → ALLOW with no guardian approval.
+4. **Boundary action** → REFUSE.
+5. **Market changed** → explain the Pyth-backed condition/refusal.
+6. **Ask for more room** → boundary request.
+7. **Guardian decision** → allow once / widen / refuse.
+8. **Widen** → version/nonce advance.
+9. **Same action** → ALLOW.
+10. **Old authorization** → STALE / REFUSE.
 
-- program: `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
-- authority runtime: PASS
-- stable upgrade authority: PASS
+## Canonical runtime proof
 
-Pyth:
+Program:
 
-- authenticated live US-equity: PASS
-- canonical proof feed: `Equity.US.TSLA/USD`
-- canonical proof run: https://github.com/Faadil1/keys/actions/runs/35910460176
+`ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`
 
-The frontend does not need either secret to render or consume the safe response.
+Network:
 
+`Solana devnet`
 
-## Ownership and hosting
+Canonical Solana + live Pyth run:
 
-Benita owns:
+https://github.com/Faadil1/keys/actions/runs/35959137364
 
-- frontend integration;
-- product experience;
-- hosting/deployment of the judge-facing application;
-- deciding whether the experience uses deterministic-only, live-proof, or a deliberate toggle between the two.
+Runtime result:
 
-Faadil owns backend semantics and proof maintenance only.
+`12 passing`
 
-The repository includes a CI-tested Vercel adapter, but canonical state does **not** currently claim a public hosted backend URL. Benita may use Vercel or another appropriate hosting path as long as the API contract and secret boundary remain intact.
+## Truth boundary
 
-If a hosted live backend is used, `PYTH_PRO_API_KEY` must stay server-side.
+The demo/runtime may truthfully claim:
+
+> KEYS enforces bounded capital actions on Solana using live Pyth market truth.
+
+It must not claim:
+
+- real minor securities execution;
+- conventional legal share ownership;
+- brokerage or custody;
+- mainnet execution;
+- universal issuer/venue/jurisdiction eligibility;
+- that Pyth grants Maya authority;
+- that learning completion grants Maya authority.
+
+The execution asset in the current proof is a demo/mock SPL token.
+
+## Hosting / secret boundary
+
+A public hosted HTTP base URL is not currently claimed by this document.
+
+Benita owns final frontend/runtime deployment.
+
+If the backend is hosted:
+
+- keep `PYTH_PRO_API_KEY` server-side only;
+- keep signer/keypair material server-side only;
+- expose only frontend-safe proof metadata;
+- preserve the frozen v0.2 semantic contract.
