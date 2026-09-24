@@ -1,6 +1,6 @@
 project: KEYS
 updated_at: "2026-09-24"
-status: V0_2_CRESCO_HTTP_DEVNET_BRIDGE_PASS_FRONTEND_FROZEN
+status: V0_2_CRESCO_STATEFUL_DEVNET_FAMILY_INTEGRATION_PASS
 candidate: B
 concept_lock: true
 concept_lock_version: 2
@@ -63,12 +63,24 @@ current_truth:
   backend_cloudflare_worker_config: READY
   cloudflare_worker_dry_run: PASS
   cloudflare_worker_dry_run_run: "https://github.com/Faadil1/keys/actions/runs/36043084725"
-  cloudflare_authenticated_solana_rpc: REQUIRED
-  cloudflare_public_rpc_status: BLOCKED_403_THEN_RATE_LIMITED_429
+  cloudflare_authenticated_solana_rpc: CONFIGURED_ONFINALITY
+  cloudflare_public_rpc_status: PASS_ONFINALITY
   cloudflare_public_health: PASS
-  cloudflare_demo_runtime: BLOCKED_PENDING_AUTHENTICATED_RPC
-  backend_cloudflare_deployment: PENDING_USER_ACCOUNT_CONNECTION
-  backend_public_url: PENDING
+  cloudflare_demo_runtime: PASS_LIVE
+  backend_cloudflare_deployment: LIVE
+  backend_public_url: "https://keys-api-stocklana.faadil-casecraft.workers.dev"
+  family_state_durable_object: IMPLEMENTED_SQLITE
+  family_role_sessions: IMPLEMENTED_DEMO_CHILD_GUARDIAN
+  family_server_owned_mandate: IMPLEMENTED
+  family_boundary_request_persistence: IMPLEMENTED
+  family_allow_once_exact_single_use: IMPLEMENTED
+  family_durable_idempotency_reservations: IMPLEMENTED
+  family_test_funding: IMPLEMENTED_NO_REAL_PAYMENT
+  family_learning_sync: IMPLEMENTED_AUTHORITY_EFFECT_NONE
+  family_money_portfolio_sync: IMPLEMENTED
+  family_market_quotes: IMPLEMENTED_FAIL_CLOSED
+  family_market_history: EXPLICITLY_UNAVAILABLE_NO_FABRICATION
+  cresco_webkit_iphone_qa: IMPLEMENTED_CI_GATE
   backend_default_cors_origin: "https://cresco-lac.vercel.app"
   backend_deployment_guide: docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md
   tessera_bounty: HOLD_WATCH
@@ -189,12 +201,12 @@ truth_boundary:
   - market evidence has no authority-widening effect
 
 active_step:
-  name: CRESCO_BACKEND_DEPLOYMENT_AND_LIVE_WIRING
+  name: STOCKLANA_JUDGE_DEMO_AND_SUBMISSION_PACKAGING
   owner: Faadil
   support_owner: Benita
   next:
-    - "Connect Faadil1/keys to Cloudflare Workers Builds using docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md."
-    - "Configure Cloudflare Worker secrets DEVNET_KEYPAIR_JSON and PYTH_PRO_API_KEY; CORS is already pinned to https://cresco-lac.vercel.app."
-    - "Point Cresco to the hosted KEYS API with NEXT_PUBLIC_KEYS_API_URL and NEXT_PUBLIC_KEYS_EXECUTION=runtime."
-    - "Verify the Live Solana proof lane from the deployed Cresco UI and preserve the demo-token / server-held-devnet-signer truth boundary."
-    - "Keep the Family product spine unchanged; AAPL is the current isolated technical proof lane and TSLA remains historical proof."
+    - "Verify the latest web CI including iPhone WebKit QA is green."
+    - "Smoke-test the deployed Cloudflare health, market and Devnet runtime endpoints."
+    - "Record the judge demo: My Key -> in-bounds Devnet action -> boundary -> guardian decision -> widen -> same action -> stale refusal."
+    - "Surface the confirmed Devnet receipt/program/version/nonce/Pyth evidence without turning the UI into a protocol dashboard."
+    - "Keep production auth/KYC, wallets, fiat rails, custody/mainnet and all-symbol history explicitly outside the hackathon truth boundary."
