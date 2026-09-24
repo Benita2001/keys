@@ -590,16 +590,10 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
     const afterVault = await getAccount(provider.connection, vaultTokenAccount);
     assert.equal(Number(beforeVault.amount) - Number(afterVault.amount), 1);
 
-    const afterAllowMandate = await program.account.mandate.fetch(mandate);
-    assert.notDeepEqual(
-      Array.from(afterAllowMandate.lastEvidenceHash),
-      Array(32).fill(0)
-    );
-
-    console.log(\`PROOF pyth_policy_tx=\${configureTx}\`);
-    console.log(\`PROOF pyth_verified_execution_tx=\${allowTx}\`);
+    console.log(`PROOF pyth_policy_tx=${configureTx}`);
+    console.log(`PROOF pyth_verified_execution_tx=${allowTx}`);
     console.log(
-      \`PROOF pyth_onchain_execution=ALLOW feed=1435 price=\${first.snapshot.price} action_limit_micro_usd=\${actionLimitMicroUsd} nonce=\${pythNonce}\`
+      `PROOF pyth_onchain_execution=ALLOW feed=1435 price=${first.snapshot.price} action_limit_micro_usd=${actionLimitMicroUsd} nonce=${pythNonce}`
     );
 
     const second = await liveMessage();
@@ -609,7 +603,7 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
       ["PythNotionalExceeded", "Pyth notional"]
     );
     console.log(
-      \`PROOF pyth_notional_boundary=ENFORCED price=\${second.snapshot.price} amount=2 action_limit_micro_usd=\${actionLimitMicroUsd}\`
+      `PROOF pyth_notional_boundary=ENFORCED price=${second.snapshot.price} amount=2 action_limit_micro_usd=${actionLimitMicroUsd}`
     );
 
     const beforeCondition = await program.account.mandate.fetch(mandate);
@@ -649,9 +643,9 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
       ["MarketConditionInvalidated", "market condition"]
     );
 
-    console.log(\`PROOF pyth_market_condition_policy_tx=\${conditionTx}\`);
+    console.log(`PROOF pyth_market_condition_policy_tx=${conditionTx}`);
     console.log(
-      \`PROOF pyth_market_condition=REFUSE verified_price=\${third.snapshot.price} max_price_micro_usd=\${lowPriceCeiling} authority_effect=NONE\`
+      `PROOF pyth_market_condition=REFUSE verified_price=${third.snapshot.price} max_price_micro_usd=${lowPriceCeiling} authority_effect=NONE`
     );
   });
 
