@@ -25,11 +25,14 @@
 import type {
   ActionEvaluation,
   AssetRule,
+  BoundaryRequest,
   CurrentMandate,
   Decision,
   ExecutionOutcome,
   ExecutionProof,
+  GuardianDecision,
   ReasonCode,
+  Session,
 } from "@/domain/types";
 
 type KeysConfig = { url: string; execution: "demo" | "runtime"; timeoutMs: number };
@@ -133,6 +136,184 @@ export type DevnetDemoRuntime = {
 /** Current server-held AAPL devnet proof lane. Never authority by itself. */
 export function fetchDevnetDemoRuntime() {
   return request<DevnetDemoRuntime>("/api/v0.2/demo/runtime");
+}
+
+export type CurrentMandateResponse = {
+  contractVersion: "0.2";
+  type: "V0_2_CURRENT_MANDATE";
+  mandate: CurrentMandate;
+  assetRule: AssetRule;
+  source: string;
+};
+
+export function fetchCurrentMandate() {
+  return request<CurrentMandateResponse>("/api/v0.2/mandates/current");
+}
+
+export function transitionCurrentMandate(input: {
+  expectedNonce: number;
+  changes: Partial<
+    Pick<
+      CurrentMandate,
+      "maxActionNotional" | "maxPeriodNotional" | "allowedAssets" | "status"
+    >
+  >;
+}) {
+  return request<{
+    mandate: CurrentMandate;
+    proof: {
+      network: "solana-devnet";
+      signatures: string[];
+      programId: string;
+      simulated: false;
+    };
+  }>("/api/v0.2/mandates/transition", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function createPersistentBoundaryRequest(input: {
+  mandate: CurrentMandate;
+  evaluation: ActionEvaluation;
+  asset: string;
+  type: string;
+  amount: number;
+  reason: string;
+}) {
+  return request<BoundaryRequest>("/api/v0.2/boundary-requests", {
+    method: "POST",
+    body: JSON.stringify({
+      asset: input.asset,
+      type: input.type,
+      notional: input.amount,
+      reason: input.reason,
+      evaluation: input.evaluation,
+      expectedNonce: input.mandate.nonce,
+    }),
+  });
+}
+
+export function fetchPersistentBoundaryRequests(status?: string) {
+  const suffix = status ? `?status=${encodeURIComponent(status)}` : "";
+  return request<{ requests: BoundaryRequest[] }>(
+    `/api/v0.2/boundary-requests${suffix}`,
+  );
+}
+
+export function decidePersistentBoundaryRequest(input: {
+  requestId: string;
+  decision: GuardianDecision;
+  note?: string;
+  newLimits?: { maxActionNotional: number; maxPeriodNotional: number };
+}) {
+  return request<{ request: BoundaryRequest; mandate: CurrentMandate }>(
+    `/api/v0.2/boundary-requests/${input.requestId}/decision`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        decision: input.decision,
+        note: input.note,
+        newLimits: input.newLimits,
+      }),
+    },
+  );
+}
+
+export function addDevnetTestFunds(amount: number) {
+  return request<{
+    status: "DEVNET_TEST_CREDITED";
+    amount: number;
+    availableBalance: number;
+    realPaymentTaken: false;
+  }>("/api/v0.2/funding/deposits", {
+    method: "POST",
+    body: JSON.stringify({ amount }),
+  });
+}
+
+export async function createBackendDemoSession(
+  role: Session["role"],
+  displayName: string,
+): Promise<Session> {
+  const backendRole = role === "parent" ? "guardian" : "child";
+  const result = await request<{
+    role: "guardian" | "child";
+    displayName: string;
+  }>("/api/v0.2/auth/demo-session", {
+    method: "POST",
+    body: JSON.stringify({ role: backendRole, displayName }),
+  });
+  return {
+    role: result.role === "guardian" ? "parent" : "child",
+    displayName: result.displayName,
+    kind: "demo",
+  };
+}
+
+export function linkBackendFamily(code: string) {
+  return request<{ linked: boolean; familyId: string | null }>(
+    "/api/v0.2/family/link",
+    {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    },
+  );
+}
+
+export function fetchFamilyState() {
+  return request<{
+    profile: {
+      childName: string;
+      parentName: string;
+      parentLinked: boolean;
+    };
+    mandate: CurrentMandate;
+    balances: { money: number; practice: number };
+    moneyHoldings: { ticker: string; shares: number; costBasis: number }[];
+    requests: BoundaryRequest[];
+    learning: {
+      completedLessons: string[];
+      xp: number;
+      weeklyMinutes: { at: string; minutes: number }[];
+    };
+  }>("/api/v0.2/family/state");
+}
+
+export function persistLearningProgress(input: {
+  lessonId: string;
+  xp?: number;
+  minutes?: number;
+  researchedCompany?: string;
+}) {
+  return request<{
+    learning: {
+      completedLessons: string[];
+      xp: number;
+      weeklyMinutes: { at: string; minutes: number }[];
+    };
+    authorityEffect: "NONE";
+  }>("/api/v0.2/learning/progress", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function fetchLearningSummary() {
+  return request<{
+    completedLessons: string[];
+    xp: number;
+    weeklyMinutes: { at: string; minutes: number }[];
+    authorityEffect: "NONE";
+  }>("/api/v0.2/learning/summary");
+}
+
+export function fetchMoneyPortfolio() {
+  return request<{
+    balance: number;
+    holdings: { ticker: string; shares: number; costBasis: number }[];
+    activity: unknown[];
+  }>("/api/v0.2/portfolio?mode=money");
 }
 
 type LiveProof = {
