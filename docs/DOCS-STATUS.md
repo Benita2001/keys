@@ -59,7 +59,7 @@ Canonical live Pyth proof feed:
 | `docs/FRONTEND-START-HERE.md` | Benita transition guide | CURRENT |
 | `docs/BENITA-FRONTEND-HANDOFF.md` | ownership/handoff | CURRENT |
 | `state/CURRENT.yaml` | machine-readable current truth | CURRENT |
-| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v9 |
+| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v12 |
 
 ## v0.1 evidence remains evidence
 
