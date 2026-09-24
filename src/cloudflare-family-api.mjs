@@ -264,7 +264,11 @@ async function handleExecute(env, body) {
     type: body.type,
     notional: body.notional,
     expectedNonce: runtime.mandate.nonce,
-    idempotencyKey: key
+    idempotencyKey: key,
+    allowOnceRequestId:
+      reserved.body?.reservation?.allowOnceRequestId ||
+      body.allowOnceRequestId ||
+      null
   });
 
   const confirmed =
@@ -491,7 +495,42 @@ export async function handleFamilyApi(request, env) {
       method: "POST",
       body
     });
-    if (first.status !== 200 || body.decision !== "WIDEN_MANDATE") {
+    if (first.status !== 200) {
+      return json(first.body, first.status);
+    }
+
+    if (body.decision === "ALLOW_ONCE") {
+      const { provider } = await loadRuntimeAndFamily(env);
+      const item = first.body.request;
+      const grant = await provider.grantAllowanceOnce({
+        requestId: id,
+        expectedNonce: item.mandateNonce,
+        maxNotional: item.requestedNotional,
+      });
+
+      const completed = await familyJson(
+        env,
+        `/requests/${id}/complete-allowance`,
+        {
+          method: "POST",
+          body: {
+            chainProof: {
+              network: "solana-devnet",
+              programId: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk",
+              signature: grant.signature,
+              allowanceReceipt: grant.allowanceReceipt,
+              requestHash: grant.requestHash,
+              maxNotionalMicroUsd: grant.maxNotionalMicroUsd,
+              expiresAt: grant.expiresAt,
+              simulated: false
+            }
+          }
+        }
+      );
+      return json(completed.body, completed.status);
+    }
+
+    if (body.decision !== "WIDEN_MANDATE") {
       return json(first.body, first.status);
     }
 
