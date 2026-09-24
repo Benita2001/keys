@@ -1,7 +1,7 @@
 # KEYS — Benita Frontend Handoff v0.2 Transition
 
 Date: 2026-09-24  
-Status: **FRONTEND OWNERSHIP UNCHANGED; NEW CONTRACT PENDING**
+Status: **FROZEN V0.2 CONTRACT READY FOR INTEGRATION**
 
 ## Ownership
 
@@ -56,17 +56,30 @@ See `docs/FAMILY-LEARNING-LAYER.md`.
 
 ## Contract status
 
-The old v0.1 frontend/backend contract remains valid as evidence for the original authority-transition demo, but it should no longer be treated as the final product contract.
+The old v0.1 frontend/backend contract remains historical evidence only.
 
-**v0.2 contract status: NOT YET FROZEN.**
+**v0.2 contract status: FROZEN.**
 
-Backend work must first add:
+Use:
 
-- explicit permission-matrix Mandate;
-- program-controlled execution boundary;
-- signed on-chain Pyth verification;
-- boundary-only proposal semantics;
-- pause/revoke/downward authority.
+`docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
+
+The canonical devnet runtime now proves:
+
+- permission-matrix / AssetRule core;
+- program-controlled capital boundary;
+- in-bounds execution without guardian approval;
+- out-of-bounds refusal;
+- signed live Pyth verification inside the capital path;
+- Pyth-derived USD/notional enforcement;
+- Pyth precommitted max-price refusal;
+- explicit human widen;
+- stale authorization refusal;
+- pause/downward authority.
+
+Canonical run:
+
+https://github.com/Faadil1/keys/actions/runs/35959137364
 
 ## UX target
 
@@ -103,3 +116,20 @@ Likely core surfaces:
 - no brokerage/custody claim;
 - no API/private keys in frontend;
 - do not claim AAPL is live under the current Pyth trial unless separately proven.
+
+
+## Integration priority
+
+Build the judge-facing experience in this order:
+
+1. **My Key** — current bounds in plain language.
+2. **Contextual Learn / Practice** — short, age-respectful, never a score.
+3. **In-bounds action** — immediate success, no guardian approval.
+4. **Boundary refusal** — show that the capital path refused.
+5. **Pyth market condition** — explain why a stale/invalid condition blocks an action.
+6. **Ask for more room** — short boundary request.
+7. **Guardian decision** — allow once / widen / refuse.
+8. **Same action after widen** — success.
+9. **Stale authorization** — old nonce refuses.
+
+Do not expose backend/protocol vocabulary as the primary UX.
