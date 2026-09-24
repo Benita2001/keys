@@ -10,14 +10,14 @@ npm run dev        # http://localhost:3000
 npm run check      # typecheck + lint + test + build
 ```
 
-Optional: get Money Mode decisions from the real KEYS draft API.
+Production uses the hosted KEYS v0.2 Cloudflare API by default. For local development you can point the frontend at a local API:
 
 ```bash
 (cd ../.. && npm install && npm run api)                          # 127.0.0.1:8787
 echo "NEXT_PUBLIC_KEYS_API_URL=http://127.0.0.1:8787" > .env.local
 ```
 
-### Execute integration (mock of the proposed backend route)
+### Execute integration (local simulated test server)
 
 ```bash
 npm run mock:keys                                   # mock KEYS API on 127.0.0.1:8788
@@ -34,13 +34,13 @@ Mock proofs are `simulated: true` with `MOCK…` signatures and are labeled "Tes
 | `src/app` | Routes (child app in `(child)`, parent area in `parent/(dash)`, full-screen flows `lesson`, `invest`, `onboarding`, `start`) |
 | `src/components` | Design-system components and SVG illustrations |
 | `src/domain` | Types (KEYS contract vocabulary), policy preview, formatting |
-| `src/services` | Service interfaces, demo implementations, KEYS HTTP adapter |
-| `src/mocks` | The only place sample prices and demo family data live |
-| `src/state` | Local demo session store (localStorage) |
+| `src/services` | Service interfaces + hosted KEYS v0.2 HTTP adapter |
+| `src/mocks` | Practice/sample data only; live evidence overlays are explicitly tagged |
+| `src/state` | UI cache + local preferences; Family authority/state re-syncs from Cloudflare |
 
 ## Truth labels
 
-Prices are samples unless tagged **Live · Pyth**. Money Mode is a demo: no funding, custody or on-chain execution happens from this app, and every Money balance says **Demo money**.
+Prices are samples unless tagged **Live · Pyth**. The current AAPL Money lane executes a **demo SPL token on Solana Devnet** through the KEYS program with Pyth evidence. Test funding is backend demo credit only. Cresco does not claim bank/card funding, brokerage, custody, real AAPL ownership, mainnet or real minor securities execution.
 
 Docs: [design system](../../docs/CRESCO-FRONTEND-DESIGN-SYSTEM.md) · [backend handoff](../../docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md) · [implementation summary](../../docs/CRESCO-FRONTEND-IMPLEMENTATION-SUMMARY.md)
 
