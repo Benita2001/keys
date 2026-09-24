@@ -561,7 +561,7 @@ describe("KEYS Solana authority + bounded-capital proof", () => {
       const ed25519Ix = createEd25519Instruction(message, 1, 12);
       return program.methods
         .executeWithinMandateWithPyth(
-          Array.from(message),
+          message,
           new anchor.BN(amount),
           new anchor.BN(expectedNonce)
         )
