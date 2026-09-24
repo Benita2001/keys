@@ -111,7 +111,8 @@ truth_boundaries:
 next_work:
   step: 29
   step_name: BENITA_V0_2_FRONTEND_INTEGRATION
-  owner: Faadil
+  owner: Benita
+  support_owner: Faadil
   sequence:
     - "Benita integrates against docs/FRONTEND-BACKEND-CONTRACT-V0.2.md."
     - "Connect My Key / Learn-Practice / action / boundary / guardian decision / market-change surfaces."
