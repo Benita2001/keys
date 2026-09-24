@@ -236,15 +236,19 @@ async function main() {
     ];
   }
 
-  const tslaRules = rules.filter(
-    (entry) => Number(entry.account.pythFeedId) === TARGET_FEED_ID
-  );
+  const tslaRules = rules
+    .filter((entry) => Number(entry.account.pythFeedId) === TARGET_FEED_ID)
+    .sort((a, b) =>
+      a.publicKey.toBase58().localeCompare(b.publicKey.toBase58())
+    );
 
-  if (tslaRules.length !== 1) {
-    throw new Error(
-      tslaRules.length === 0
-        ? 'DEVNET_DEMO_TSLA_RULE_NOT_FOUND'
-        : 'DEVNET_DEMO_TSLA_RULE_AMBIGUOUS'
+  if (tslaRules.length === 0) {
+    throw new Error('DEVNET_DEMO_TSLA_RULE_NOT_FOUND');
+  }
+
+  if (tslaRules.length > 1) {
+    console.log(
+      `DEMO_RUNTIME duplicate_tsla_rules=${tslaRules.length} canonical=${tslaRules[0].publicKey.toBase58()}`
     );
   }
 
