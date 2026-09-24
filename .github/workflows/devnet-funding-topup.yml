@@ -75,5 +75,23 @@ jobs:
             fi
           done
 
-          echo "DEVNET_TOPUP=PROVIDER_UNAVAILABLE"
+          echo "PROOF provider_faucets_unavailable_trying_pow=1"
+          cargo install devnet-pow
+
+          set +e
+          pow_out=$(devnet-pow mine -d 3 --reward 0.02 --no-infer -t "$TARGET_LAMPORTS" 2>&1)
+          pow_rc=$?
+          set -e
+          echo "$pow_out"
+          echo "PROOF topup_pow_rc=$pow_rc mode=official_no_infer target_lamports=$TARGET_LAMPORTS"
+
+          final_json=$(rpc_call "https://api.devnet.solana.com" "$balance_payload")
+          final=$(printf '%s' "$final_json" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("result",{}).get("value",0))')
+          echo "PROOF topup_balance_after_pow_lamports=$final"
+          if [ "$final" -ge "$TARGET_LAMPORTS" ]; then
+            echo "DEVNET_TOPUP=PASS_POW"
+            exit 0
+          fi
+
+          echo "DEVNET_TOPUP=EXTERNAL_DEVNET_FUNDING_UNAVAILABLE"
           exit 1

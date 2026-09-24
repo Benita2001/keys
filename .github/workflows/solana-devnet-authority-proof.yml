@@ -69,8 +69,21 @@ jobs:
       - name: Install Solana CLI 2.3.0
         shell: bash
         run: |
-          sh -c "$(curl -sSfL https://release.anza.xyz/v2.3.0/install)"
+          set -euo pipefail
+          for INSTALL_ATTEMPT in 1 2 3; do
+            rm -rf "$HOME/.local/share/solana/install/releases/2.3.0"
+            if INSTALLER="$(curl --retry 5 --retry-all-errors --connect-timeout 20 -sSfL https://release.anza.xyz/v2.3.0/install)" && sh -c "$INSTALLER"; then
+              break
+            fi
+            echo "PROOF solana_cli_install_retry attempt=$INSTALL_ATTEMPT"
+            if [ "$INSTALL_ATTEMPT" -eq 3 ]; then
+              echo "DEVNET_PROOF=FAILED_SOLANA_CLI_INSTALL"
+              exit 1
+            fi
+            sleep 5
+          done
           echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/share/solana/install/active_release/bin/solana" --version
 
       - name: Install Anchor CLI 0.32.1
         shell: bash
@@ -236,11 +249,11 @@ jobs:
               echo "PROOF devnet_pow_faucet=START balance_lamports=$BALANCE shortfall_lamports=$SHORTFALL_LAMPORTS"
               cargo install devnet-pow
               set +e
-              POW_OUT=$(devnet-pow mine --target-lamports "$SHORTFALL_LAMPORTS" -ud 2>&1)
+              POW_OUT=$(devnet-pow mine -d 3 --reward 0.02 --no-infer -t "$TARGET_BALANCE_LAMPORTS" 2>&1)
               POW_RC=$?
               set -e
               echo "$POW_OUT"
-              echo "PROOF devnet_pow_faucet_rc=$POW_RC"
+              echo "PROOF devnet_pow_faucet_rc=$POW_RC mode=official_no_infer target_lamports=$TARGET_BALANCE_LAMPORTS"
             fi
 
             BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
