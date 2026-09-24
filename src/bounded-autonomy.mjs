@@ -1,4 +1,4 @@
-export const V2_CONTRACT_VERSION = '0.2-draft';
+export const V2_CONTRACT_VERSION = '0.2';
 
 export const MandateStatus = Object.freeze({
   ACTIVE: 'ACTIVE',
