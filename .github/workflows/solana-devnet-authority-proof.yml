@@ -57,7 +57,10 @@ jobs:
           if grep -q 'version = "0.23.10+spec-1.0.0"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p 'toml_edit@0.23.10+spec-1.0.0' --precise 0.23.7; fi
           if grep -q 'name = "toml_parser"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p toml_parser --precise 1.0.4; fi
           if grep -q 'name = "unicode-segmentation"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p unicode-segmentation --precise 1.12.0; fi
-          # Solana 2.3 cargo-build-sbf currently uses Cargo/Rust 1.84; time >=0.3.46 requires Rust 1.88.
+          # pyth-lazer-protocol 0.46 allows newer serde_with releases whose time dependency requires Rust >=1.88.
+          # Keep the Pyth protocol source version while selecting an SBF-compatible serde/time pair.
+          if grep -q 'name = "serde_with"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p serde_with --precise 3.12.0; fi
+          # Solana 2.3 cargo-build-sbf currently uses Cargo/Rust 1.84.
           if grep -q 'name = "time"' Cargo.lock; then cargo update --manifest-path Cargo.toml -p time --precise 0.3.45; fi
           sed -i 's/^version = 4$/version = 3/' Cargo.lock
           grep -A2 'name = "indexmap"' Cargo.lock || true
