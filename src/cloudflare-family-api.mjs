@@ -491,10 +491,34 @@ export async function handleFamilyApi(request, env) {
     const denied = await requireGuardian(env, request);
     if (denied) return denied;
     const id = decisionMatch[1];
-    const first = await familyJson(env, `/requests/${id}/decision`, {
-      method: "POST",
-      body
-    });
+
+    let first;
+    if (body.decision === "ALLOW_ONCE") {
+      const family = await familyJson(env, "/state");
+      const existing = family.body?.requests?.find((item) => item.id === id);
+
+      if (existing?.status === "ALLOWED_ONCE") {
+        return json({ request: existing, mandate: family.body.mandate });
+      }
+
+      if (existing?.status === "ALLOW_ONCE_PENDING_CHAIN") {
+        first = {
+          status: 200,
+          body: { request: existing, mandate: family.body.mandate }
+        };
+      } else {
+        first = await familyJson(env, `/requests/${id}/decision`, {
+          method: "POST",
+          body
+        });
+      }
+    } else {
+      first = await familyJson(env, `/requests/${id}/decision`, {
+        method: "POST",
+        body
+      });
+    }
+
     if (first.status !== 200) {
       return json(first.body, first.status);
     }
@@ -502,11 +526,25 @@ export async function handleFamilyApi(request, env) {
     if (body.decision === "ALLOW_ONCE") {
       const { provider } = await loadRuntimeAndFamily(env);
       const item = first.body.request;
-      const grant = await provider.grantAllowanceOnce({
-        requestId: id,
-        expectedNonce: item.mandateNonce,
-        maxNotional: item.requestedNotional,
-      });
+
+      let grant;
+      try {
+        grant = await provider.grantAllowanceOnce({
+          requestId: id,
+          expectedNonce: item.mandateNonce,
+          maxNotional: item.requestedNotional,
+        });
+      } catch (error) {
+        return json(
+          {
+            error: "ALLOW_ONCE_CHAIN_COMMIT_FAILED",
+            retryable: true,
+            request: item,
+            message: error?.message ?? "Unable to commit one-time allowance"
+          },
+          503
+        );
+      }
 
       const completed = await familyJson(
         env,
@@ -522,6 +560,7 @@ export async function handleFamilyApi(request, env) {
               requestHash: grant.requestHash,
               maxNotionalMicroUsd: grant.maxNotionalMicroUsd,
               expiresAt: grant.expiresAt,
+              reusedExistingReceipt: grant.reusedExistingReceipt === true,
               simulated: false
             }
           }
