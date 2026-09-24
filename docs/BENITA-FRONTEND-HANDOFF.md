@@ -107,7 +107,7 @@ The 10-company Explore universe may contain a mix of live and sample values.
 - `FRESH` Pyth → **Live · Pyth**
 - `STALE` → delayed
 - `UNAVAILABLE` → retain clearly labeled sample value
-- historical API currently returns `HISTORY_PROVIDER_NOT_CONNECTED`; charts may remain clearly labeled sample history.
+- AAPL history now comes from authenticated Pyth Pro History when entitled; unavailable/unconfigured history may remain clearly labeled sample fallback.
 
 AAPL is the current proven Money/Pyth lane. TSLA remains historical valid proof.
 
