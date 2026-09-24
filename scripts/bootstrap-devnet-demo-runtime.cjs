@@ -148,9 +148,12 @@ async function main() {
     mandateState = await program.account.mandate.fetch(mandate);
   }
 
-  let rules = await program.account.assetRule.all([
-    { memcmp: { offset: 8, bytes: mandate.toBase58() } }
-  ]);
+  async function rulesForMandate() {
+    const allRules = await program.account.assetRule.all();
+    return allRules.filter((entry) => entry.account.mandate.equals(mandate));
+  }
+
+  let rules = await rulesForMandate();
 
   let mint;
   let assetRule;
@@ -198,9 +201,7 @@ async function main() {
 
     console.log(`DEMO_RUNTIME initialize_asset_rule_tx=${initRuleTx}`);
     mandateState = await program.account.mandate.fetch(mandate);
-    rules = await program.account.assetRule.all([
-      { memcmp: { offset: 8, bytes: mandate.toBase58() } }
-    ]);
+    rules = await rulesForMandate();
   }
 
   const tslaRules = rules.filter(
