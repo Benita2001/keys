@@ -1,0 +1,39 @@
+import { describe, expect, it } from "vitest";
+import { initialState, reducer } from "./store";
+
+describe("demo state reducer", () => {
+  it("LEARNING COMPLETION != AUTHORITY: finishing lessons never changes the Mandate", () => {
+    let s = initialState;
+    for (const lessonId of ["what-is-a-stock", "why-companies-sell-shares", "why-prices-move", "risk-and-reward"]) {
+      s = reducer(s, { type: "completeLesson", lessonId, xp: 500 });
+    }
+    expect(s.xp).toBe(initialState.xp + 2000);
+    expect(s.mandate).toEqual(initialState.mandate);
+  });
+
+  it("money buys spend from the balance and the period allowance", () => {
+    const s = reducer(initialState, {
+      type: "moneyBuy",
+      ticker: "AAPL",
+      amount: 10,
+      shares: 0.05,
+      proof: { status: "DEMO_NOT_EXECUTED", executedAt: "2026-09-24T00:00:00Z" },
+    });
+    expect(s.money.balance).toBe(initialState.money.balance - 10);
+    expect(s.mandate.spentThisPeriod).toBe(initialState.mandate.spentThisPeriod + 10);
+    expect(s.practice).toEqual(initialState.practice);
+  });
+
+  it("practice buys never touch Money state", () => {
+    const s = reducer(initialState, {
+      type: "practiceBuy",
+      ticker: "TSLA",
+      amount: 100,
+      shares: 0.26,
+      proof: { status: "PRACTICE_LOCAL", executedAt: "2026-09-24T00:00:00Z" },
+    });
+    expect(s.money).toEqual(initialState.money);
+    expect(s.mandate).toEqual(initialState.mandate);
+    expect(s.practice.cash).toBe(initialState.practice.cash - 100);
+  });
+});

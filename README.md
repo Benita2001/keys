@@ -101,6 +101,12 @@ KEYS is not claiming to be a broker or custodian.
 
 The current live Pyth path proves authenticated equity evidence and signed Solana-payload availability. The signed payload is **not yet verified inside the KEYS Anchor execution instruction**, so on-chain Pyth enforcement must not be presented as completed yet.
 
+## Consumer frontend — Cresco
+
+The family-facing app is **Cresco**, built in [`apps/web`](apps/web) (Next.js, isolated from the backend package). Practice and Money modes, bounded-autonomy boundary requests and guardian decisions are implemented against the KEYS v0.2 draft semantics. Money Mode is demo-only in the frontend.
+
+See [Cresco implementation summary](docs/CRESCO-FRONTEND-IMPLEMENTATION-SUMMARY.md) and [backend integration handoff](docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md).
+
 ## Collaboration
 
 - Frontend / product experience: Benita
