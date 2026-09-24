@@ -64,6 +64,14 @@ Use:
 
 `docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
 
+Primary product routes:
+
+- `GET /api/v0.2/demo/maya`
+- `POST /api/v0.2/actions/evaluate`
+- `POST /api/v0.2/boundary-requests`
+
+The `/api/v0.1/*` routes and `/api/v0.2/draft/*` aliases are compatibility/history surfaces, not the frontend product target.
+
 The canonical devnet runtime now proves:
 
 - permission-matrix / AssetRule core;
