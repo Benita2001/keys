@@ -132,6 +132,46 @@ function evaluation({
   };
 }
 
+async function confirmSignatureOverRpc({
+  rpc,
+  signature,
+  lastValidBlockHeight,
+  timeoutMs = 25_000,
+  pollMs = 1_000
+}) {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const statuses = await rpc.getSignatureStatuses([signature]);
+    const status = statuses?.value?.[0] ?? null;
+
+    if (status?.err) {
+      throw new Error(
+        `SOLANA_CONFIRMATION_FAILED:${JSON.stringify(status.err)}`
+      );
+    }
+
+    if (
+      status &&
+      ['confirmed', 'finalized'].includes(status.confirmationStatus)
+    ) {
+      return status;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
+  }
+
+  const blockHeight = await rpc.getBlockHeight('confirmed');
+  if (
+    Number.isFinite(lastValidBlockHeight) &&
+    blockHeight > lastValidBlockHeight
+  ) {
+    throw new Error('SOLANA_BLOCKHASH_EXPIRED');
+  }
+
+  throw new Error('SOLANA_CONFIRMATION_TIMEOUT');
+}
+
 function reasonFromError(error) {
   const candidates = [
     'StaleNonce',
@@ -555,20 +595,11 @@ export function createDevnetExecutionProvider({
           maxRetries: 3
         });
 
-        const confirmation = await rpc.confirmTransaction(
-          {
-            signature,
-            blockhash: latest.blockhash,
-            lastValidBlockHeight: latest.lastValidBlockHeight
-          },
-          'confirmed'
-        );
-
-        if (confirmation.value.err) {
-          throw new Error(
-            `SOLANA_CONFIRMATION_FAILED:${JSON.stringify(confirmation.value.err)}`
-          );
-        }
+        await confirmSignatureOverRpc({
+          rpc,
+          signature,
+          lastValidBlockHeight: latest.lastValidBlockHeight
+        });
 
         const after = await loadRuntime();
         const result = {
