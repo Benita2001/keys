@@ -5,7 +5,7 @@ import {
   fetchPythProSolanaPayload
 } from '../src/pyth-adapter.mjs';
 
-const proofSymbol = process.env.PYTH_PRO_EQUITY_SYMBOL || 'TSLA';
+const proofSymbol = process.env.PYTH_PRO_EQUITY_SYMBOL || 'AAPL';
 const feed = PYTH_PRO_EQUITY_FEEDS[proofSymbol];
 
 if (!feed) {
