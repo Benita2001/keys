@@ -569,3 +569,131 @@ test('v0.2 PreStocks asset route fails explicitly for an unknown symbol', async 
   assert.equal(result.status, 404);
   assert.equal(result.body.error, 'PRESTOCK_NOT_FOUND');
 });
+
+
+test('v0.2 exposes the stable devnet demo runtime through an injected execution provider', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.2/demo/runtime',
+    services: {
+      executionProvider: {
+        async getState() {
+          return {
+            mode: 'SERVER_HELD_DEVNET_DEMO',
+            network: 'solana-devnet',
+            asset: 'TSLA',
+            programId: 'ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk',
+            mandate: { version: 4, nonce: 3 },
+            truthBoundary: {
+              executionAsset: 'DEMO_TOKEN',
+              serverHeldDemoSigner: true,
+              realMinorSecuritiesExecution: false
+            }
+          };
+        }
+      }
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.contractVersion, '0.2');
+  assert.equal(result.body.type, 'V0_2_DEVNET_DEMO_RUNTIME');
+  assert.equal(result.body.mode, 'SERVER_HELD_DEVNET_DEMO');
+  assert.equal(result.body.asset, 'TSLA');
+  assert.equal(result.body.truthBoundary.realMinorSecuritiesExecution, false);
+});
+
+test('v0.2 execute route returns a real-proof-shaped response from the runtime provider', async () => {
+  let received = null;
+
+  const result = await routeKeysHttp({
+    method: 'POST',
+    path: '/api/v0.2/actions/execute',
+    body: {
+      asset: 'TSLA',
+      type: 'BUY',
+      notional: 5,
+      expectedNonce: 3,
+      idempotencyKey: 'demo-idempotency-key'
+    },
+    services: {
+      executionProvider: {
+        idempotencyScope: 'PROCESS_LOCAL_DEMO',
+        async execute(input) {
+          received = input;
+          return {
+            evaluation: {
+              contractVersion: '0.2',
+              decision: 'ALLOW',
+              reasonCode: 'WITHIN_MANDATE',
+              mandateVersion: 4,
+              mandateNonce: 3
+            },
+            executionProof: {
+              status: 'CONFIRMED',
+              network: 'solana-devnet',
+              signature: '5FakeDevnetSignatureForShapeOnly',
+              programId: 'ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk',
+              mandateVersion: 4,
+              mandateNonce: 3,
+              idempotencyKey: 'demo-idempotency-key',
+              simulated: false,
+              executionAsset: 'DEMO_TOKEN'
+            }
+          };
+        }
+      }
+    }
+  });
+
+  assert.deepEqual(received, {
+    asset: 'TSLA',
+    type: 'BUY',
+    notional: 5,
+    expectedNonce: 3,
+    idempotencyKey: 'demo-idempotency-key'
+  });
+  assert.equal(result.status, 200);
+  assert.equal(result.body.type, 'V0_2_ACTION_EXECUTION');
+  assert.equal(result.body.runtimeMode, 'SERVER_HELD_DEVNET_DEMO');
+  assert.equal(result.body.idempotencyScope, 'PROCESS_LOCAL_DEMO');
+  assert.equal(result.body.evaluation.decision, 'ALLOW');
+  assert.equal(result.body.executionProof.status, 'CONFIRMED');
+  assert.equal(result.body.executionProof.simulated, false);
+});
+
+test('v0.2 execute route preserves an on-chain refusal without fabricating proof', async () => {
+  const result = await routeKeysHttp({
+    method: 'POST',
+    path: '/api/v0.2/actions/execute',
+    body: {
+      asset: 'TSLA',
+      type: 'BUY',
+      notional: 20,
+      expectedNonce: 3,
+      idempotencyKey: 'refused-demo-key'
+    },
+    services: {
+      executionProvider: {
+        async execute() {
+          return {
+            evaluation: {
+              contractVersion: '0.2',
+              decision: 'REFUSE',
+              reasonCode: 'PYTH_NOTIONAL_EXCEEDED',
+              boundaryRequestAvailable: true,
+              mandateVersion: 4,
+              mandateNonce: 3
+            },
+            executionProof: null
+          };
+        }
+      }
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.evaluation.decision, 'REFUSE');
+  assert.equal(result.body.evaluation.reasonCode, 'PYTH_NOTIONAL_EXCEEDED');
+  assert.equal(result.body.executionProof, null);
+});
