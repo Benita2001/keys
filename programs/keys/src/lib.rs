@@ -1303,14 +1303,14 @@ pub struct ExecuteOnceWithPyth<'info> {
         bump = charter.bump,
         has_one = beneficiary
     )]
-    pub charter: Account<'info, Charter>,
+    pub charter: Box<Account<'info, Charter>>,
     #[account(
         mut,
         seeds = [b"mandate", charter.key().as_ref()],
         bump = mandate.bump,
         has_one = charter
     )]
-    pub mandate: Account<'info, Mandate>,
+    pub mandate: Box<Account<'info, Mandate>>,
     #[account(
         mut,
         seeds = [b"asset-rule", mandate.key().as_ref(), mint.key().as_ref()],
@@ -1318,7 +1318,7 @@ pub struct ExecuteOnceWithPyth<'info> {
         constraint = asset_rule.mandate == mandate.key() @ KeysError::AssetRuleMandateMismatch,
         constraint = asset_rule.mint == mint.key() @ KeysError::AssetRuleMintMismatch
     )]
-    pub asset_rule: Account<'info, AssetRule>,
+    pub asset_rule: Box<Account<'info, AssetRule>>,
     #[account(
         mut,
         seeds = [
@@ -1332,7 +1332,7 @@ pub struct ExecuteOnceWithPyth<'info> {
         constraint = allowance.beneficiary == beneficiary.key() @ KeysError::AllowanceBeneficiaryMismatch,
         constraint = allowance.mint == mint.key() @ KeysError::AllowanceMintMismatch
     )]
-    pub allowance: Account<'info, AllowanceReceipt>,
+    pub allowance: Box<Account<'info, AllowanceReceipt>>,
     #[account(
         mut,
         seeds = [b"vault", mandate.key().as_ref(), mint.key().as_ref()],
