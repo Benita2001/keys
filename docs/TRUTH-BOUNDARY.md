@@ -24,7 +24,7 @@ Canonical devnet program:
 
 Canonical live Pyth proof feed:
 
-`Equity.US.TSLA/USD`
+`Equity.US.AAPL/USD`
 
 ## Real in v0.2
 
@@ -42,7 +42,7 @@ Runtime proof now covers:
 - pause/downward authority blocking execution;
 - signed Pyth Pro Solana-payload availability at the backend evidence boundary.
 
-Now additionally **proven on a local Solana validator with live authenticated Pyth TSLA evidence**:
+Now additionally **proven on a local Solana validator with live authenticated Pyth AAPL evidence**:
 
 - Pyth signature/message verification inside the KEYS capital execution path;
 - Pyth-derived USD/notional enforcement;
@@ -50,7 +50,7 @@ Now additionally **proven on a local Solana validator with live authenticated Py
 - fail-closed refusal when a precommitted max-price condition is invalidated;
 - market evidence has no authority-widening effect.
 
-Canonical devnet confirmation is now **PASS**.
+Canonical AAPL HTTP→Solana devnet confirmation is **PASS** in run `36034651466`; Pyth feed `922` is verified through `ONCHAIN_PYTH_LAZER`. Historical TSLA proofs remain valid evidence.
 
 The frozen current integration contract is:
 
@@ -67,7 +67,6 @@ Still not claimed:
 ## Not claimed
 
 - Solana mainnet deployment;
-- live AAPL entitlement on the current Pyth trial token;
 - brokerage or custodian integration;
 - real minor securities execution;
 - real family identity verification;
