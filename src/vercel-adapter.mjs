@@ -26,7 +26,10 @@ function setResponseHeaders(res, headers = {}) {
   const corsOrigin = process.env.KEYS_CORS_ORIGIN || DEFAULT_CORS_ORIGIN;
   res.setHeader('access-control-allow-origin', corsOrigin);
   res.setHeader('access-control-allow-methods', 'GET,POST,OPTIONS');
-  res.setHeader('access-control-allow-headers', 'content-type');
+  res.setHeader(
+    'access-control-allow-headers',
+    'content-type,idempotency-key'
+  );
 
   for (const [name, value] of Object.entries(headers)) {
     res.setHeader(name, value);
