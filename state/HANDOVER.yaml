@@ -56,8 +56,8 @@ canonical_truth:
     pause_downward_authority: PASS_LOCAL_AND_DEVNET
     signed_pyth_solana_payload_availability: PASS
     signed_onchain_pyth_verification: PASS_LOCAL_AND_DEVNET_LIVE_PYTH
-    boundary_only_proposals: SPEC_AND_DRAFT_API
-    contextual_learning: SPEC_AND_DRAFT_FACADE
+    boundary_only_proposals: IMPLEMENTED_FROZEN_V0_2_API
+    contextual_learning: FROZEN_CONTRACT_AND_FIXTURE
     frontend_contract: FROZEN
     devnet_run: "https://github.com/Faadil1/keys/actions/runs/35959137364"
     pyth_signed_payload_run: "https://github.com/Faadil1/keys/actions/runs/35930425544"
