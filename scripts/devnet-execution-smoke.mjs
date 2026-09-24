@@ -12,7 +12,7 @@ const state = await provider.getState();
 const idempotencyKey = `ci-smoke-${process.env.GITHUB_RUN_ID ?? Date.now()}`;
 
 const result = await provider.execute({
-  asset: 'TSLA',
+  asset: 'AAPL',
   type: 'BUY',
   notional: 1,
   expectedNonce: state.mandate.nonce,
