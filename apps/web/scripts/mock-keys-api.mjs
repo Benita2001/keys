@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * MOCK KEYS API — local test double for the PROPOSED execute route.
+ * MOCK KEYS API — local test double for the frozen v0.2 execute route.
  *
  *   npm run mock:keys                       # http://127.0.0.1:8788
  *   MOCK_EXECUTE_SCENARIO=pending-once npm run mock:keys
  *
  * Implements (see docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md §3.3):
- *   POST /api/v0.2/actions/execute          proposed contract, idempotent by key
- *   POST /api/v0.2/draft/actions/evaluate   same shape as the real draft route
+ *   POST /api/v0.2/actions/execute          frozen technical proof contract, idempotent by key
+ *   POST /api/v0.2/actions/evaluate         frozen action-evaluation route
  *   GET  /api/v0.1/capabilities
  *   GET  /api/v0.1/demo/live-proof          never FRESH (no Pyth here)
  *
@@ -101,17 +101,17 @@ export function createMockKeysServer({ scenario = process.env.MOCK_EXECUTE_SCENA
       }
 
       if (req.method === "GET" && url.pathname === "/api/v0.1/demo/live-proof") {
-        return send(res, 200, { contractVersion: "0.1", scenario: { asset: "TSLA" }, evaluation: { marketEvidence: { status: "BLOCKED_API_KEY" } } });
+        return send(res, 200, { contractVersion: "0.1", scenario: { asset: "AAPL" }, evaluation: { marketEvidence: { status: "BLOCKED_API_KEY" } } });
       }
 
-      if (req.method === "POST" && url.pathname === "/api/v0.2/draft/actions/evaluate") {
+      if (req.method === "POST" && ["/api/v0.2/actions/evaluate", "/api/v0.2/draft/actions/evaluate"].includes(url.pathname)) {
         const body = await readJson(req);
         const evaluation = evaluateBoundedAction({
           mandate: body?.mandate,
           assetRule: body?.assetRule,
           action: body?.action,
         });
-        return send(res, 200, { ...evaluation, type: "V0_2_DRAFT_ACTION_EVALUATION", runtimeProofStatus: "MOCK" });
+        return send(res, 200, { ...evaluation, type: "V0_2_ACTION_EVALUATION", runtimeProofStatus: "MOCK" });
       }
 
       if (req.method === "POST" && url.pathname === "/api/v0.2/actions/execute") {
