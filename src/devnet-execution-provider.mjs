@@ -57,6 +57,15 @@ function discriminator(name) {
     .subarray(0, 8);
 }
 
+function allowanceRequestHash(requestId) {
+  if (!requestId || typeof requestId !== 'string') {
+    throw new Error('ALLOW_ONCE_REQUEST_ID_REQUIRED');
+  }
+  return createHash('sha256')
+    .update(`keys:allow-once:${requestId}`)
+    .digest();
+}
+
 function encodeU64(value) {
   const out = Buffer.alloc(8);
   out.writeBigUInt64LE(BigInt(value));
@@ -199,7 +208,15 @@ function reasonFromError(error) {
     'PythMessageInvalid',
     'PythFeedMismatch',
     'PythEvidenceStale',
-    'PythConfidenceTooWide'
+    'PythConfidenceTooWide',
+    'AllowanceAlreadyUsed',
+    'StaleAllowance',
+    'AllowanceExpired',
+    'AllowanceRequestMismatch',
+    'AllowanceMandateMismatch',
+    'AllowanceBeneficiaryMismatch',
+    'AllowanceMintMismatch',
+    'AllowanceNotionalExceeded'
   ];
 
   const text = [
@@ -376,6 +393,81 @@ export function createDevnetExecutionProvider({
     ]);
   }
 
+  async function grantAllowanceOnce({
+    requestId,
+    expectedNonce,
+    maxNotional,
+    expiresAt = Math.floor(Date.now() / 1000) + 10 * 60
+  }) {
+    const runtime = await loadRuntime();
+    const requestHash = allowanceRequestHash(requestId);
+    const maxNotionalMicroUsd = Math.round(Number(maxNotional) * 1_000_000);
+
+    if (
+      !Number.isFinite(maxNotionalMicroUsd) ||
+      maxNotionalMicroUsd <= 0
+    ) {
+      throw new Error('INVALID_ALLOW_ONCE_NOTIONAL');
+    }
+
+    const [allowanceReceipt] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('allowance'),
+        runtime.mandateAddress.toBuffer(),
+        runtime.assetRule.mint.toBuffer(),
+        requestHash
+      ],
+      DEVNET_KEYS_PROGRAM_ID
+    );
+
+    const data = Buffer.concat([
+      discriminator('grant_allowance_once'),
+      requestHash,
+      encodeU64(expectedNonce),
+      encodeU64(maxNotionalMicroUsd),
+      encodeI64(expiresAt)
+    ]);
+
+    const ix = new TransactionInstruction({
+      programId: DEVNET_KEYS_PROGRAM_ID,
+      keys: [
+        { pubkey: runtime.charter, isSigner: false, isWritable: false },
+        { pubkey: runtime.mandateAddress, isSigner: false, isWritable: false },
+        { pubkey: runtime.assetRule.mint, isSigner: false, isWritable: false },
+        { pubkey: allowanceReceipt, isSigner: false, isWritable: true },
+        { pubkey: signer.publicKey, isSigner: true, isWritable: true },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+      ],
+      data
+    });
+
+    const latest = await rpc.getLatestBlockhash('confirmed');
+    const tx = new Transaction({
+      feePayer: signer.publicKey,
+      recentBlockhash: latest.blockhash
+    }).add(ix);
+    tx.sign(signer);
+
+    const signature = await rpc.sendRawTransaction(tx.serialize(), {
+      skipPreflight: false,
+      maxRetries: 3
+    });
+    await confirmSignatureOverRpc({
+      rpc,
+      signature,
+      lastValidBlockHeight: latest.lastValidBlockHeight
+    });
+
+    return {
+      signature,
+      allowanceReceipt: allowanceReceipt.toBase58(),
+      requestHash: requestHash.toString('hex'),
+      expectedNonce,
+      maxNotionalMicroUsd,
+      expiresAt
+    };
+  }
+
   async function getState() {
     const runtime = await loadRuntime();
     return {
@@ -426,7 +518,8 @@ export function createDevnetExecutionProvider({
     type,
     notional,
     expectedNonce,
-    idempotencyKey
+    idempotencyKey,
+    allowOnceRequestId = null
   }) {
     if (!idempotencyKey || typeof idempotencyKey !== 'string') {
       return {
@@ -512,6 +605,7 @@ export function createDevnetExecutionProvider({
       }
 
       if (
+        !allowOnceRequestId &&
         mandate.maxActionNotionalMicroUsd > 0 &&
         requestedNotionalMicroUsd > mandate.maxActionNotionalMicroUsd
       ) {
@@ -536,6 +630,7 @@ export function createDevnetExecutionProvider({
         : rule.spentThisPeriodNotionalMicroUsd;
 
       if (
+        !allowOnceRequestId &&
         mandate.maxPeriodNotionalMicroUsd > 0 &&
         effectiveSpentNotional + requestedNotionalMicroUsd >
           mandate.maxPeriodNotionalMicroUsd
@@ -605,7 +700,7 @@ export function createDevnetExecutionProvider({
         Math.floor((requestedNotionalMicroUsd * scale) / unitPriceMicroUsd)
       );
 
-      if (amount > rule.maxActionAmount) {
+      if (!allowOnceRequestId && amount > rule.maxActionAmount) {
         return {
           evaluation: evaluation({
             decision: 'REFUSE',
@@ -619,7 +714,10 @@ export function createDevnetExecutionProvider({
       }
 
       const effectiveSpentAmount = periodExpired ? 0 : rule.spentThisPeriod;
-      if (effectiveSpentAmount + amount > rule.maxPeriodAmount) {
+      if (
+        !allowOnceRequestId &&
+        effectiveSpentAmount + amount > rule.maxPeriodAmount
+      ) {
         return {
           evaluation: evaluation({
             decision: 'REFUSE',
@@ -645,17 +743,65 @@ export function createDevnetExecutionProvider({
       const vecLength = Buffer.alloc(4);
       vecLength.writeUInt32LE(message.length);
 
-      const data = Buffer.concat([
-        discriminator('execute_within_mandate_with_pyth'),
-        vecLength,
-        message,
-        encodeU64(amount),
-        encodeU64(mandate.nonce)
-      ]);
+      let allowanceReceipt = null;
+      let data;
+      let keys;
 
-      const executionIx = new TransactionInstruction({
-        programId: DEVNET_KEYS_PROGRAM_ID,
-        keys: [
+      if (allowOnceRequestId) {
+        const requestHash = allowanceRequestHash(allowOnceRequestId);
+        [allowanceReceipt] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from('allowance'),
+            runtime.mandateAddress.toBuffer(),
+            rule.mint.toBuffer(),
+            requestHash
+          ],
+          DEVNET_KEYS_PROGRAM_ID
+        );
+
+        data = Buffer.concat([
+          discriminator('execute_once_with_pyth'),
+          vecLength,
+          message,
+          encodeU64(amount),
+          encodeU64(mandate.nonce),
+          requestHash
+        ]);
+
+        keys = [
+          { pubkey: runtime.charter, isSigner: false, isWritable: false },
+          { pubkey: runtime.mandateAddress, isSigner: false, isWritable: true },
+          { pubkey: rule.address, isSigner: false, isWritable: true },
+          { pubkey: allowanceReceipt, isSigner: false, isWritable: true },
+          { pubkey: runtime.vaultTokenAccount, isSigner: false, isWritable: true },
+          { pubkey: rule.mint, isSigner: false, isWritable: false },
+          { pubkey: signer.publicKey, isSigner: true, isWritable: true },
+          {
+            pubkey: runtime.delegateTokenAccount,
+            isSigner: false,
+            isWritable: true
+          },
+          { pubkey: PYTH_LAZER_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: PYTH_LAZER_STORAGE_ID, isSigner: false, isWritable: false },
+          { pubkey: pythTreasury, isSigner: false, isWritable: true },
+          {
+            pubkey: SYSVAR_INSTRUCTIONS_PUBKEY,
+            isSigner: false,
+            isWritable: false
+          },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+        ];
+      } else {
+        data = Buffer.concat([
+          discriminator('execute_within_mandate_with_pyth'),
+          vecLength,
+          message,
+          encodeU64(amount),
+          encodeU64(mandate.nonce)
+        ]);
+
+        keys = [
           { pubkey: runtime.charter, isSigner: false, isWritable: false },
           { pubkey: runtime.mandateAddress, isSigner: false, isWritable: true },
           { pubkey: rule.address, isSigner: false, isWritable: true },
@@ -677,7 +823,12 @@ export function createDevnetExecutionProvider({
           },
           { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
           { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
-        ],
+        ];
+      }
+
+      const executionIx = new TransactionInstruction({
+        programId: DEVNET_KEYS_PROGRAM_ID,
+        keys,
         data
       });
 
@@ -722,6 +873,13 @@ export function createDevnetExecutionProvider({
             simulated: false,
             asset: DEMO_ASSET,
             executionAsset: 'DEMO_TOKEN',
+            oneTimeAllowance: allowOnceRequestId
+              ? {
+                  requestId: allowOnceRequestId,
+                  receipt: allowanceReceipt?.toBase58() ?? null,
+                  consumed: true
+                }
+              : null,
             pyth: {
               source: 'PYTH_PRO',
               feedId: DEMO_FEED_ID,
@@ -767,6 +925,7 @@ export function createDevnetExecutionProvider({
     execute,
     configureMandatePolicy,
     setMandateStatus,
+    grantAllowanceOnce,
     idempotencyScope: 'PROCESS_LOCAL_DEMO'
   };
 }
