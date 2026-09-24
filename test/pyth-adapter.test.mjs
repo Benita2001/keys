@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   PYTH_PRO_EQUITY_FEEDS,
   fetchPythProSnapshot,
+  fetchPythProHistory,
   fetchPythProSolanaPayload,
   normalizePythProSnapshot,
   normalizePythSnapshot
@@ -222,4 +223,60 @@ test('fails closed for the signed-payload path when the payload is absent', asyn
   assert.equal(out.status, 'FRESH');
   assert.equal(out.solanaPayload.status, 'UNAVAILABLE');
   assert.equal(out.solanaPayload.reasonCode, 'PYTH_SOLANA_PAYLOAD_MISSING');
+});
+
+
+test('fetches Pyth Pro history and maps close candles to KEYS price points', async () => {
+  const fakeFetch = async (url, options) => {
+    const parsed = new URL(url);
+    assert.equal(parsed.pathname, '/v1/fixed_rate%401000ms/history');
+    assert.equal(parsed.searchParams.get('symbol'), 'Equity.US.AAPL/USD');
+    assert.equal(parsed.searchParams.get('from'), '1700000000');
+    assert.equal(parsed.searchParams.get('to'), '1700600000');
+    assert.equal(parsed.searchParams.get('resolution'), 'D');
+    assert.equal(options.headers.Authorization, 'Bearer test-token');
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return {
+          s: 'ok',
+          t: [1700000000, 1700086400, 1700172800],
+          o: [190, 191, 192],
+          h: [192, 193, 194],
+          l: [189, 190, 191],
+          c: [191.5, 192.5, 193.5],
+          v: [1, 1, 1]
+        };
+      }
+    };
+  };
+
+  const out = await fetchPythProHistory({
+    apiKey: 'test-token',
+    feed: PYTH_PRO_EQUITY_FEEDS.AAPL,
+    from: 1700000000,
+    to: 1700600000,
+    resolution: 'D',
+    fetchImpl: fakeFetch
+  });
+
+  assert.equal(out.status, 'AVAILABLE');
+  assert.equal(out.source, 'PYTH_PRO_HISTORY');
+  assert.equal(out.candleCount, 3);
+  assert.deepEqual(out.points[0], { t: 1700000000000, v: 191.5 });
+});
+
+test('Pyth Pro history fails closed on entitlement refusal', async () => {
+  const out = await fetchPythProHistory({
+    apiKey: 'test-token',
+    feed: PYTH_PRO_EQUITY_FEEDS.AAPL,
+    from: 1700000000,
+    to: 1700600000,
+    fetchImpl: async () => ({ ok: false, status: 403 })
+  });
+
+  assert.equal(out.status, 'UNAVAILABLE');
+  assert.equal(out.reasonCode, 'PYTH_NOT_ENTITLED');
+  assert.deepEqual(out.points, []);
 });
