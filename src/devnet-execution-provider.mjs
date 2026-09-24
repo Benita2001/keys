@@ -111,6 +111,26 @@ function parseMandateAccount(data) {
   };
 }
 
+function parseAllowanceReceiptAccount(data) {
+  if (!Buffer.isBuffer(data) || data.length < 202) {
+    throw new Error('DEVNET_ALLOWANCE_RECEIPT_INVALID');
+  }
+
+  return {
+    mandate: new PublicKey(data.subarray(8, 40)),
+    guardian: new PublicKey(data.subarray(40, 72)),
+    beneficiary: new PublicKey(data.subarray(72, 104)),
+    mint: new PublicKey(data.subarray(104, 136)),
+    requestHash: Buffer.from(data.subarray(136, 168)),
+    maxNotionalMicroUsd: u64(data, 168),
+    mandateNonce: u64(data, 176),
+    expiresAt: i64(data, 184),
+    used: data.readUInt8(192) !== 0,
+    usedAt: i64(data, 193),
+    bump: data.readUInt8(201)
+  };
+}
+
 function parseAssetRuleAccount(pubkey, data) {
   if (!Buffer.isBuffer(data) || data.length < ASSET_RULE_ACCOUNT_SIZE) {
     throw new Error('DEVNET_DEMO_ASSET_RULE_INVALID');
@@ -420,6 +440,39 @@ export function createDevnetExecutionProvider({
       DEVNET_KEYS_PROGRAM_ID
     );
 
+    const existingInfo = await rpc.getAccountInfo(allowanceReceipt, 'confirmed');
+    if (existingInfo) {
+      const existing = parseAllowanceReceiptAccount(Buffer.from(existingInfo.data));
+      const compatible =
+        existing.mandate.equals(runtime.mandateAddress) &&
+        existing.guardian.equals(signer.publicKey) &&
+        existing.beneficiary.equals(signer.publicKey) &&
+        existing.mint.equals(runtime.assetRule.mint) &&
+        existing.requestHash.equals(requestHash) &&
+        existing.mandateNonce === Number(expectedNonce) &&
+        existing.maxNotionalMicroUsd === maxNotionalMicroUsd;
+
+      if (!compatible) {
+        throw new Error('ALLOW_ONCE_EXISTING_RECEIPT_MISMATCH');
+      }
+      if (existing.used) {
+        throw new Error('AllowanceAlreadyUsed');
+      }
+      if (existing.expiresAt > 0 && existing.expiresAt <= Math.floor(Date.now() / 1000)) {
+        throw new Error('AllowanceExpired');
+      }
+
+      return {
+        signature: null,
+        allowanceReceipt: allowanceReceipt.toBase58(),
+        requestHash: requestHash.toString('hex'),
+        expectedNonce,
+        maxNotionalMicroUsd,
+        expiresAt: existing.expiresAt,
+        reusedExistingReceipt: true
+      };
+    }
+
     const data = Buffer.concat([
       discriminator('grant_allowance_once'),
       requestHash,
@@ -464,7 +517,8 @@ export function createDevnetExecutionProvider({
       requestHash: requestHash.toString('hex'),
       expectedNonce,
       maxNotionalMicroUsd,
-      expiresAt
+      expiresAt,
+      reusedExistingReceipt: false
     };
   }
 
