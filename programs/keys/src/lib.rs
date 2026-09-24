@@ -298,6 +298,174 @@ pub mod keys {
         Ok(())
     }
 
+    pub fn grant_allowance_once(
+        ctx: Context<GrantAllowanceOnce>,
+        request_hash: [u8; 32],
+        expected_nonce: u64,
+        max_notional_micro_usd: u64,
+        expires_at: i64,
+    ) -> Result<()> {
+        require!(max_notional_micro_usd > 0, KeysError::InvalidCap);
+
+        let now = Clock::get()?.unix_timestamp;
+        let mandate = &ctx.accounts.mandate;
+        require_eq!(mandate.nonce, expected_nonce, KeysError::StaleNonce);
+        require_eq!(mandate.status, MANDATE_ACTIVE, KeysError::MandateNotActive);
+        require!(
+            mandate.expires_at == 0 || now <= mandate.expires_at,
+            KeysError::MandateExpired
+        );
+        require!(
+            expires_at == 0 || expires_at > now,
+            KeysError::InvalidExpiry
+        );
+
+        let allowance = &mut ctx.accounts.allowance;
+        allowance.mandate = mandate.key();
+        allowance.guardian = ctx.accounts.guardian.key();
+        allowance.beneficiary = ctx.accounts.charter.beneficiary;
+        allowance.mint = ctx.accounts.mint.key();
+        allowance.request_hash = request_hash;
+        allowance.max_notional_micro_usd = max_notional_micro_usd;
+        allowance.mandate_nonce = expected_nonce;
+        allowance.expires_at = expires_at;
+        allowance.used = false;
+        allowance.used_at = 0;
+        allowance.bump = ctx.bumps.allowance;
+
+        msg!(
+            "ALLOW_ONCE_GRANTED nonce={} max_notional_micro_usd={}",
+            expected_nonce,
+            max_notional_micro_usd
+        );
+        Ok(())
+    }
+
+    pub fn execute_once_with_pyth(
+        ctx: Context<ExecuteOnceWithPyth>,
+        pyth_message: Vec<u8>,
+        amount: u64,
+        expected_nonce: u64,
+        request_hash: [u8; 32],
+    ) -> Result<()> {
+        require!(amount > 0, KeysError::InvalidAmount);
+        require!(!pyth_message.is_empty(), KeysError::PythMessageInvalid);
+
+        let now = Clock::get()?.unix_timestamp;
+        validate_execution_authority(
+            &ctx.accounts.mandate,
+            &ctx.accounts.asset_rule,
+            expected_nonce,
+            now,
+        )?;
+
+        let allowance = &ctx.accounts.allowance;
+        require!(!allowance.used, KeysError::AllowanceAlreadyUsed);
+        require_eq!(
+            allowance.mandate_nonce,
+            expected_nonce,
+            KeysError::StaleAllowance
+        );
+        require!(
+            allowance.expires_at == 0 || now <= allowance.expires_at,
+            KeysError::AllowanceExpired
+        );
+        require!(
+            allowance.request_hash == request_hash,
+            KeysError::AllowanceRequestMismatch
+        );
+
+        require_keys_eq!(
+            ctx.accounts.pyth_program.key(),
+            PYTH_LAZER_PROGRAM_ID,
+            KeysError::InvalidPythProgram
+        );
+        require_keys_eq!(
+            ctx.accounts.pyth_storage.key(),
+            PYTH_LAZER_STORAGE_ID,
+            KeysError::InvalidPythStorage
+        );
+        require_keys_eq!(
+            ctx.accounts.instructions_sysvar.key(),
+            sysvar::instructions::ID,
+            KeysError::InvalidInstructionsSysvar
+        );
+
+        verify_pyth_message_via_lazer(
+            &ctx.accounts.beneficiary.to_account_info(),
+            &ctx.accounts.pyth_program,
+            &ctx.accounts.pyth_storage,
+            &ctx.accounts.pyth_treasury,
+            &ctx.accounts.system_program.to_account_info(),
+            &ctx.accounts.instructions_sysvar,
+            &pyth_message,
+        )?;
+
+        let market = parse_verified_market_evidence(
+            &pyth_message,
+            ctx.accounts.asset_rule.pyth_feed_id,
+            now,
+            ctx.accounts.mandate.max_market_age_seconds,
+            ctx.accounts.mandate.max_confidence_bps,
+        )?;
+
+        require!(
+            ctx.accounts.asset_rule.max_unit_price_micro_usd == 0
+                || market.unit_price_micro_usd
+                    <= ctx.accounts.asset_rule.max_unit_price_micro_usd,
+            KeysError::MarketConditionInvalidated
+        );
+
+        reset_period_if_needed(&mut ctx.accounts.asset_rule, now);
+
+        let requested_notional_micro_usd = compute_notional_micro_usd(
+            amount,
+            ctx.accounts.mint.decimals,
+            market.unit_price_micro_usd,
+        )?;
+        require!(
+            requested_notional_micro_usd
+                <= ctx.accounts.allowance.max_notional_micro_usd,
+            KeysError::AllowanceNotionalExceeded
+        );
+
+        let next_spent_amount = ctx
+            .accounts
+            .asset_rule
+            .spent_this_period
+            .checked_add(amount)
+            .ok_or(KeysError::Overflow)?;
+        let next_spent_notional = ctx
+            .accounts
+            .asset_rule
+            .spent_this_period_notional
+            .checked_add(requested_notional_micro_usd)
+            .ok_or(KeysError::Overflow)?;
+
+        transfer_from_vault(
+            &ctx.accounts.mandate,
+            &ctx.accounts.mint,
+            &ctx.accounts.vault_token_account,
+            &ctx.accounts.delegate_token_account,
+            &ctx.accounts.token_program,
+            ctx.bumps.vault_token_account,
+            amount,
+        )?;
+
+        ctx.accounts.asset_rule.spent_this_period = next_spent_amount;
+        ctx.accounts.asset_rule.spent_this_period_notional = next_spent_notional;
+        ctx.accounts.allowance.used = true;
+        ctx.accounts.allowance.used_at = now;
+
+        msg!(
+            "ALLOW_ONCE_CONSUMED feed={} notional_micro_usd={} nonce={}",
+            ctx.accounts.asset_rule.pyth_feed_id,
+            requested_notional_micro_usd,
+            expected_nonce
+        );
+        Ok(())
+    }
+
     pub fn execute_within_mandate(
         ctx: Context<ExecuteWithinMandate>,
         amount: u64,
@@ -470,10 +638,9 @@ pub mod keys {
     }
 }
 
-fn validate_execution_common(
+fn validate_execution_authority(
     mandate: &Mandate,
     rule: &AssetRule,
-    amount: u64,
     expected_nonce: u64,
     now: i64,
 ) -> Result<()> {
@@ -496,6 +663,17 @@ fn validate_execution_common(
         rule.action_mask & ACTION_TRANSFER != 0,
         KeysError::ActionNotAllowed
     );
+    Ok(())
+}
+
+fn validate_execution_common(
+    mandate: &Mandate,
+    rule: &AssetRule,
+    amount: u64,
+    expected_nonce: u64,
+    now: i64,
+) -> Result<()> {
+    validate_execution_authority(mandate, rule, expected_nonce, now)?;
     require!(
         amount <= rule.max_action_amount,
         KeysError::ActionAmountExceeded
@@ -1079,6 +1257,117 @@ pub struct UpdateAssetRule<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(request_hash: [u8; 32])]
+pub struct GrantAllowanceOnce<'info> {
+    #[account(
+        seeds = [b"charter", charter.beneficiary.as_ref()],
+        bump = charter.bump,
+        has_one = guardian
+    )]
+    pub charter: Account<'info, Charter>,
+    #[account(
+        seeds = [b"mandate", charter.key().as_ref()],
+        bump = mandate.bump,
+        has_one = charter
+    )]
+    pub mandate: Account<'info, Mandate>,
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        init,
+        payer = guardian,
+        space = AllowanceReceipt::SPACE,
+        seeds = [
+            b"allowance",
+            mandate.key().as_ref(),
+            mint.key().as_ref(),
+            request_hash.as_ref()
+        ],
+        bump
+    )]
+    pub allowance: Account<'info, AllowanceReceipt>,
+    #[account(mut)]
+    pub guardian: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(
+    pyth_message: Vec<u8>,
+    amount: u64,
+    expected_nonce: u64,
+    request_hash: [u8; 32]
+)]
+pub struct ExecuteOnceWithPyth<'info> {
+    #[account(
+        seeds = [b"charter", charter.beneficiary.as_ref()],
+        bump = charter.bump,
+        has_one = beneficiary
+    )]
+    pub charter: Account<'info, Charter>,
+    #[account(
+        mut,
+        seeds = [b"mandate", charter.key().as_ref()],
+        bump = mandate.bump,
+        has_one = charter
+    )]
+    pub mandate: Account<'info, Mandate>,
+    #[account(
+        mut,
+        seeds = [b"asset-rule", mandate.key().as_ref(), mint.key().as_ref()],
+        bump = asset_rule.bump,
+        constraint = asset_rule.mandate == mandate.key() @ KeysError::AssetRuleMandateMismatch,
+        constraint = asset_rule.mint == mint.key() @ KeysError::AssetRuleMintMismatch
+    )]
+    pub asset_rule: Account<'info, AssetRule>,
+    #[account(
+        mut,
+        seeds = [
+            b"allowance",
+            mandate.key().as_ref(),
+            mint.key().as_ref(),
+            request_hash.as_ref()
+        ],
+        bump = allowance.bump,
+        constraint = allowance.mandate == mandate.key() @ KeysError::AllowanceMandateMismatch,
+        constraint = allowance.beneficiary == beneficiary.key() @ KeysError::AllowanceBeneficiaryMismatch,
+        constraint = allowance.mint == mint.key() @ KeysError::AllowanceMintMismatch
+    )]
+    pub allowance: Account<'info, AllowanceReceipt>,
+    #[account(
+        mut,
+        seeds = [b"vault", mandate.key().as_ref(), mint.key().as_ref()],
+        bump,
+        token::mint = mint,
+        token::authority = vault_token_account,
+        token::token_program = token_program
+    )]
+    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
+    pub beneficiary: Signer<'info>,
+    #[account(
+        mut,
+        token::mint = mint,
+        token::authority = beneficiary,
+        token::token_program = token_program
+    )]
+    pub delegate_token_account: InterfaceAccount<'info, TokenAccount>,
+
+    /// CHECK: address is validated in the instruction.
+    pub pyth_program: AccountInfo<'info>,
+    /// CHECK: address is validated in the instruction; Pyth validates its data.
+    pub pyth_storage: AccountInfo<'info>,
+    /// CHECK: Pyth storage has_one treasury is enforced by Pyth during CPI.
+    #[account(mut)]
+    pub pyth_treasury: AccountInfo<'info>,
+    /// CHECK: address is validated against the instructions sysvar id.
+    pub instructions_sysvar: AccountInfo<'info>,
+
+    pub token_program: Interface<'info, TokenInterface>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
 pub struct ExecuteWithinMandate<'info> {
     #[account(
         seeds = [b"charter", charter.beneficiary.as_ref()],
@@ -1239,6 +1528,25 @@ impl AssetRule {
 }
 
 #[account]
+pub struct AllowanceReceipt {
+    pub mandate: Pubkey,
+    pub guardian: Pubkey,
+    pub beneficiary: Pubkey,
+    pub mint: Pubkey,
+    pub request_hash: [u8; 32],
+    pub max_notional_micro_usd: u64,
+    pub mandate_nonce: u64,
+    pub expires_at: i64,
+    pub used: bool,
+    pub used_at: i64,
+    pub bump: u8,
+}
+impl AllowanceReceipt {
+    pub const SPACE: usize =
+        8 + 32 + 32 + 32 + 32 + 32 + 8 + 8 + 8 + 1 + 8 + 1;
+}
+
+#[account]
 pub struct ProposalCommitment {
     pub mandate: Pubkey,
     pub beneficiary: Pubkey,
@@ -1320,6 +1628,22 @@ pub enum KeysError {
     AssetRuleMandateMismatch,
     #[msg("The asset rule does not match this mint.")]
     AssetRuleMintMismatch,
+    #[msg("The one-time allowance has already been used.")]
+    AllowanceAlreadyUsed,
+    #[msg("The one-time allowance belongs to an older Mandate nonce.")]
+    StaleAllowance,
+    #[msg("The one-time allowance has expired.")]
+    AllowanceExpired,
+    #[msg("The one-time allowance request hash does not match.")]
+    AllowanceRequestMismatch,
+    #[msg("The one-time allowance does not belong to this Mandate.")]
+    AllowanceMandateMismatch,
+    #[msg("The one-time allowance does not belong to this beneficiary.")]
+    AllowanceBeneficiaryMismatch,
+    #[msg("The one-time allowance does not match this asset representation.")]
+    AllowanceMintMismatch,
+    #[msg("The requested notional exceeds the one-time allowance.")]
+    AllowanceNotionalExceeded,
     #[msg("Unexpected Pyth Lazer program id.")]
     InvalidPythProgram,
     #[msg("Unexpected Pyth Lazer storage account.")]
@@ -1450,6 +1774,25 @@ mod tests {
         assert!(amount_is_within_rule(100, 250, 0, 1000));
         assert!(!amount_is_within_rule(500, 250, 0, 1000));
         assert!(!amount_is_within_rule(200, 250, 900, 1000));
+    }
+
+    #[test]
+    fn one_time_allowance_requires_same_nonce_and_unused_receipt() {
+        let usable = |receipt_nonce: u64,
+                      expected_nonce: u64,
+                      used: bool,
+                      requested: u64,
+                      max_notional: u64| {
+            receipt_nonce == expected_nonce
+                && !used
+                && requested > 0
+                && requested <= max_notional
+        };
+
+        assert!(usable(7, 7, false, 20_000_000, 20_000_000));
+        assert!(!usable(6, 7, false, 20_000_000, 20_000_000));
+        assert!(!usable(7, 7, true, 20_000_000, 20_000_000));
+        assert!(!usable(7, 7, false, 21_000_000, 20_000_000));
     }
 
     #[test]
