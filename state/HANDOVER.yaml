@@ -1,5 +1,5 @@
 project: KEYS
-handover_version: 15
+handover_version: 16
 updated_at: "2026-09-24"
 status: V0_2_CRESCO_STATEFUL_DEVNET_FAMILY_INTEGRATION_PASS
 
@@ -68,7 +68,7 @@ canonical_truth:
     cresco_web_ci: PASS
     cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36057960828"
     current_node_ci: PASS
-    current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36057960586"
+    current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36070676334"
     cresco_aapl_migration: PASS_FULL_STACK
     cresco_aapl_bridge_revalidation_run: "https://github.com/Faadil1/keys/actions/runs/36035543689"
     cresco_live_proof_lane_ui: IMPLEMENTED_WEB_CI_PASS
@@ -97,8 +97,11 @@ canonical_truth:
     backend_public_url: "https://keys-api-stocklana.faadil-casecraft.workers.dev"
     hosted_stateful_smoke: PASS
     hosted_stateful_smoke_run: "https://github.com/Faadil1/keys/actions/runs/36066208304"
-    devnet_allow_once_program_upgrade: RETRY_IN_PROGRESS_AFTER_POW_SHORTFALL_FIX
-    devnet_allow_once_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/36066178194"
+    devnet_allow_once_program_upgrade: BLOCKED_EXTERNAL_DEVNET_FUNDING
+    devnet_allow_once_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/36070676319"
+    devnet_allow_once_required_lamports: 2371812520
+    devnet_allow_once_available_lamports: 1948895627
+    devnet_allow_once_shortfall_lamports: 422916893
     aapl_assetrule_toggle_code: IMPLEMENTED_ONCHAIN_INSTRUCTION_CLIENT
     family_state_durable_object: IMPLEMENTED_SQLITE
     family_role_sessions: IMPLEMENTED_DEMO_CHILD_GUARDIAN
@@ -210,8 +213,8 @@ next_work:
   owner: Faadil
   support_owner: Benita
   sequence:
-    - "Complete the in-progress Solana Devnet program upgrade so grant_allowance_once exists in the deployed binary."
-    - "Re-run the Devnet execution bridge against the upgraded program and capture ALLOW_ONCE single-use evidence."
+    - "Fund the canonical Devnet upgrade authority by at least 422916893 additional lamports, then rerun solana-devnet-authority-proof; the current blocker is external Devnet funding."
+    - "After the upgrade succeeds, re-run the Devnet execution bridge and capture ALLOW_ONCE single-use evidence."
     - "Preserve the passing hosted Pyth-history and multi-asset Durable Object concurrency proof as judge evidence."
     - "Record the canonical Family demo with a confirmed Devnet receipt."
     - "Prepare submission copy and Q&A using only verified claims."
