@@ -17,7 +17,7 @@ Status: **CANONICAL DOCS SYNCHRONIZED TO BOUNDED-AUTONOMY RELOCK**
 - v0.2 explicit human widen + stale execution refusal: **PASS**
 - v0.2 pause/downward authority: **PASS**
 - Pyth signed Solana payload availability: **PASS**
-- v0.2 signed on-chain Pyth verification: **PASS — local + canonical devnet**
+- v0.2 signed on-chain Pyth verification: **PASS — AAPL current devnet lane; TSLA historical local/devnet evidence retained**
 - Pyth-derived USD/notional enforcement: **PASS — devnet**
 - precommitted max-price refusal: **PASS — devnet**
 - frontend/backend contract v0.2: **FROZEN**
@@ -31,7 +31,7 @@ Canonical devnet program:
 
 Canonical live Pyth proof feed:
 
-`Equity.US.TSLA/USD`
+`Equity.US.AAPL/USD`
 
 ## Current canonical documents
 
@@ -57,7 +57,8 @@ Canonical live Pyth proof feed:
 | `docs/LIVE-DEMO-INTEGRATION.md` | Benita live/demo integration guide | CURRENT v0.2 |
 | `docs/CRESCO-BACKEND-DELTA-2026-09-24.md` | corrections/delta for Benita PR #1 backend assumptions | CURRENT |
 | `docs/BOUNTY-INTEGRATION-GATE-2026-09-24.md` | sponsor-track activation / anti-bounty-chasing gate | CURRENT |
-| `evidence/pyth/DEVNET-ONCHAIN-PYTH-BOUNDARY-PROOF-2026-09-24.md` | canonical devnet live Pyth capital proof | CURRENT EVIDENCE |
+| `evidence/solana/CRESCO-AAPL-HTTP-DEVNET-EXECUTION-PROOF-2026-09-24.md` | current AAPL entitlement + HTTP→Solana devnet proof | CURRENT CANONICAL EVIDENCE |
+| `evidence/pyth/DEVNET-ONCHAIN-PYTH-BOUNDARY-PROOF-2026-09-24.md` | historical TSLA devnet live Pyth capital proof | HISTORICAL VALID EVIDENCE |
 | `evidence/solana/LOCAL-BOUNDED-AUTONOMY-RUNTIME-PROOF-2026-09-23.md` | v0.2 local capital proof | CURRENT EVIDENCE |
 | `evidence/solana/DEVNET-BOUNDED-AUTONOMY-RUNTIME-PROOF-2026-09-23.md` | v0.2 canonical devnet capital proof | CURRENT EVIDENCE |
 | `docs/FRONTEND-START-HERE.md` | Benita transition guide | CURRENT |
