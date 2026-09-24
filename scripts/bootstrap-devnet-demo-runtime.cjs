@@ -22,7 +22,7 @@ const TARGET_MAX_ACTION_AMOUNT = 100_000;
 const TARGET_MAX_PERIOD_AMOUNT = 500_000;
 const TARGET_PERIOD_SECONDS = 30 * 24 * 60 * 60;
 const TARGET_MAX_UNIT_PRICE = 1_000_000_000;
-const TARGET_FEED_ID = 1435;
+const TARGET_FEED_ID = 922;
 const TARGET_VAULT_BALANCE = 50_000_000;
 
 function hash32(value) {
@@ -183,7 +183,13 @@ async function main() {
   let assetRule;
   let vaultTokenAccount;
 
-  if (rules.length === 0) {
+  let targetRules = rules
+    .filter((entry) => Number(entry.account.pythFeedId) === TARGET_FEED_ID)
+    .sort((a, b) =>
+      a.publicKey.toBase58().localeCompare(b.publicKey.toBase58())
+    );
+
+  if (targetRules.length === 0) {
     mint = await createMint(
       provider.connection,
       payer,
@@ -226,9 +232,7 @@ async function main() {
     console.log(`DEMO_RUNTIME initialize_asset_rule_tx=${initRuleTx}`);
     mandateState = await program.account.mandate.fetch(mandate);
 
-    // Reuse the exact PDA we just created instead of waiting for RPC program-account
-    // indexing to catch up. Future runs discover it through rulesForMandate().
-    rules = [
+    targetRules = [
       {
         publicKey: assetRule,
         account: await program.account.assetRule.fetch(assetRule)
@@ -236,23 +240,13 @@ async function main() {
     ];
   }
 
-  const tslaRules = rules
-    .filter((entry) => Number(entry.account.pythFeedId) === TARGET_FEED_ID)
-    .sort((a, b) =>
-      a.publicKey.toBase58().localeCompare(b.publicKey.toBase58())
-    );
-
-  if (tslaRules.length === 0) {
-    throw new Error('DEVNET_DEMO_TSLA_RULE_NOT_FOUND');
-  }
-
-  if (tslaRules.length > 1) {
+  if (targetRules.length > 1) {
     console.log(
-      `DEMO_RUNTIME duplicate_tsla_rules=${tslaRules.length} canonical=${tslaRules[0].publicKey.toBase58()}`
+      `DEMO_RUNTIME duplicate_target_rules=${targetRules.length} canonical=${targetRules[0].publicKey.toBase58()}`
     );
   }
 
-  const ruleEntry = tslaRules[0];
+  const ruleEntry = targetRules[0];
   assetRule = ruleEntry.publicKey;
   mint = ruleEntry.account.mint;
   [vaultTokenAccount] = PublicKey.findProgramAddressSync(
@@ -361,7 +355,7 @@ async function main() {
           finalMandate.maxActionNotional.toNumber(),
         maxPeriodNotionalMicroUsd:
           finalMandate.maxPeriodNotional.toNumber(),
-        asset: 'TSLA',
+        asset: 'AAPL',
         pythFeedId: Number(finalRule.pythFeedId),
         mint: mint.toBase58(),
         assetRule: assetRule.toBase58(),
