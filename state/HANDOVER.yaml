@@ -59,7 +59,7 @@ canonical_truth:
     boundary_only_proposals: SPEC_AND_DRAFT_API
     contextual_learning: SPEC_AND_DRAFT_FACADE
     frontend_contract: FROZEN
-    devnet_run: "https://github.com/Faadil1/keys/actions/runs/35931280449"
+    devnet_run: "https://github.com/Faadil1/keys/actions/runs/35959137364"
     pyth_signed_payload_run: "https://github.com/Faadil1/keys/actions/runs/35930425544"
     local_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35956618933"
     local_onchain_pyth_result: "12 passing"
@@ -69,7 +69,7 @@ canonical_truth:
 ownership:
   frontend:
     owner: Benita
-    current_instruction: "Do not freeze the new bounded-autonomy UX against v0.1 proposal-per-action semantics. Coordinate on v0.2 when the backend contract is ready."
+    current_instruction: "Integrate against docs/FRONTEND-BACKEND-CONTRACT-V0.2.md and frozen /api/v0.2 semantics; v0.1 remains historical proof only."
     future_scope:
       - family-native Maya experience
       - contextual learning and Practice UX
