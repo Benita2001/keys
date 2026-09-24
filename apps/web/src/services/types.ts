@@ -20,7 +20,7 @@ import type {
 
 export type Capabilities = {
   /** "none" → frontend runs fully on local demo state. */
-  backend: "none" | "keys-v0.2-draft";
+  backend: "none" | "keys-v0.2-frozen";
   marketData: "mock" | "mock-with-live-tsla";
   moneyMode: "demo" | "runtime";
   funding: "demo";
