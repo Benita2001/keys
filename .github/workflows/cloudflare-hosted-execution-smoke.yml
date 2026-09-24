@@ -65,7 +65,25 @@ jobs:
           '
           echo "CLOUDFLARE_HOSTED_CHILD_SESSION=PASS"
 
-      - name: Verify hosted Family state and market truth
+      - name: Create guardian demo session
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "content-type: application/json" \
+            --data '{"role":"guardian","displayName":"Hosted Smoke Guardian"}' \
+            "$KEYS_API_URL/api/v0.2/auth/demo-session" \
+            > /tmp/guardian-session.json
+          node -e '
+            const fs = require("fs");
+            const x = JSON.parse(fs.readFileSync("/tmp/guardian-session.json","utf8"));
+            if (x.role !== "guardian" || !x.token) { console.error(x); process.exit(1); }
+            fs.appendFileSync(process.env.GITHUB_ENV, "GUARDIAN_TOKEN=" + x.token + "\n");
+          '
+          echo "CLOUDFLARE_HOSTED_GUARDIAN_SESSION=PASS"
+
+      - name: Verify hosted Family state and Pyth history
         shell: bash
         run: |
           set -euo pipefail
@@ -76,9 +94,24 @@ jobs:
           curl --fail --silent --show-error \
             "$KEYS_API_URL/api/v0.2/market/quotes?symbols=AAPL,NVDA" \
             | tee /tmp/quotes.json
-          curl --fail --silent --show-error \
-            "$KEYS_API_URL/api/v0.2/market/series?symbol=AAPL&period=1M" \
-            | tee /tmp/history.json
+
+          for attempt in $(seq 1 24); do
+            curl --fail --silent --show-error \
+              "$KEYS_API_URL/api/v0.2/market/series?symbol=AAPL&period=1M" \
+              > /tmp/history.json
+            if node -e '
+              const fs = require("fs");
+              const x = JSON.parse(fs.readFileSync("/tmp/history.json","utf8"));
+              process.exit(x.status === "AVAILABLE" && Array.isArray(x.points) && x.points.length > 1 ? 0 : 1);
+            '; then
+              cat /tmp/history.json
+              break
+            fi
+            echo "Waiting for deployed Pyth history adapter (attempt $attempt/24)..."
+            cat /tmp/history.json
+            sleep 10
+          done
+
           node -e '
             const fs = require("fs");
             const family = JSON.parse(fs.readFileSync("/tmp/family.json","utf8"));
@@ -88,9 +121,48 @@ jobs:
             const nvda = quotes.quotes && quotes.quotes.find((q) => q.symbol === "NVDA");
             if (!family.profile || !family.mandate || !family.balances) process.exit(1);
             if (quotes.type !== "V0_2_MARKET_QUOTES" || !aapl || !nvda || nvda.status !== "UNAVAILABLE") process.exit(1);
-            if (history.type !== "V0_2_MARKET_SERIES" || history.status !== "UNAVAILABLE" || history.reasonCode !== "HISTORY_PROVIDER_NOT_CONNECTED" || history.points.length !== 0) process.exit(1);
+            if (
+              history.type !== "V0_2_MARKET_SERIES" ||
+              history.status !== "AVAILABLE" ||
+              history.source !== "PYTH_PRO_HISTORY" ||
+              !Array.isArray(history.points) ||
+              history.points.length < 2 ||
+              history.truthBoundary?.fabricatedHistory !== false
+            ) process.exit(1);
           '
-          echo "CLOUDFLARE_HOSTED_FAMILY_AND_MARKET=PASS"
+          echo "CLOUDFLARE_HOSTED_FAMILY_MARKET_HISTORY=PASS"
+
+      - name: Prove hosted multi-asset reservation concurrency
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            -X POST \
+            -H "content-type: application/json" \
+            -H "authorization: Bearer $GUARDIAN_TOKEN" \
+            --data '{}' \
+            "$KEYS_API_URL/api/v0.2/proofs/concurrency" \
+            | tee /tmp/concurrency.json
+          node -e '
+            const fs = require("fs");
+            const x = JSON.parse(fs.readFileSync("/tmp/concurrency.json","utf8"));
+            if (
+              x.type !== "V0_2_CONCURRENCY_PROOF" ||
+              x.status !== "PASS" ||
+              x.allowed < 1 ||
+              x.refused < 1 ||
+              x.stateUnchangedAfterRelease !== true ||
+              x.truthBoundary?.provesDurableReservationSerialization !== true ||
+              x.truthBoundary?.tslaExecutionClaimed !== false ||
+              !Array.isArray(x.assetsAttempted) ||
+              !x.assetsAttempted.includes("AAPL") ||
+              !x.assetsAttempted.includes("TSLA")
+            ) {
+              console.error(x);
+              process.exit(1);
+            }
+          '
+          echo "CLOUDFLARE_HOSTED_CONCURRENCY=PASS"
 
       - name: Resolve hosted AAPL runtime
         shell: bash
