@@ -1,0 +1,656 @@
+import { createHash } from 'node:crypto';
+
+import anchor from '@coral-xyz/anchor';
+import {
+  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
+  getMint
+} from '@solana/spl-token';
+import { createEd25519Instruction } from '@pythnetwork/pyth-lazer-solana-sdk';
+
+import {
+  PYTH_PRO_EQUITY_FEEDS,
+  fetchPythProSolanaPayload
+} from './pyth-adapter.mjs';
+
+const {
+  Connection,
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+  SYSVAR_INSTRUCTIONS_PUBKEY
+} = anchor.web3;
+
+export const DEVNET_KEYS_PROGRAM_ID = new PublicKey(
+  'ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk'
+);
+
+export const PYTH_LAZER_PROGRAM_ID = new PublicKey(
+  'pytd2yyk641x7ak7mkaasSJVXh6YYZnC7wTmtgAyxPt'
+);
+
+export const PYTH_LAZER_STORAGE_ID = new PublicKey(
+  '3rdJbqfnagQ4yx9HXJViD4zc4xpiSqmFsKpPuSCQVyQL'
+);
+
+const ASSET_RULE_ACCOUNT_SIZE = 135;
+const DEMO_ASSET = 'TSLA';
+const DEMO_FEED_ID = 1435;
+
+const executionPromises = new Map();
+const executionResults = new Map();
+
+function u64(buffer, offset) {
+  return Number(buffer.readBigUInt64LE(offset));
+}
+
+function i64(buffer, offset) {
+  return Number(buffer.readBigInt64LE(offset));
+}
+
+function discriminator(name) {
+  return createHash('sha256')
+    .update(`global:${name}`)
+    .digest()
+    .subarray(0, 8);
+}
+
+function encodeU64(value) {
+  const out = Buffer.alloc(8);
+  out.writeBigUInt64LE(BigInt(value));
+  return out;
+}
+
+function parseKeypair(json) {
+  const values = JSON.parse(json);
+  if (!Array.isArray(values) || values.length !== 64) {
+    throw new Error('DEVNET_KEYPAIR_JSON must be a 64-byte Solana keypair array');
+  }
+  return Keypair.fromSecretKey(Uint8Array.from(values));
+}
+
+function parseMandateAccount(data) {
+  if (!Buffer.isBuffer(data) || data.length < 123) {
+    throw new Error('DEVNET_DEMO_MANDATE_INVALID');
+  }
+
+  return {
+    charter: new PublicKey(data.subarray(8, 40)),
+    stage: data.readUInt8(40),
+    status: data.readUInt8(41),
+    version: u64(data, 42),
+    nonce: u64(data, 50),
+    maxActionNotionalMicroUsd: u64(data, 58),
+    maxPeriodNotionalMicroUsd: u64(data, 66),
+    expiresAt: i64(data, 74),
+    maxMarketAgeSeconds: data.readUInt32LE(82),
+    maxConfidenceBps: data.readUInt32LE(86)
+  };
+}
+
+function parseAssetRuleAccount(pubkey, data) {
+  if (!Buffer.isBuffer(data) || data.length < ASSET_RULE_ACCOUNT_SIZE) {
+    throw new Error('DEVNET_DEMO_ASSET_RULE_INVALID');
+  }
+
+  return {
+    address: pubkey,
+    mandate: new PublicKey(data.subarray(8, 40)),
+    mint: new PublicKey(data.subarray(40, 72)),
+    actionMask: data.readUInt8(72),
+    enabled: data.readUInt8(73) !== 0,
+    maxActionAmount: u64(data, 74),
+    maxPeriodAmount: u64(data, 82),
+    periodSeconds: i64(data, 90),
+    periodStartedAt: i64(data, 98),
+    spentThisPeriod: u64(data, 106),
+    spentThisPeriodNotionalMicroUsd: u64(data, 114),
+    maxUnitPriceMicroUsd: u64(data, 122),
+    pythFeedId: data.readUInt32LE(130)
+  };
+}
+
+function evaluation({
+  decision,
+  reasonCode,
+  mandate,
+  requestedNotionalMicroUsd = null,
+  boundaryRequestAvailable = false
+}) {
+  return {
+    contractVersion: '0.2',
+    decision,
+    reasonCode,
+    requestedNotionalMicroUsd,
+    standingLimitMicroUsd: mandate?.maxActionNotionalMicroUsd ?? null,
+    boundaryRequestAvailable,
+    guardianApprovalRequired: false,
+    mandateVersion: mandate?.version ?? null,
+    mandateNonce: mandate?.nonce ?? null
+  };
+}
+
+function reasonFromError(error) {
+  const candidates = [
+    'StaleNonce',
+    'MandateNotActive',
+    'MandateExpired',
+    'AssetRuleDisabled',
+    'ActionNotAllowed',
+    'ActionAmountExceeded',
+    'PeriodAmountExceeded',
+    'PythNotionalExceeded',
+    'PythPeriodNotionalExceeded',
+    'MarketConditionInvalidated',
+    'PythMessageInvalid',
+    'PythFeedMismatch',
+    'PythEvidenceStale',
+    'PythConfidenceTooWide'
+  ];
+
+  const text = [
+    error?.message,
+    error?.stack,
+    ...(Array.isArray(error?.logs) ? error.logs : [])
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return candidates.find((candidate) => text.includes(candidate)) ??
+    'SOLANA_EXECUTION_REFUSED';
+}
+
+export function createDevnetExecutionProvider({
+  rpcUrl = 'https://api.devnet.solana.com',
+  signer,
+  pythApiKey,
+  connection = null,
+  now = () => new Date().toISOString()
+}) {
+  if (!signer?.publicKey) throw new Error('devnet signer is required');
+  if (!pythApiKey) throw new Error('Pyth API key is required');
+
+  const rpc = connection ?? new Connection(rpcUrl, 'confirmed');
+
+  const [charter] = PublicKey.findProgramAddressSync(
+    [Buffer.from('charter'), signer.publicKey.toBuffer()],
+    DEVNET_KEYS_PROGRAM_ID
+  );
+  const [mandateAddress] = PublicKey.findProgramAddressSync(
+    [Buffer.from('mandate'), charter.toBuffer()],
+    DEVNET_KEYS_PROGRAM_ID
+  );
+
+  async function loadRuntime() {
+    const mandateInfo = await rpc.getAccountInfo(mandateAddress, 'confirmed');
+    if (!mandateInfo) {
+      throw new Error('DEVNET_DEMO_RUNTIME_NOT_BOOTSTRAPPED');
+    }
+
+    const mandate = parseMandateAccount(Buffer.from(mandateInfo.data));
+
+    const rules = await rpc.getProgramAccounts(DEVNET_KEYS_PROGRAM_ID, {
+      commitment: 'confirmed',
+      filters: [
+        { dataSize: ASSET_RULE_ACCOUNT_SIZE },
+        { memcmp: { offset: 8, bytes: mandateAddress.toBase58() } }
+      ]
+    });
+
+    const parsedRules = rules
+      .map(({ pubkey, account }) =>
+        parseAssetRuleAccount(pubkey, Buffer.from(account.data))
+      )
+      .filter((rule) => rule.pythFeedId === DEMO_FEED_ID);
+
+    if (parsedRules.length !== 1) {
+      throw new Error(
+        parsedRules.length === 0
+          ? 'DEVNET_DEMO_ASSET_RULE_NOT_FOUND'
+          : 'DEVNET_DEMO_ASSET_RULE_AMBIGUOUS'
+      );
+    }
+
+    const assetRule = parsedRules[0];
+    const [vaultTokenAccount] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('vault'),
+        mandateAddress.toBuffer(),
+        assetRule.mint.toBuffer()
+      ],
+      DEVNET_KEYS_PROGRAM_ID
+    );
+
+    const delegateTokenAccount = getAssociatedTokenAddressSync(
+      assetRule.mint,
+      signer.publicKey,
+      false,
+      TOKEN_PROGRAM_ID
+    );
+
+    return {
+      charter,
+      mandateAddress,
+      mandate,
+      assetRule,
+      vaultTokenAccount,
+      delegateTokenAccount
+    };
+  }
+
+  async function getState() {
+    const runtime = await loadRuntime();
+    return {
+      mode: 'SERVER_HELD_DEVNET_DEMO',
+      network: 'solana-devnet',
+      asset: DEMO_ASSET,
+      programId: DEVNET_KEYS_PROGRAM_ID.toBase58(),
+      charter: runtime.charter.toBase58(),
+      mandateAddress: runtime.mandateAddress.toBase58(),
+      mandate: {
+        status: runtime.mandate.status === 0 ? 'ACTIVE' : 'NOT_ACTIVE',
+        stage: runtime.mandate.stage,
+        version: runtime.mandate.version,
+        nonce: runtime.mandate.nonce,
+        maxActionNotionalMicroUsd:
+          runtime.mandate.maxActionNotionalMicroUsd,
+        maxPeriodNotionalMicroUsd:
+          runtime.mandate.maxPeriodNotionalMicroUsd
+      },
+      assetRule: {
+        address: runtime.assetRule.address.toBase58(),
+        mint: runtime.assetRule.mint.toBase58(),
+        enabled: runtime.assetRule.enabled,
+        pythFeedId: runtime.assetRule.pythFeedId,
+        maxActionAmountBaseUnits: runtime.assetRule.maxActionAmount,
+        maxPeriodAmountBaseUnits: runtime.assetRule.maxPeriodAmount,
+        spentThisPeriodBaseUnits: runtime.assetRule.spentThisPeriod,
+        spentThisPeriodNotionalMicroUsd:
+          runtime.assetRule.spentThisPeriodNotionalMicroUsd
+      },
+      truthBoundary: {
+        executionAsset: 'DEMO_TOKEN',
+        livePyth: true,
+        serverHeldDemoSigner: true,
+        realMinorSecuritiesExecution: false,
+        brokerageOrCustody: false
+      }
+    };
+  }
+
+  async function execute({
+    asset,
+    type,
+    notional,
+    expectedNonce,
+    idempotencyKey
+  }) {
+    if (!idempotencyKey || typeof idempotencyKey !== 'string') {
+      return {
+        evaluation: {
+          contractVersion: '0.2',
+          decision: 'REFUSE',
+          reasonCode: 'IDEMPOTENCY_KEY_REQUIRED'
+        },
+        executionProof: null
+      };
+    }
+
+    if (executionResults.has(idempotencyKey)) {
+      return executionResults.get(idempotencyKey);
+    }
+
+    if (executionPromises.has(idempotencyKey)) {
+      return executionPromises.get(idempotencyKey);
+    }
+
+    const promise = (async () => {
+      const runtime = await loadRuntime();
+      const mandate = runtime.mandate;
+      const rule = runtime.assetRule;
+
+      if (String(asset ?? '').toUpperCase() !== DEMO_ASSET) {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'ASSET_OUTSIDE_RUNTIME',
+            mandate
+          }),
+          executionProof: null
+        };
+      }
+
+      if (String(type ?? '').toUpperCase() !== 'BUY') {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'ACTION_OUTSIDE_MANDATE',
+            mandate
+          }),
+          executionProof: null
+        };
+      }
+
+      if (Number(expectedNonce) !== Number(mandate.nonce)) {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'STALE_NONCE',
+            mandate
+          }),
+          executionProof: null
+        };
+      }
+
+      if (mandate.status !== 0 || mandate.stage < 3 || !rule.enabled) {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'MANDATE_NOT_ACTIVE',
+            mandate
+          }),
+          executionProof: null
+        };
+      }
+
+      const requestedNotionalMicroUsd = Math.round(Number(notional) * 1_000_000);
+      if (
+        !Number.isFinite(requestedNotionalMicroUsd) ||
+        requestedNotionalMicroUsd <= 0
+      ) {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'INVALID_AMOUNT',
+            mandate
+          }),
+          executionProof: null
+        };
+      }
+
+      if (
+        mandate.maxActionNotionalMicroUsd > 0 &&
+        requestedNotionalMicroUsd > mandate.maxActionNotionalMicroUsd
+      ) {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'PYTH_NOTIONAL_EXCEEDED',
+            mandate,
+            requestedNotionalMicroUsd,
+            boundaryRequestAvailable: true
+          }),
+          executionProof: null
+        };
+      }
+
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const periodExpired =
+        rule.periodSeconds > 0 &&
+        nowSeconds >= rule.periodStartedAt + rule.periodSeconds;
+      const effectiveSpentNotional = periodExpired
+        ? 0
+        : rule.spentThisPeriodNotionalMicroUsd;
+
+      if (
+        mandate.maxPeriodNotionalMicroUsd > 0 &&
+        effectiveSpentNotional + requestedNotionalMicroUsd >
+          mandate.maxPeriodNotionalMicroUsd
+      ) {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'PYTH_PERIOD_NOTIONAL_EXCEEDED',
+            mandate,
+            requestedNotionalMicroUsd,
+            boundaryRequestAvailable: true
+          }),
+          executionProof: null
+        };
+      }
+
+      const snapshot = await fetchPythProSolanaPayload({
+        apiKey: pythApiKey,
+        feed: PYTH_PRO_EQUITY_FEEDS.TSLA,
+        maxAgeSeconds: mandate.maxMarketAgeSeconds || 30,
+        maxConfidenceBps: mandate.maxConfidenceBps || 100
+      });
+
+      if (
+        snapshot.status !== 'FRESH' ||
+        snapshot.solanaPayload?.status !== 'AVAILABLE'
+      ) {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'PYTH_MARKET_EVIDENCE_UNAVAILABLE',
+            mandate,
+            requestedNotionalMicroUsd
+          }),
+          executionProof: null
+        };
+      }
+
+      const encoding =
+        snapshot.solanaPayload.encoding === 'base64' ? 'base64' : 'hex';
+      const message = Buffer.from(snapshot.solanaPayload.data, encoding);
+      const unitPriceMicroUsd = Math.round(Number(snapshot.price) * 1_000_000);
+
+      if (!Number.isFinite(unitPriceMicroUsd) || unitPriceMicroUsd <= 0) {
+        throw new Error('PYTH_UNIT_PRICE_INVALID');
+      }
+
+      if (
+        rule.maxUnitPriceMicroUsd > 0 &&
+        unitPriceMicroUsd > rule.maxUnitPriceMicroUsd
+      ) {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'MARKET_CONDITION_INVALIDATED',
+            mandate,
+            requestedNotionalMicroUsd
+          }),
+          executionProof: null
+        };
+      }
+
+      const mintInfo = await getMint(rpc, rule.mint, 'confirmed', TOKEN_PROGRAM_ID);
+      const scale = 10 ** mintInfo.decimals;
+      const amount = Math.max(
+        1,
+        Math.floor((requestedNotionalMicroUsd * scale) / unitPriceMicroUsd)
+      );
+
+      if (amount > rule.maxActionAmount) {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'MANDATE_LIMIT_EXCEEDED',
+            mandate,
+            requestedNotionalMicroUsd,
+            boundaryRequestAvailable: true
+          }),
+          executionProof: null
+        };
+      }
+
+      const effectiveSpentAmount = periodExpired ? 0 : rule.spentThisPeriod;
+      if (effectiveSpentAmount + amount > rule.maxPeriodAmount) {
+        return {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: 'PERIOD_LIMIT_EXCEEDED',
+            mandate,
+            requestedNotionalMicroUsd,
+            boundaryRequestAvailable: true
+          }),
+          executionProof: null
+        };
+      }
+
+      const storageInfo = await rpc.getAccountInfo(
+        PYTH_LAZER_STORAGE_ID,
+        'confirmed'
+      );
+      if (!storageInfo || storageInfo.data.length < 72) {
+        throw new Error('PYTH_LAZER_STORAGE_UNAVAILABLE');
+      }
+      const pythTreasury = new PublicKey(storageInfo.data.subarray(40, 72));
+
+      const ed25519Ix = createEd25519Instruction(message, 1, 12);
+      const vecLength = Buffer.alloc(4);
+      vecLength.writeUInt32LE(message.length);
+
+      const data = Buffer.concat([
+        discriminator('execute_within_mandate_with_pyth'),
+        vecLength,
+        message,
+        encodeU64(amount),
+        encodeU64(mandate.nonce)
+      ]);
+
+      const executionIx = new TransactionInstruction({
+        programId: DEVNET_KEYS_PROGRAM_ID,
+        keys: [
+          { pubkey: runtime.charter, isSigner: false, isWritable: false },
+          { pubkey: runtime.mandateAddress, isSigner: false, isWritable: true },
+          { pubkey: rule.address, isSigner: false, isWritable: true },
+          { pubkey: runtime.vaultTokenAccount, isSigner: false, isWritable: true },
+          { pubkey: rule.mint, isSigner: false, isWritable: false },
+          { pubkey: signer.publicKey, isSigner: true, isWritable: true },
+          {
+            pubkey: runtime.delegateTokenAccount,
+            isSigner: false,
+            isWritable: true
+          },
+          { pubkey: PYTH_LAZER_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: PYTH_LAZER_STORAGE_ID, isSigner: false, isWritable: false },
+          { pubkey: pythTreasury, isSigner: false, isWritable: true },
+          {
+            pubkey: SYSVAR_INSTRUCTIONS_PUBKEY,
+            isSigner: false,
+            isWritable: false
+          },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+        ],
+        data
+      });
+
+      const latest = await rpc.getLatestBlockhash('confirmed');
+      const tx = new Transaction({
+        feePayer: signer.publicKey,
+        recentBlockhash: latest.blockhash
+      }).add(ed25519Ix, executionIx);
+
+      tx.sign(signer);
+
+      try {
+        const signature = await rpc.sendRawTransaction(tx.serialize(), {
+          skipPreflight: false,
+          maxRetries: 3
+        });
+
+        const confirmation = await rpc.confirmTransaction(
+          {
+            signature,
+            blockhash: latest.blockhash,
+            lastValidBlockHeight: latest.lastValidBlockHeight
+          },
+          'confirmed'
+        );
+
+        if (confirmation.value.err) {
+          throw new Error(
+            `SOLANA_CONFIRMATION_FAILED:${JSON.stringify(confirmation.value.err)}`
+          );
+        }
+
+        const after = await loadRuntime();
+        const result = {
+          evaluation: evaluation({
+            decision: 'ALLOW',
+            reasonCode: 'WITHIN_MANDATE',
+            mandate: after.mandate,
+            requestedNotionalMicroUsd
+          }),
+          executionProof: {
+            status: 'CONFIRMED',
+            network: 'solana-devnet',
+            signature,
+            programId: DEVNET_KEYS_PROGRAM_ID.toBase58(),
+            mandateAddress: after.mandateAddress.toBase58(),
+            mandateVersion: after.mandate.version,
+            mandateNonce: after.mandate.nonce,
+            executedAt: now(),
+            idempotencyKey,
+            simulated: false,
+            asset: DEMO_ASSET,
+            executionAsset: 'DEMO_TOKEN',
+            pyth: {
+              source: 'PYTH_PRO',
+              feedId: DEMO_FEED_ID,
+              verification: 'ONCHAIN_PYTH_LAZER',
+              status: 'FRESH',
+              authorityEffect: 'NONE'
+            }
+          }
+        };
+
+        executionResults.set(idempotencyKey, result);
+        return result;
+      } catch (error) {
+        const result = {
+          evaluation: evaluation({
+            decision: 'REFUSE',
+            reasonCode: reasonFromError(error),
+            mandate,
+            requestedNotionalMicroUsd
+          }),
+          executionProof: null
+        };
+        executionResults.set(idempotencyKey, result);
+        return result;
+      }
+    })();
+
+    executionPromises.set(idempotencyKey, promise);
+
+    try {
+      const result = await promise;
+      executionResults.set(idempotencyKey, result);
+      return result;
+    } finally {
+      executionPromises.delete(idempotencyKey);
+    }
+  }
+
+  return {
+    getState,
+    execute,
+    idempotencyScope: 'PROCESS_LOCAL_DEMO'
+  };
+}
+
+let defaultProvider = null;
+
+export function configuredDevnetExecutionProviderFromEnv() {
+  if (defaultProvider) return defaultProvider;
+
+  if (!process.env.DEVNET_KEYPAIR_JSON || !process.env.PYTH_PRO_API_KEY) {
+    return null;
+  }
+
+  defaultProvider = createDevnetExecutionProvider({
+    rpcUrl:
+      process.env.SOLANA_DEVNET_RPC_URL ??
+      'https://api.devnet.solana.com',
+    signer: parseKeypair(process.env.DEVNET_KEYPAIR_JSON),
+    pythApiKey: process.env.PYTH_PRO_API_KEY
+  });
+
+  return defaultProvider;
+}
