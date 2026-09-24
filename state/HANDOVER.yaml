@@ -64,6 +64,8 @@ canonical_truth:
     pyth_bounty: ACTIVE_PROVEN
     prestocks_bounty: ACTIVE_LIVE_API_INTEGRATED
     prestocks_live_proof: PASS
+    cresco_frontend_pr_1: MERGED
+    cresco_web_ci: PASS
     cresco_devnet_execution_bridge: IMPLEMENTED_PROOF_PENDING
     cresco_demo_runtime_mode: SERVER_HELD_DEVNET_DEMO
     cresco_execution_asset: DEMO_TOKEN
