@@ -28,6 +28,10 @@ import {
   preStocksIntegrationSummary
 } from './prestocks-adapter.mjs';
 
+import {
+  configuredDevnetExecutionProviderFromEnv
+} from './devnet-execution-provider.mjs';
+
 const mayaFixture = JSON.parse(
   await readFile(new URL('../fixtures/frontend-maya-contract.json', import.meta.url), 'utf8')
 );
@@ -163,6 +167,13 @@ function capabilitiesForServices(services = {}) {
       demoRoute: '/api/v0.2/demo/maya',
       actionEvaluationRoute: '/api/v0.2/actions/evaluate',
       boundaryRequestRoute: '/api/v0.2/boundary-requests',
+      executionRoute: '/api/v0.2/actions/execute',
+      demoRuntimeRoute: '/api/v0.2/demo/runtime',
+      executionStatus:
+        services.executionProvider ||
+        (process.env.DEVNET_KEYPAIR_JSON && process.env.PYTH_PRO_API_KEY)
+          ? 'SERVER_HELD_DEVNET_DEMO_READY'
+          : 'RUNTIME_SECRETS_REQUIRED',
       canonicalDevnetProofRun: CANONICAL_DEVNET_PROOF_RUN,
       onchainPythVerification: true,
       realMinorSecuritiesExecution: false
@@ -333,6 +344,105 @@ export async function routeKeysHttp({
         runtimeProofStatus: 'CANONICAL_DEVNET_RUNTIME_PROVEN'
       }
     };
+  }
+
+  if (method === 'GET' && path === '/api/v0.2/demo/runtime') {
+    const executionProvider =
+      services?.executionProvider ??
+      configuredDevnetExecutionProviderFromEnv();
+
+    if (!executionProvider) {
+      return {
+        status: 503,
+        headers: JSON_HEADERS,
+        body: {
+          contractVersion: V2_CONTRACT_VERSION,
+          error: 'DEVNET_EXECUTION_RUNTIME_UNAVAILABLE',
+          requiredServerSecrets: [
+            'DEVNET_KEYPAIR_JSON',
+            'PYTH_PRO_API_KEY'
+          ],
+          truthBoundary: {
+            serverHeldDemoSigner: true,
+            realMinorSecuritiesExecution: false
+          }
+        }
+      };
+    }
+
+    try {
+      return {
+        status: 200,
+        headers: JSON_HEADERS,
+        body: {
+          contractVersion: V2_CONTRACT_VERSION,
+          type: 'V0_2_DEVNET_DEMO_RUNTIME',
+          ...(await executionProvider.getState())
+        }
+      };
+    } catch (error) {
+      return {
+        status: 503,
+        headers: JSON_HEADERS,
+        body: {
+          contractVersion: V2_CONTRACT_VERSION,
+          error: 'DEVNET_EXECUTION_RUNTIME_NOT_READY',
+          message: error?.message ?? 'Runtime unavailable'
+        }
+      };
+    }
+  }
+
+  if (method === 'POST' && path === '/api/v0.2/actions/execute') {
+    const executionProvider =
+      services?.executionProvider ??
+      configuredDevnetExecutionProviderFromEnv();
+
+    if (!executionProvider) {
+      return {
+        status: 503,
+        headers: JSON_HEADERS,
+        body: {
+          contractVersion: V2_CONTRACT_VERSION,
+          error: 'DEVNET_EXECUTION_RUNTIME_UNAVAILABLE',
+          executionProof: null
+        }
+      };
+    }
+
+    try {
+      const result = await executionProvider.execute({
+        asset: body?.asset,
+        type: body?.type,
+        notional: body?.notional,
+        expectedNonce: body?.expectedNonce,
+        idempotencyKey: body?.idempotencyKey
+      });
+
+      return {
+        status: 200,
+        headers: JSON_HEADERS,
+        body: {
+          contractVersion: V2_CONTRACT_VERSION,
+          type: 'V0_2_ACTION_EXECUTION',
+          runtimeMode: 'SERVER_HELD_DEVNET_DEMO',
+          idempotencyScope:
+            executionProvider.idempotencyScope ?? 'UNSPECIFIED',
+          ...result
+        }
+      };
+    } catch (error) {
+      return {
+        status: 503,
+        headers: JSON_HEADERS,
+        body: {
+          contractVersion: V2_CONTRACT_VERSION,
+          error: 'DEVNET_EXECUTION_RUNTIME_ERROR',
+          message: error?.message ?? 'Runtime execution unavailable',
+          executionProof: null
+        }
+      };
+    }
   }
 
   if (method === 'POST' && ['/api/v0.2/boundary-requests', '/api/v0.2/draft/boundary-requests'].includes(path)) {
