@@ -22,7 +22,7 @@ function withCors(headers, request, env) {
   next.set('access-control-allow-methods', 'GET,POST,OPTIONS');
   next.set(
     'access-control-allow-headers',
-    'content-type,idempotency-key'
+    'content-type,idempotency-key,authorization'
   );
   next.set('vary', 'Origin');
   return next;
