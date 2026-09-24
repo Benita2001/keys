@@ -149,8 +149,32 @@ async function main() {
   }
 
   async function rulesForMandate() {
-    const allRules = await program.account.assetRule.all();
-    return allRules.filter((entry) => entry.account.mandate.equals(mandate));
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const rawRules = await provider.connection.getProgramAccounts(program.programId, {
+        commitment: 'confirmed',
+        filters: [
+          { dataSize: 135 },
+          { memcmp: { offset: 8, bytes: mandate.toBase58() } }
+        ]
+      });
+
+      if (rawRules.length > 0) {
+        const decoded = [];
+        for (const { pubkey } of rawRules) {
+          decoded.push({
+            publicKey: pubkey,
+            account: await program.account.assetRule.fetch(pubkey)
+          });
+        }
+        return decoded;
+      }
+
+      if (attempt < 5) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+
+    return [];
   }
 
   let rules = await rulesForMandate();
@@ -201,7 +225,15 @@ async function main() {
 
     console.log(`DEMO_RUNTIME initialize_asset_rule_tx=${initRuleTx}`);
     mandateState = await program.account.mandate.fetch(mandate);
-    rules = await rulesForMandate();
+
+    // Reuse the exact PDA we just created instead of waiting for RPC program-account
+    // indexing to catch up. Future runs discover it through rulesForMandate().
+    rules = [
+      {
+        publicKey: assetRule,
+        account: await program.account.assetRule.fetch(assetRule)
+      }
+    ];
   }
 
   const tslaRules = rules.filter(
