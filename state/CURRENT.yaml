@@ -1,6 +1,6 @@
 project: KEYS
 updated_at: "2026-09-24"
-status: V0_2_ONCHAIN_PYTH_DEVNET_PASS_FRONTEND_CONTRACT_FROZEN
+status: V0_2_CRESCO_HTTP_DEVNET_BRIDGE_PASS_FRONTEND_FROZEN
 candidate: B
 concept_lock: true
 concept_lock_version: 2
@@ -41,7 +41,11 @@ current_truth:
   cresco_frontend_pr_1: MERGED
   cresco_web_ci: PASS
   cresco_live_proof_lane_ui: IMPLEMENTED_WEB_CI_PASS
-  cresco_devnet_execution_bridge: IMPLEMENTED_PROOF_PENDING
+  cresco_devnet_execution_bridge: PASS_PROVEN_HTTP_TO_SOLANA_DEVNET
+  cresco_devnet_execution_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36008701813"
+  cresco_devnet_execution_signature: "2GqHrafL46sU3RMDEEb8AChHzwgRqkMT5fjn5GiMyqomqkrEukrnywDCmGZrNtnRLkNGYMVjdPowyh5HrKtGdytn"
+  cresco_devnet_mandate: "AnBnNwACbwQ7KMN46jBoDS5pxsek2AdHV6X1B1uA7hXp"
+  cresco_bridge_evidence: evidence/solana/CRESCO-HTTP-DEVNET-EXECUTION-BRIDGE-PROOF-2026-09-24.md
   cresco_demo_runtime_mode: SERVER_HELD_DEVNET_DEMO
   cresco_execution_asset: DEMO_TOKEN
   cresco_execution_route: POST_/api/v0.2/actions/execute
@@ -158,13 +162,12 @@ truth_boundary:
   - market evidence has no authority-widening effect
 
 active_step:
-  name: BENITA_V0_2_FRONTEND_INTEGRATION
-  owner: Benita
-  support_owner: Faadil
+  name: CRESCO_BACKEND_DEPLOYMENT_AND_LIVE_WIRING
+  owner: Faadil
+  support_owner: Benita
   next:
-    - "Benita integrates against docs/FRONTEND-BACKEND-CONTRACT-V0.2.md and docs/CRESCO-BACKEND-DELTA-2026-09-24.md."
-    - "Switch Cresco from /api/v0.2/draft/actions/evaluate to /api/v0.2/actions/evaluate."
-    - "Wire Cresco to GET /api/v0.2/demo/runtime and POST /api/v0.2/actions/execute after devnet smoke proof passes."
-    - "Keep the judge-facing demo on the proven spine: in-bounds ALLOW -> out-of-bounds REFUSE -> Pyth condition REFUSE -> human widen -> same action ALLOW -> stale authorization REFUSE."
-    - "Preserve Practice/contextual learning without turning it into an authority score."
-    - "Maintain proof/truth boundaries while frontend integration is completed."
+    - "Deploy the KEYS backend as a separate hosted runtime without overwriting the Cresco frontend project."
+    - "Configure server-only DEVNET_KEYPAIR_JSON and PYTH_PRO_API_KEY plus CORS for https://cresco-lac.vercel.app."
+    - "Point Cresco to the hosted KEYS API with NEXT_PUBLIC_KEYS_API_URL and NEXT_PUBLIC_KEYS_EXECUTION=runtime."
+    - "Verify the Live Solana proof lane from the deployed Cresco UI and preserve the demo-token / server-held-devnet-signer truth boundary."
+    - "Keep the Family product spine unchanged; TSLA remains the isolated technical proof lane."
