@@ -8,8 +8,8 @@
  * Production fallback:
  *   https://keys-api-stocklana.faadil-casecraft.workers.dev
  *
- * In production, the hosted runtime is enabled by default only for the isolated
- * technical proof lane. The normal Family Money lane remains demo/policy-only.
+ * In production, the hosted runtime backs the bounded AAPL Money demo lane.
+ * It uses Solana Devnet test capital / demo-token execution, not real securities.
  *
  * Routes used:
  *   GET  /api/v0.1/capabilities                 (exists)
@@ -314,6 +314,41 @@ export function fetchMoneyPortfolio() {
     holdings: { ticker: string; shares: number; costBasis: number }[];
     activity: unknown[];
   }>("/api/v0.2/portfolio?mode=money");
+}
+
+export type BackendMarketQuote = {
+  symbol: string;
+  tokenizedSymbol?: string;
+  source: "PYTH_PRO";
+  feedId?: number;
+  status: "FRESH" | "STALE" | "UNAVAILABLE";
+  price?: number | null;
+  publishTime?: string | null;
+  confidenceBps?: number | null;
+  reasonCode?: string | null;
+};
+
+export function fetchMarketQuotes(symbols: string[]) {
+  const query = encodeURIComponent(symbols.join(","));
+  return request<{
+    contractVersion: "0.2";
+    type: "V0_2_MARKET_QUOTES";
+    quotes: BackendMarketQuote[];
+  }>(`/api/v0.2/market/quotes?symbols=${query}`);
+}
+
+export function fetchMarketSeries(symbol: string, period: string) {
+  return request<{
+    contractVersion: "0.2";
+    type: "V0_2_MARKET_SERIES";
+    symbol: string;
+    period: string;
+    status: "FRESH" | "STALE" | "UNAVAILABLE";
+    points: { t: number; v: number }[];
+    reasonCode?: string;
+  }>(
+    `/api/v0.2/market/series?symbol=${encodeURIComponent(symbol)}&period=${encodeURIComponent(period)}`,
+  );
 }
 
 type LiveProof = {
