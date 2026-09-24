@@ -96,6 +96,41 @@ Current v0.2 API semantics:
 
 The old v0.1 contract remains historical proof only.
 
+## Sponsor integrations
+
+KEYS currently targets the Stocklana main track plus two sponsor tracks that strengthen the locked product.
+
+### Pyth — proven
+
+Pyth is load-bearing market truth in the canonical Solana capital path: signed live Pyth Pro/Lazer evidence, on-chain verification, USD/notional enforcement, market-condition refusal, and authority effect `NONE`.
+
+### PreStocks — live API integration
+
+KEYS consumes the official PreStocks public token catalog:
+
+`https://prestocks.com/api/prestocks`
+
+Current routes:
+
+- `GET /api/v0.2/integrations/prestocks`
+- `GET /api/v0.2/integrations/prestocks/:symbol`
+
+The adapter exposes the exact Solana representation plus live mark/token pricing for contextual Practice and representation understanding.
+
+It defaults fail-closed:
+
+- `eligibility.status = UNKNOWN`
+- `executionEligible = false`
+- `practiceAvailable = true`
+- `authorityEffect = NONE`
+
+Live proof command:
+
+`npm run proof:prestocks`
+
+See [docs/BOUNTY-INTEGRATION-GATE-2026-09-24.md](docs/BOUNTY-INTEGRATION-GATE-2026-09-24.md).
+
+
 ## Truth boundary
 
 The current capital proof uses an explicitly labeled **demo/mock SPL token** with real live Pyth market evidence.
