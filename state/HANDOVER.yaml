@@ -85,6 +85,11 @@ canonical_truth:
     cresco_execution_asset: DEMO_TOKEN
     cresco_execution_route: POST_/api/v0.2/actions/execute
     cresco_runtime_route: GET_/api/v0.2/demo/runtime
+    backend_vercel_deployment_config: READY
+    backend_vercel_project_creation: MANUAL_REQUIRED
+    backend_public_url: PENDING
+    backend_default_cors_origin: "https://cresco-lac.vercel.app"
+    backend_deployment_guide: docs/VERCEL-BACKEND-DEPLOYMENT.md
     tessera_bounty: HOLD_WATCH
     clawpump_bounty: HOLD_OUTSIDE_CORE
     meteora_bounty: HOLD_OUTSIDE_CORE
@@ -176,7 +181,7 @@ next_work:
   owner: Faadil
   support_owner: Benita
   sequence:
-    - "Deploy KEYS backend separately from Cresco."
+    - "Create/import the KEYS backend Vercel project from Faadil1/keys using docs/VERCEL-BACKEND-DEPLOYMENT.md."
     - "Configure server-only devnet/Pyth secrets and CORS for the Cresco origin."
     - "Set Cresco NEXT_PUBLIC_KEYS_API_URL and NEXT_PUBLIC_KEYS_EXECUTION=runtime."
     - "Run the deployed Technical details -> Live Solana proof lane and verify a confirmed non-simulated devnet signature."
