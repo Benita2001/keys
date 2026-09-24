@@ -6,7 +6,6 @@
 import { assetRuleFor, evaluateBoundedAction } from "@/domain/policy";
 import type {
   ActionEvaluation,
-  BoundaryRequest,
   CurrentMandate,
   ExecutionResult,
   MarketAsset,
