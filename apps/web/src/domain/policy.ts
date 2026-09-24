@@ -119,8 +119,9 @@ export function assetRuleFor(mandate: CurrentMandate, ticker: string): AssetRule
     maxActionNotional: mandate.maxActionNotional,
     maxPeriodNotional: mandate.maxPeriodNotional,
     spentThisPeriod: mandate.spentThisPeriod,
-    // Pyth-derived USD notional is not yet enforced on-chain (TRUTH-BOUNDARY.md),
-    // so the frontend preview does not require market evidence.
+    // The local preview never acts as market-data authority. The real TSLA
+    // devnet proof lane enforces signed Pyth evidence on-chain; this projected
+    // rule remains market-neutral so typing in Cresco stays instant.
     requiresMarketEvidence: false,
   };
 }
