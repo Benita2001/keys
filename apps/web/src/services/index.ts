@@ -14,10 +14,18 @@ import type {
 } from "@/domain/types";
 import { EXPLORE_ORDER, MOCK_ASSETS, sampleSeries } from "@/mocks/market";
 import {
+  addDevnetTestFunds,
+  buildExecuteRequest,
+  createBackendDemoSession,
+  createPersistentBoundaryRequest,
+  decidePersistentBoundaryRequest,
   evaluateAction,
+  executeAction,
   fetchLiveEquityPrice,
   keysBackendConfigured,
   keysRuntimeExecutionEnabled,
+  newIdempotencyKey,
+  transitionCurrentMandate,
 } from "./keys-backend";
 import type {
   AuthService,
@@ -57,11 +65,9 @@ export function getCapabilities(): Capabilities {
   return {
     backend: backend ? "keys-v0.2-frozen" : "none",
     marketData: backend ? "mock-with-live-aapl" : "mock",
-    // The Family product lane remains demo/policy-only. A configured runtime
-    // enables only the isolated AAPL technical proof lane.
-    moneyMode: "demo",
-    funding: "demo",
-    auth: "demo",
+    moneyMode: runtime ? "runtime" : "demo",
+    funding: backend ? "devnet-test" : "demo",
+    auth: backend ? "backend-demo" : "demo",
     execution: runtime ? "keys-runtime" : "demo-not-executed",
   };
 }
@@ -229,6 +235,34 @@ export const moneyExecution: MoneyExecutionService = {
   },
   async execute(input) {
     await latency(520);
+
+    if (keysBackendConfigured() && keysRuntimeExecutionEnabled()) {
+      const key = input.idempotencyKey ?? newIdempotencyKey();
+      const runtime = await executeAction(
+        buildExecuteRequest({
+          mandate: input.mandate,
+          assetRule: input.assetRule,
+          asset: input.asset.ticker,
+          type: input.type,
+          notional: input.amount,
+          idempotencyKey: key,
+          allowOnceRequestId: input.allowOnce?.id,
+        }),
+      );
+
+      const executed = runtime.outcome === "EXECUTED";
+      return {
+        ok: executed,
+        outcome: runtime.outcome,
+        evaluation: runtime.evaluation,
+        ticker: input.asset.ticker,
+        amount: input.amount,
+        shares: executed ? sharesFor(input) : undefined,
+        idempotencyKey: key,
+        proof: runtime.proof,
+      };
+    }
+
     const evaluation = await decide(input);
     const ok = evaluation.decision === "ALLOW";
     const result: ExecutionResult = {
@@ -239,7 +273,6 @@ export const moneyExecution: MoneyExecutionService = {
       amount: input.amount,
       shares: ok ? sharesFor(input) : undefined,
       idempotencyKey: input.idempotencyKey,
-      // No Money execution runtime is configured. Be explicit.
       proof: ok
         ? {
             status: "DEMO_NOT_EXECUTED",
@@ -270,8 +303,19 @@ function bumpMandate(mandate: CurrentMandate, changes: Partial<CurrentMandate>):
 
 export const boundaryRequests: BoundaryRequestService = {
   async create({ mandate, evaluation, asset, type, amount, reason }) {
+    if (keysBackendConfigured()) {
+      return createPersistentBoundaryRequest({
+        mandate,
+        evaluation,
+        asset,
+        type,
+        amount,
+        reason,
+      });
+    }
+
     await latency(360);
-    const request: BoundaryRequest = {
+    return {
       id: `br_${Date.now().toString(36)}`,
       status: "PENDING_HUMAN_DECISION",
       mandateVersion: mandate.version,
@@ -280,41 +324,72 @@ export const boundaryRequests: BoundaryRequestService = {
       actionType: type,
       requestedNotional: amount,
       standingLimit:
-        evaluation.reasonCode === "PERIOD_LIMIT_EXCEEDED" ? mandate.maxPeriodNotional : mandate.maxActionNotional,
+        evaluation.reasonCode === "PERIOD_LIMIT_EXCEEDED"
+          ? mandate.maxPeriodNotional
+          : mandate.maxActionNotional,
       reasonCode: evaluation.reasonCode,
       reason: reason.trim().slice(0, 140),
       createdAt: new Date().toISOString(),
     };
-    return request;
   },
+
   async decide({ request, decision, mandate, newLimits, note }) {
+    if (keysBackendConfigured()) {
+      return decidePersistentBoundaryRequest({
+        requestId: request.id,
+        decision,
+        newLimits,
+        note,
+      });
+    }
+
     await latency(360);
     const decidedAt = new Date().toISOString();
     if (decision === "WIDEN_MANDATE") {
       if (!newLimits) throw new Error("newLimits required to widen");
       const next = bumpMandate(mandate, newLimits);
-      return { request: { ...request, status: "WIDENED", decidedAt, guardianNote: note }, mandate: next };
+      return {
+        request: { ...request, status: "WIDENED", decidedAt, guardianNote: note },
+        mandate: next,
+      };
     }
     if (decision === "ALLOW_ONCE") {
-      return { request: { ...request, status: "ALLOWED_ONCE", decidedAt, guardianNote: note }, mandate };
+      return {
+        request: {
+          ...request,
+          status: "ALLOWED_ONCE",
+          decidedAt,
+          guardianNote: note,
+        },
+        mandate,
+      };
     }
-    return { request: { ...request, status: "REFUSED", decidedAt, guardianNote: note }, mandate };
+    return {
+      request: { ...request, status: "REFUSED", decidedAt, guardianNote: note },
+      mandate,
+    };
   },
 };
 
 export const mandates: MandateService = {
   async update({ mandate, changes }) {
+    if (keysBackendConfigured()) {
+      const result = await transitionCurrentMandate({
+        expectedNonce: mandate.nonce,
+        changes,
+      });
+      return result.mandate;
+    }
     await latency(300);
     return bumpMandate(mandate, changes);
   },
 };
 
-/* ------------------------------------------------------------------ */
-/* Funding + auth — demo only                                          */
-/* ------------------------------------------------------------------ */
-
 export const funding: FundingService = {
   async addMoney({ amount }) {
+    if (keysBackendConfigured()) {
+      return addDevnetTestFunds(amount);
+    }
     await latency(500);
     return { status: "DEMO_CREDITED", amount };
   },
@@ -322,6 +397,9 @@ export const funding: FundingService = {
 
 export const auth: AuthService = {
   async signInDemo(role, displayName) {
+    if (keysBackendConfigured()) {
+      return createBackendDemoSession(role, displayName);
+    }
     await latency(250);
     return { role, displayName, kind: "demo" };
   },
