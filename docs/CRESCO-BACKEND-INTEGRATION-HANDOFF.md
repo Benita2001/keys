@@ -1,9 +1,11 @@
 # Cresco — Backend Integration Handoff
 
 Audience: backend owner (KEYS v0.2 runtime, Solana, Pyth).
-Frontend: `apps/web` (Next.js 16, TypeScript). Contract status: the backend v0.2 contract is **DRAFT** (`docs/FRONTEND-BACKEND-CONTRACT-V0.2-DRAFT.md`). This document lists exactly what the Cresco frontend consumes, what already exists, and what's missing.
+Frontend: `apps/web` (Next.js 16, TypeScript). Contract status: the backend v0.2 contract is **FROZEN** (`docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`). This document reflects the merged Cresco frontend and current backend integration truth.
 
 **Read first:** nothing in the frontend executes capital. Money Mode is demo state with honest labels. The only backend calls the frontend makes today are listed in §1.
+
+> **Current delta:** see `docs/CRESCO-BACKEND-DELTA-2026-09-24.md`. The stable devnet execution bridge is intentionally TSLA + demo/mock SPL token + server-held devnet demo signer. It does not replace the broader production architecture sections below.
 
 ---
 
@@ -37,10 +39,10 @@ Unset → the frontend runs fully on local demo state and the local policy previ
 
 | Frontend call | Backend route (exists) | Used for | Verified |
 |---|---|---|---|
-| `evaluateActionDraft()` | `POST /api/v0.2/draft/actions/evaluate` | Money Mode decision (ALLOW / REFUSE + `boundaryRequestAvailable`) | Yes: local API, browser CORS, $5 → ALLOW, $20 → REFUSE `MANDATE_LIMIT_EXCEEDED` |
+| `evaluateAction()` | `POST /api/v0.2/actions/evaluate` | Money Mode decision (ALLOW / REFUSE + `boundaryRequestAvailable`) | Yes: frozen v0.2 route |
 | `fetchLiveEquityPrice()` | `GET /api/v0.1/demo/live-proof` | Overlay a live Pyth price for the configured demo equity (TSLA) when `evaluation.marketEvidence.status === "FRESH"` | Route reachable. Without `PYTH_PRO_API_KEY` it returns no fresh evidence, so TSLA stays labeled **Sample prices** (correct fail-closed behavior). Live path not observed locally. |
 | `fetchCapabilities()` | `GET /api/v0.1/capabilities` | Available for routing decisions; not yet consumed by UI | Route exists |
-| `executeAction()` | `POST /api/v0.2/actions/execute` (**proposed, not built**) | Money execution + proof when `NEXT_PUBLIC_KEYS_EXECUTION=runtime` | Against the local mock only (`npm run mock:keys`): confirm, pending, timeout, 5xx, malformed, stale nonce, allow-once, idempotent replay |
+| `executeAction()` | `POST /api/v0.2/actions/execute` (**implemented; stable devnet smoke proof pending**) | Real demo-token devnet execution + proof when `NEXT_PUBLIC_KEYS_EXECUTION=runtime` | HTTP route + provider implemented; dedicated CI bootstrap/smoke is the proof gate |
 
 Fail-closed rule in the adapter: if the evaluate call errors or times out (8s), the frontend returns `REFUSE / DECISION_UNAVAILABLE` ("We couldn't check your limits. Nothing happened."). An unreachable backend never becomes an ALLOW.
 
@@ -52,7 +54,7 @@ Fail-closed rule in the adapter: if the evaluate call errors or times out (8s), 
 |---|---|---|---|
 | `currentMandate` | `CurrentMandate` | Home Money hero, `MandateSummaryCard`, My limits, parent dashboard/limits | Frontend needs **multi-asset scope** (`allowedAssets[]`), `periodLabel`, `spentThisPeriod`, `updatedAt`. Draft fixture is single-asset. `familyStage` is display-only. |
 | `assetRule` | `AssetRule` (projected by `assetRuleFor(mandate, ticker)`) | Evaluate request body | Frontend sends `requiresMarketEvidence:false` because USD/notional Pyth enforcement isn't built on-chain yet (TRUTH-BOUNDARY). Flip when it is. Period spend is **mandate-wide** in the UI; the backend currently tracks it per rule. |
-| `actionEvaluation` | `ActionEvaluation` | Invest flow, Company Detail CTA, `BoundaryMessage` | Uses `decision`, `reasonCode`, `requestedNotional`, `standingLimit`, `remainingPeriodNotional`, `boundaryRequestAvailable`, `guardianApprovalRequired`, `mandateVersion/Nonce`. Frontend adds `source` (`keys-backend-draft` \| `local-preview`). Frontend-only codes: `INSUFFICIENT_BALANCE`, `ASSET_UNAVAILABLE`, `DECISION_UNAVAILABLE`. |
+| `actionEvaluation` | `ActionEvaluation` | Invest flow, Company Detail CTA, `BoundaryMessage` | Uses `decision`, `reasonCode`, `requestedNotional`, `standingLimit`, `remainingPeriodNotional`, `boundaryRequestAvailable`, `guardianApprovalRequired`, `mandateVersion/Nonce`. Frontend adds `source` (`keys-backend` | `keys-runtime` | `local-preview`). Frontend-only codes: `INSUFFICIENT_BALANCE`, `ASSET_UNAVAILABLE`, `DECISION_UNAVAILABLE`. |
 | `learningContext` | `LearningContext` | `BoundaryMessage` "Why limits exist", company first-use sheet | Mirrors `learningCueForAction`. No score field exists or is rendered. |
 | `boundaryRequest` | `BoundaryRequest` | `BoundaryRequestSheet`, `RequestStatusCard`, parent request page | Draft route builds the envelope but **nothing persists it and no decision route exists** (see §3.5). Frontend keeps `reason` text client-side; backend draft expects `reasoningCommitmentHash`. |
 | `executionProof` | `ExecutionProof` | Invest success, *View transaction details* | Today always `DEMO_NOT_EXECUTED` (Money) or `PRACTICE_LOCAL`. UI already renders `RUNTIME_CONFIRMED` with `network`, `signature`, `programId`, `mandateVersion/Nonce`. |
@@ -79,7 +81,7 @@ Each entry: screen → purpose → existing support → missing → proposed end
 ### 3.2 Money Mode action evaluation — **wired (draft)**
 
 - **Screens:** Invest (`/invest/[ticker]?mode=money`), Company Detail Money CTA.
-- **Existing:** `POST /api/v0.2/draft/actions/evaluate`.
+- **Existing:** `POST /api/v0.2/actions/evaluate` (frozen route).
 - **Request sent:** `{ mandate:{status,version,nonce,expiresAt}, assetRule, action:{asset,type:"BUY",amount,notional} }`.
 - **Missing:** server-owned Mandate (today the client sends it; the backend must load the delegate's current Mandate by session, not trust the client), multi-asset rules, mandate-wide period spend, balance check.
 - **Proposed v0.2 final:** `POST /api/v0.2/actions/evaluate` with body `{ asset, type, notional, expectedNonce }`, identity from session.
@@ -92,7 +94,7 @@ Each entry: screen → purpose → existing support → missing → proposed end
 - **Existing:** Anchor program `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk` proves bounded **demo-token** execution on devnet (in-bounds executes without guardian, out-of-bounds fails in-program, widen advances version/nonce, stale refuses, pause blocks). No HTTP route executes it yet.
 - **Frontend status:** implemented in `apps/web/src/services/keys-backend.ts` (`executeAction`) and `services/index.ts` (`executeOnRuntime`). Enabled with `NEXT_PUBLIC_KEYS_API_URL=…` + `NEXT_PUBLIC_KEYS_EXECUTION=runtime`. Verified against the local mock `apps/web/scripts/mock-keys-api.mjs` (`npm run mock:keys`, port 8788), which evaluates with the real `src/bounded-autonomy.mjs` and returns `simulated: true` proofs.
 
-**Route:** `POST /api/v0.2/actions/execute` · header `idempotency-key: <same as body>`
+**Route:** `POST /api/v0.2/actions/execute` · implemented for the server-held TSLA devnet proof lane · header `idempotency-key: <same as body>`
 
 Request:
 
@@ -224,8 +226,8 @@ Response: **HTTP 200 for every policy outcome.**
 
 ## 5. Truth boundary (unchanged by this PR)
 
-Real today: bounded demo-token execution on devnet (backend proof), draft v0.2 evaluation route, authenticated Pyth TSLA evidence server-side.
-**Not** claimed by the frontend: live prices for non-TSLA assets, real Money execution, custody, brokerage, xStocks settlement, share ownership, fiat funding, KYC, embedded wallet, mainnet, on-chain Pyth enforcement.
+Real today: bounded demo-token execution on devnet, frozen v0.2 evaluation route, signed live Pyth TSLA evidence verified on-chain, PreStocks live API integration, and an implemented Cresco HTTP execution bridge awaiting its dedicated stable-runtime smoke PASS.
+**Not** claimed by the frontend: live prices for non-TSLA assets, real securities execution, custody, brokerage, xStocks settlement, share ownership, fiat funding, KYC, embedded wallet, or mainnet.
 
 ---
 
