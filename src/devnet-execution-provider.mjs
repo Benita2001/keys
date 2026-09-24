@@ -722,7 +722,9 @@ export function createDevnetExecutionProvider({
               feedId: DEMO_FEED_ID,
               verification: 'ONCHAIN_PYTH_LAZER',
               status: 'FRESH',
-              authorityEffect: 'NONE'
+              authorityEffect: 'NONE',
+              unitPriceMicroUsd,
+              publishTime: snapshot.publishTime ?? null
             }
           }
         };
