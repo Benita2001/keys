@@ -1,4 +1,6 @@
 import { routeKeysHttp } from './http-api.mjs';
+import { handleFamilyApi } from './cloudflare-family-api.mjs';
+export { FamilyState } from './cloudflare-family-state.mjs';
 
 const DEFAULT_CRESCO_ORIGIN = 'https://cresco-lac.vercel.app';
 
@@ -45,6 +47,14 @@ export async function handleKeysCloudflareRequest(request, env = {}) {
   }
 
   try {
+    const familyResponse = await handleFamilyApi(request, env);
+    if (familyResponse) {
+      return new Response(await familyResponse.text(), {
+        status: familyResponse.status,
+        headers: withCors(familyResponse.headers, request, env)
+      });
+    }
+
     const body = await readJsonBody(request);
     const result = await routeKeysHttp({
       method: request.method,
