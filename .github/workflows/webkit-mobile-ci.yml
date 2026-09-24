@@ -25,7 +25,7 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
 
       - name: Install app
-        run: npm ci
+        run: npm install --no-package-lock --no-audit --no-fund
 
       - name: Install Playwright for QA only
         run: npm install --no-save --no-package-lock @playwright/test@1.55.0
@@ -37,4 +37,4 @@ jobs:
         run: npm run build
 
       - name: Run iPhone WebKit QA
-        run: npx playwright test --project=webkit
+        run: npx playwright test --config=playwright.config.mjs --project=webkit
