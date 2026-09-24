@@ -115,6 +115,20 @@ Likely core surfaces:
 - market evidence explanation;
 - concise transition/review history.
 
+## Sponsor extension — do not block the core flow
+
+Pyth remains part of the core proof.
+
+PreStocks is now available as an optional representation / Practice surface:
+
+- `GET /api/v0.2/integrations/prestocks`
+- `GET /api/v0.2/integrations/prestocks/:symbol`
+
+Use it to explain the exact on-chain representation and live private-market context. The default PreStocks state is deliberately Practice available, eligibility unknown, execution not eligible, authority effect none.
+
+Do not make PreStocks the homepage hero. Do not represent this integration as live minor securities execution.
+
+
 ## Truth boundaries
 
 - market evidence does not create authority;
