@@ -67,12 +67,12 @@ current_truth:
   cloudflare_public_rpc_status: PASS_ONFINALITY
   cloudflare_public_health: PASS
   cloudflare_demo_runtime: PASS_LIVE
-  backend_cloudflare_deployment: LIVE_OLDER_BUILD_REDEPLOY_REQUIRED_FOR_STATEFUL_SESSION_TOKEN
+  backend_cloudflare_deployment: LIVE_CURRENT_STATEFUL_FAMILY_BUILD
   backend_public_url: "https://keys-api-stocklana.faadil-casecraft.workers.dev"
-  hosted_stateful_smoke: BLOCKED_OLD_CLOUDFLARE_BUILD
-  hosted_stateful_smoke_run: "https://github.com/Faadil1/keys/actions/runs/36057734921"
-  devnet_allow_once_program_upgrade: IN_PROGRESS
-  devnet_allow_once_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/36055017447"
+  hosted_stateful_smoke: PASS
+  hosted_stateful_smoke_run: "https://github.com/Faadil1/keys/actions/runs/36066208304"
+  devnet_allow_once_program_upgrade: RETRY_IN_PROGRESS_AFTER_POW_SHORTFALL_FIX
+  devnet_allow_once_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/36066178194"
   aapl_assetrule_toggle_code: IMPLEMENTED_ONCHAIN_INSTRUCTION_CLIENT
   family_state_durable_object: IMPLEMENTED_SQLITE
   family_role_sessions: IMPLEMENTED_DEMO_CHILD_GUARDIAN
@@ -84,7 +84,11 @@ current_truth:
   family_learning_sync: IMPLEMENTED_AUTHORITY_EFFECT_NONE
   family_money_portfolio_sync: IMPLEMENTED
   family_market_quotes: IMPLEMENTED_FAIL_CLOSED
-  family_market_history: EXPLICITLY_UNAVAILABLE_NO_FABRICATION
+  family_market_history: PASS_PYTH_PRO_AAPL_HOSTED
+  family_market_history_run: "https://github.com/Faadil1/keys/actions/runs/36066208304"
+  family_global_period_multi_asset_reservations: PASS_HOSTED_SERIALIZATION_PROOF
+  family_global_period_multi_asset_reservations_run: "https://github.com/Faadil1/keys/actions/runs/36066208304"
+  family_second_money_asset: NOT_CLAIMED_TSLA_RESERVATION_LABEL_ONLY
   cresco_webkit_iphone_qa: PASS
   cresco_webkit_iphone_qa_run: "https://github.com/Faadil1/keys/actions/runs/36057960806"
   backend_default_cors_origin: "https://cresco-lac.vercel.app"
@@ -211,9 +215,9 @@ active_step:
   owner: Faadil
   support_owner: Benita
   next:
-    - "Redeploy the latest main commit to Cloudflare so the public Worker serves role-session tokens and the stateful Family API."
     - "Complete the in-progress Solana Devnet program upgrade so grant_allowance_once exists in the deployed binary."
-    - "Re-run hosted Cloudflare + Devnet bridge smoke after those two deployment gates pass."
+    - "Re-run the Devnet execution bridge against the upgraded program and capture ALLOW_ONCE single-use evidence."
+    - "Keep the now-passing hosted Pyth-history and Durable Object concurrency proofs as submission evidence."
     - "Record the judge demo: My Key -> in-bounds Devnet action -> boundary -> guardian decision -> widen -> same action -> stale refusal."
     - "Surface the confirmed Devnet receipt/program/version/nonce/Pyth evidence without turning the UI into a protocol dashboard."
     - "Keep production auth/KYC, wallets, fiat rails, custody/mainnet and all-symbol history explicitly outside the hackathon truth boundary."
