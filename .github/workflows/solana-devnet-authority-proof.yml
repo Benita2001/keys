@@ -187,7 +187,7 @@ jobs:
             echo "PROOF devnet_pow_faucet=START balance_lamports=$BALANCE"
             cargo install devnet-pow
             set +e
-            POW_OUT=$(devnet-pow mine --target-lamports 700000000 -ud 2>&1)
+            POW_OUT=$(devnet-pow mine -d 3 --reward 0.02 --no-infer -t 600000000 -ud 2>&1)
             POW_RC=$?
             set -e
             echo "$POW_OUT"
