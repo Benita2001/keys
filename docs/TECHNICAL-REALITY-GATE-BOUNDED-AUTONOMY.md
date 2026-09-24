@@ -1,150 +1,128 @@
 # KEYS — Technical Reality Gate: Bounded Autonomy
 
 Date: 2026-09-24  
-Status: **PASS WITH ARCHITECTURE DELTA**
+Status: **PASS — IMPLEMENTED CORE PROVEN ON CANONICAL DEVNET**
 
 ## Decision
 
-The improved Family wedge is technically credible without turning KEYS into a parental-control dashboard.
+The improved Family wedge is technically credible and its core mechanism is now demonstrated:
 
-The canonical product direction is now:
+> A guardian defines an explicit Mandate. The young person acts freely inside it. Actions outside it are refused or escalated. Market evidence may restrict or invalidate an action, but only an authorized human can widen human authority.
 
-> A guardian defines an explicit mandate once. The young person acts freely inside it. Actions outside it are refused or escalated. Market evidence may restrict or expire an action, but it may never grant more human authority. Wider authority requires an explicit signed transition, and old authorization material becomes stale.
+## Required truths and current verdict
 
-The previous v0.1 proof remains valid evidence for authority-transition semantics, but it is no longer the complete target architecture.
+1. **In-bounds action is immediate — PASS.** No guardian approval is required for ordinary actions already covered by the Mandate.
+2. **Capital boundary is machine-enforced — PASS.** An out-of-bounds action fails in the Solana execution path.
+3. **Mandate is technical truth — PASS at runtime core.** Asset/action, amount, period, status, version/nonce and market constraints participate in execution.
+4. **Pyth is load-bearing — PASS.** Live signed market evidence is verified in the capital path and used for USD/notional and market-condition checks.
+5. **Pyth never grants authority — PASS.** Market evidence can refuse an action; widening remains human-signed.
+6. **Learning remains without becoming authority — LOCKED product rule.**
+7. **Minor private reasoning stays off public chain — LOCKED truth boundary.**
+8. **Real execution truth remains separate from legal eligibility — LOCKED truth boundary.**
 
-## What must be true
-
-1. **In-bounds action is immediate.** No proposal or guardian approval is required for ordinary actions already covered by the current Mandate.
-2. **The capital boundary is machine-enforced.** An out-of-bounds action must fail in the Solana execution path, not only in UI/backend policy.
-3. **The Mandate is the technical truth.** Family stages may remain as a UX/policy pack, but authority is represented by explicit scopes and bounds.
-4. **Pyth is load-bearing.** Fresh signed market evidence can be used to compute notional, expire a precommitted condition, or fail closed on stale/unknown evidence.
-5. **Pyth never grants authority.** External evidence may restrict, expire, or escalate; only an authorized human transition may widen a human delegate's authority.
-6. **Learning remains in the product.** Learning is contextual and practice is available, but lesson completion, quiz performance, P&L, or model scores do not auto-promote authority.
-7. **Minor private reasoning stays off public chain.** Only commitments/hashes, bounds, receipts and transition proofs belong on-chain.
-8. **Real execution truth remains separate from legal eligibility.** Mainnet tokenized-stock use still requires issuer/venue/jurisdiction eligibility.
-
-## Architecture options considered
+## Architecture decision
 
 ### A. UI/backend-only rules — REJECTED
 
-A centralized service can enforce limits inside its own product, but this does not prove the Stocklana-native mechanism. It also leaves KEYS as a policy dashboard rather than an execution layer.
+Insufficient for the native Solana proof because the capital boundary would live only in application policy.
 
-### B. Raw SPL Token delegate allowance — VALID PROOF TOOL, NOT CANONICAL ARCHITECTURE
+### B. Raw SPL delegate allowance — PROOF PRIMITIVE ONLY
 
-SPL Token delegation can authorize a delegate to transfer or burn a limited token amount from a token account. This is useful for a narrow proof of an on-chain ceiling.
+Useful for narrow allowances, but insufficient for the full KEYS Mandate: USD notional, period limits, market conditions, explicit transitions, one-time exceptions and richer policy semantics.
 
-It is not sufficient as the long-term KEYS Mandate because it does not natively express:
+### C. Squads smart account — POSSIBLE FUTURE SUBSTRATE
 
-- USD/notional limits across changing prices;
-- per-period aggregate limits;
-- multi-asset policy;
-- Pyth conditions;
-- expiry semantics across a policy matrix;
-- one-time exceptions versus standing authority;
-- boundary-request semantics;
-- cross-action rules.
+Credible as a future account substrate, but not a replacement for KEYS policy semantics.
 
-Use it only where it is the simplest truthful proof adapter.
+### D. KEYS program-controlled vault — ADOPTED AND PROVEN
 
-### C. Squads smart account / spending limits — STRONG SUBSTRATE, NOT THE POLICY MODEL
+The current runtime uses a KEYS-controlled token account and checks the active Mandate before capital movement.
 
-Squads v4 provides smart-account infrastructure, spending limits, time locks and programmable asset management. It is a credible production substrate.
+The proven execution path includes:
 
-However, KEYS still needs its own policy layer for market conditions, proposal commitments, evidence semantics, learning separation, explicit mandate versioning and human-only widening.
+- delegate/signer relationship;
+- version/nonce;
+- Mandate active status;
+- asset rule;
+- action permission;
+- per-action amount;
+- per-period amount;
+- Pyth feed match;
+- Pyth freshness;
+- Pyth confidence;
+- Pyth-derived USD notional;
+- per-action/per-period notional;
+- optional precommitted max-price condition.
 
-Squads may later hold capital while KEYS compiles Mandates into compatible spending-limit/account instructions.
+**D remains the canonical architecture.**
 
-### D. KEYS program-controlled vault — CANONICAL ARCHITECTURE
+## Pyth reality — proven
 
-A KEYS-controlled vault/PDA holds demo assets or controls the token accounts from which authorized actions execute.
+The earlier REST-only Pyth proof has been superseded by a stronger runtime proof.
 
-The execution instruction checks the current Mandate before moving capital:
+The current canonical path:
 
-- delegate signer;
-- mandate version / nonce;
-- allowed asset;
-- allowed action;
-- per-action notional;
-- per-period notional;
-- expiry;
-- Pyth freshness / confidence / committed market condition;
-- current status (active / paused / revoked).
+1. server/backend obtains authenticated signed Pyth Pro Solana-format evidence;
+2. transaction includes the exact signed market message;
+3. Ed25519 verification is included;
+4. KEYS invokes the canonical Pyth Lazer verifier;
+5. KEYS parses the verified payload;
+6. policy checks occur before capital can move.
 
-Only after those checks pass does the program CPI into the token program or an approved execution adapter.
+Canonical devnet proof:
 
-This architecture directly expresses the product and keeps the authority policy independent of any single frontend.
+https://github.com/Faadil1/keys/actions/runs/35959137364
 
-**Decision: adopt D as the canonical target.**
+Evidence:
 
-Squads remains a possible production smart-account substrate. Raw SPL delegation remains a possible proof adapter.
-
-## Pyth reality
-
-Current KEYS live proof uses authenticated Pyth Pro REST data off-chain. That proof is real, but it is not yet an on-chain Pyth enforcement proof.
-
-Pyth Pro supports Solana verification of signed price updates. The target integration is:
-
-1. server/backend subscribes to or fetches Pyth Pro using the secret API key;
-2. request a signed Solana-format payload, not the current unsigned-only demo format;
-3. include the signed payload in the Solana transaction;
-4. the KEYS program verifies/parses the update using the Pyth Pro/Lazer Solana SDK and Solana ed25519 verification;
-5. enforce freshness/confidence and the committed condition before execution.
-
-Official references:
-- https://docs.pyth.network/price-feeds/pro/integrate-as-consumer/svm
-- https://docs.pyth.network/price-feeds/pro/subscribe-to-prices
-- https://docs.pyth.network/price-feeds/pro/api/rest
+`evidence/pyth/DEVNET-ONCHAIN-PYTH-BOUNDARY-PROOF-2026-09-24.md`
 
 ## Learning / Practice reality
 
-Learning is retained as a **Family experience layer**, not an automatic authority engine.
+Learning stays as a Family experience layer.
 
-Recommended learning moments:
+Recommended moments:
 
-- first exposure to a new asset or action;
-- before a new risk class;
-- after a boundary refusal;
-- when Pyth invalidates a user's own precommitted condition;
-- after execution/review, comparing T0 belief with what happened.
-
-Practice mode uses the same market evidence and Mandate vocabulary but does not move real capital.
+- first exposure to an unfamiliar asset/action;
+- Practice before unfamiliar risk;
+- explanation after a boundary refusal;
+- explanation when a Pyth condition invalidates an old idea;
+- post-action reflection comparing T0 belief with later evidence.
 
 Rules:
 
-- learning completion may suggest **requesting** a review;
-- learning completion may never auto-widen authority;
-- P&L may never be the promotion mechanism;
-- the guardian may explicitly widen, narrow, pause or revoke a Mandate.
+- learning may support a request for review;
+- learning never auto-widens authority;
+- P&L never becomes a maturity score;
+- guardian/principal explicitly controls standing authority changes.
 
-## Current v0.1 gaps
+## Historical v0.1 versus current v0.2
 
-The deployed program currently proves authority transitions, but not bounded capital execution. Specific gaps:
+v0.1 remains valid historical evidence for authority-transition semantics.
 
-- Mandate stores a single stage rather than a permission matrix;
-- no program-controlled vault / execution instruction;
-- no asset-rule PDA or explicit mint allowlist;
-- no per-period spend accounting;
-- no mandate expiry/pause/revoke state;
-- no on-chain Pyth verification;
-- Proposal is still required by the old happy path;
-- review eligibility is threshold-driven and separate from the new boundary-request model;
-- transition logic allows any forward jump rather than compiling an explicit new permission envelope;
-- proposal `created_at` is caller-supplied;
-- downward transitions are not first-class.
+v0.2 now additionally proves:
 
-These are architecture deltas, not failures of the v0.1 proof.
+- permission-matrix core / AssetRule;
+- program-controlled capital;
+- in-bounds autonomy;
+- out-of-bounds refusal;
+- explicit human widen;
+- stale execution refusal;
+- downward pause;
+- signed live Pyth verification;
+- Pyth-derived USD notional;
+- Pyth market-condition refusal.
 
 ## Gate verdict
 
 **PASS.**
 
-The new concept is technically realizable on Solana with a clean separation between:
+Next gate:
 
-- **Mandate / capital enforcement** — on-chain;
-- **Pyth market truth** — signed external evidence verified at execution;
-- **learning** — contextual product layer;
-- **human authority changes** — explicit authorized signatures;
-- **legal eligibility / custody / brokerage claims** — separate and not implied.
+**BENITA_V0_2_FRONTEND_INTEGRATION**
 
-Next gate: **BACKEND_V0_2_BOUNDED_AUTONOMY_BUILD**.
+Frozen integration contract:
+
+`docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
+
+Truth boundary remains strict: demo/mock SPL token, no real minor securities execution, no brokerage/custody claim, no mainnet claim.
