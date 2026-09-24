@@ -157,63 +157,18 @@ jobs:
           BALANCE=${BALANCE:-0}
           echo "PROOF devnet_balance_after_buffer_reclaim_lamports=$BALANCE"
 
-          # First use the native faucet. It is cheap when available, but can be
-          # rate-limited independently of our build.
-          if [ "$BALANCE" -lt 2500000000 ]; then
-            for AIRDROP_ATTEMPT in 1 2 3; do
-              set +e
-              AIRDROP_OUT=$(solana airdrop 0.5 --url https://api.devnet.solana.com 2>&1)
-              AIRDROP_RC=$?
-              set -e
-              echo "$AIRDROP_OUT"
-              echo "PROOF devnet_airdrop_attempt attempt=$AIRDROP_ATTEMPT amount=0.5 rc=$AIRDROP_RC"
-
-              BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
-              BALANCE=${BALANCE:-0}
-              if [ "$BALANCE" -ge 2500000000 ]; then
-                break
-              fi
-              sleep 15
-            done
-          fi
-
-          BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
-          BALANCE=${BALANCE:-0}
-
-          # Solana's documented proof-of-work faucet supports target-lamports.
-          # Mine the actual shortfall required by the upgrade rather than a fixed
-          # amount that can leave the payer below the deployment target.
-          TARGET_BALANCE_LAMPORTS=2500000000
-          if [ "$BALANCE" -lt "$TARGET_BALANCE_LAMPORTS" ]; then
-            SHORTFALL_LAMPORTS=$((TARGET_BALANCE_LAMPORTS - BALANCE))
-            echo "PROOF devnet_pow_faucet=START balance_lamports=$BALANCE shortfall_lamports=$SHORTFALL_LAMPORTS"
-            cargo install devnet-pow
+          # Try the upgrade with the balance already on the canonical authority
+          # before asking any faucet for more Devnet SOL. A smaller SBF binary
+          # can therefore deploy immediately without an arbitrary balance gate.
+          attempt_deploy() {
             set +e
-            POW_OUT=$(devnet-pow mine --target-lamports "$SHORTFALL_LAMPORTS" -ud 2>&1)
-            POW_RC=$?
+            DEPLOY_OUT=$(solana program deploy target/deploy/keys.so --program-id "$PROGRAM_ID" --url https://api.devnet.solana.com --keypair "$HOME/.config/solana/id.json" 2>&1)
+            DEPLOY_RC=$?
             set -e
-            echo "$POW_OUT"
-            echo "PROOF devnet_pow_faucet_rc=$POW_RC"
-          fi
+            printf '%s\n' "$DEPLOY_OUT" | sed -E 's/^([a-z]+[[:space:]]+){11}[a-z]+$/[REDACTED_EPHEMERAL_BUFFER_MNEMONIC]/'
+          }
 
-          BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
-          BALANCE=${BALANCE:-0}
-          echo "PROOF devnet_balance_lamports=$BALANCE"
-          if [ "$BALANCE" -lt "$TARGET_BALANCE_LAMPORTS" ]; then
-            echo "DEVNET_PROOF=BLOCKED_POW_FUNDING target_lamports=$TARGET_BALANCE_LAMPORTS actual_lamports=$BALANCE"
-            exit 1
-          fi
-
-          set +e
-          DEPLOY_OUT=$(solana program deploy target/deploy/keys.so --program-id "$PROGRAM_ID" --url https://api.devnet.solana.com --keypair "$HOME/.config/solana/id.json" 2>&1)
-          DEPLOY_RC=$?
-          set -e
-          # Solana CLI may print a recovery mnemonic for an intermediate
-          # deployment buffer when a deploy is interrupted. Never emit that
-          # mnemonic into GitHub Actions logs; only the buffer address is useful.
-          printf '%s\n' "$DEPLOY_OUT" | sed -E 's/^([a-z]+[[:space:]]+){11}[a-z]+$/[REDACTED_EPHEMERAL_BUFFER_MNEMONIC]/'
-
-          if [ $DEPLOY_RC -ne 0 ]; then
+          close_failed_buffer() {
             FAILED_BUFFER=$(printf '%s\n' "$DEPLOY_OUT" | awk '/^solana program close / {print $4; exit}')
             if [ -n "$FAILED_BUFFER" ]; then
               set +e
@@ -223,12 +178,100 @@ jobs:
               echo "$FAILED_BUFFER_CLOSE_OUT"
               echo "PROOF failed_deploy_buffer_close address=$FAILED_BUFFER rc=$FAILED_BUFFER_CLOSE_RC"
             fi
-            if echo "$DEPLOY_OUT" | grep -Eqi "insufficient|faucet|airdrop|funds|balance"; then
-              echo "DEVNET_PROOF=BLOCKED_FUNDING_DURING_DEPLOY"
+          }
+
+          attempt_deploy
+
+          if [ $DEPLOY_RC -ne 0 ]; then
+            close_failed_buffer
+
+            if ! echo "$DEPLOY_OUT" | grep -Eqi "insufficient|faucet|airdrop|funds|balance"; then
+              echo "DEVNET_PROOF=FAILED_DEPLOY"
+              exit $DEPLOY_RC
+            fi
+
+            BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
+            BALANCE=${BALANCE:-0}
+
+            # Parse Solana CLI's exact temporary spend + fee requirement when
+            # available. Add a small fee margin; otherwise fall back to a
+            # bounded shortfall above the current balance.
+            REQUIRED_SOL=$(printf '%s\n' "$DEPLOY_OUT" | sed -nE 's/.*insufficient funds for spend \(([0-9.]+) SOL\) \+ fee \(([0-9.]+) SOL\).*/\1 \2/p' | tail -1)
+            if [ -n "$REQUIRED_SOL" ]; then
+              TARGET_BALANCE_LAMPORTS=$(python3 - "$REQUIRED_SOL" <<'PY'
+import math, sys
+spend, fee = map(float, sys.argv[1].split())
+print(math.ceil((spend + fee + 0.01) * 1_000_000_000))
+PY
+)
+            else
+              TARGET_BALANCE_LAMPORTS=$((BALANCE + 600000000))
+            fi
+
+            echo "PROOF devnet_dynamic_target_lamports=$TARGET_BALANCE_LAMPORTS current_lamports=$BALANCE"
+
+            # First use the native faucet. It is cheap when available, but can
+            # be rate-limited independently of our build.
+            if [ "$BALANCE" -lt "$TARGET_BALANCE_LAMPORTS" ]; then
+              for AIRDROP_ATTEMPT in 1 2 3; do
+                SHORTFALL_LAMPORTS=$((TARGET_BALANCE_LAMPORTS - BALANCE))
+                AIRDROP_SOL=$(python3 - "$SHORTFALL_LAMPORTS" <<'PY'
+import sys
+shortfall = int(sys.argv[1])
+print(f"{min(shortfall / 1_000_000_000 + 0.01, 0.5):.9f}")
+PY
+)
+                set +e
+                AIRDROP_OUT=$(solana airdrop "$AIRDROP_SOL" --url https://api.devnet.solana.com 2>&1)
+                AIRDROP_RC=$?
+                set -e
+                echo "$AIRDROP_OUT"
+                echo "PROOF devnet_airdrop_attempt attempt=$AIRDROP_ATTEMPT amount=$AIRDROP_SOL rc=$AIRDROP_RC"
+
+                BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
+                BALANCE=${BALANCE:-0}
+                if [ "$BALANCE" -ge "$TARGET_BALANCE_LAMPORTS" ]; then
+                  break
+                fi
+                sleep 15
+              done
+            fi
+
+            BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
+            BALANCE=${BALANCE:-0}
+
+            # Official programmatic fallback when RPC airdrops are unavailable.
+            if [ "$BALANCE" -lt "$TARGET_BALANCE_LAMPORTS" ]; then
+              SHORTFALL_LAMPORTS=$((TARGET_BALANCE_LAMPORTS - BALANCE))
+              echo "PROOF devnet_pow_faucet=START balance_lamports=$BALANCE shortfall_lamports=$SHORTFALL_LAMPORTS"
+              cargo install devnet-pow
+              set +e
+              POW_OUT=$(devnet-pow mine --target-lamports "$SHORTFALL_LAMPORTS" -ud 2>&1)
+              POW_RC=$?
+              set -e
+              echo "$POW_OUT"
+              echo "PROOF devnet_pow_faucet_rc=$POW_RC"
+            fi
+
+            BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
+            BALANCE=${BALANCE:-0}
+            echo "PROOF devnet_balance_after_dynamic_funding_lamports=$BALANCE"
+            if [ "$BALANCE" -lt "$TARGET_BALANCE_LAMPORTS" ]; then
+              echo "DEVNET_PROOF=BLOCKED_EXTERNAL_DEVNET_FUNDING target_lamports=$TARGET_BALANCE_LAMPORTS actual_lamports=$BALANCE"
               exit 1
             fi
-            echo "DEVNET_PROOF=FAILED_DEPLOY"
-            exit $DEPLOY_RC
+
+            # Funding was required and succeeded; retry exactly once.
+            attempt_deploy
+            if [ $DEPLOY_RC -ne 0 ]; then
+              close_failed_buffer
+              if echo "$DEPLOY_OUT" | grep -Eqi "insufficient|faucet|airdrop|funds|balance"; then
+                echo "DEVNET_PROOF=BLOCKED_FUNDING_DURING_DEPLOY"
+                exit 1
+              fi
+              echo "DEVNET_PROOF=FAILED_DEPLOY"
+              exit $DEPLOY_RC
+            fi
           fi
 
           PROGRAM_SHOW_AFTER=$(solana program show "$PROGRAM_ID" --url https://api.devnet.solana.com)
