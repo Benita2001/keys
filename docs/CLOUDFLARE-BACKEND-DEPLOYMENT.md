@@ -48,10 +48,15 @@ Add as Cloudflare Worker **Secrets**, never plaintext vars:
 
 - `DEVNET_KEYPAIR_JSON`
 - `PYTH_PRO_API_KEY`
+- `SOLANA_DEVNET_RPC_URL`
 
-Optional:
+Required for hosted Cloudflare execution:
 
-- `SOLANA_DEVNET_RPC_URL` if replacing the default public devnet RPC.
+- `SOLANA_DEVNET_RPC_URL` — authenticated Solana Devnet HTTPS RPC endpoint.
+
+Use a managed/authenticated RPC URL rather than a shared public endpoint. The official Solana public RPC was blocked from Cloudflare with HTTP 403, and the OnFinality public endpoint hit HTTP 429 shared-rate limits.
+
+For OnFinality, create a free authenticated Solana Devnet endpoint and store the full HTTPS endpoint as a Cloudflare **Secret**.
 
 Do not place these secrets in Cresco.
 
