@@ -39,4 +39,5 @@ jobs:
       - name: Attempt live Pyth Pro proof
         env:
           PYTH_PRO_API_KEY: ${{ secrets.PYTH_PRO_API_KEY }}
+          PYTH_PRO_EQUITY_SYMBOL: AAPL
         run: node scripts/pyth-live-proof.mjs
