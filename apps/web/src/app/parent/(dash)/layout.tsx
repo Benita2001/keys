@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Wordmark } from "@/components/shell";
 import { cn } from "@/components/ui/primitives";
+import { auth } from "@/services";
 import { useStore } from "@/state/store";
 
 const LINKS = [
@@ -15,10 +16,22 @@ const LINKS = [
 ];
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
-  const { state, hydrated } = useStore();
+  const { state, dispatch, hydrated } = useStore();
   const router = useRouter();
   const pathname = usePathname();
+  const [switching, setSwitching] = useState(false);
   const allowed = state.session?.role === "parent";
+
+  const switchToChild = async () => {
+    setSwitching(true);
+    try {
+      const session = await auth.signInDemo("child", state.profile.childName);
+      dispatch({ type: "signIn", session });
+      router.push("/home");
+    } finally {
+      setSwitching(false);
+    }
+  };
 
   useEffect(() => {
     if (hydrated && !allowed) router.replace("/parent/sign-in");
@@ -47,9 +60,14 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
               </Link>
             ))}
           </nav>
-          <Link href="/home" className="ml-auto text-[13px] font-extrabold text-blue md:ml-2">
-            {state.profile.childName}&apos;s view
-          </Link>
+          <button
+            type="button"
+            onClick={switchToChild}
+            disabled={switching}
+            className="ml-auto text-[13px] font-extrabold text-blue disabled:opacity-60 md:ml-2"
+          >
+            {switching ? "Switching…" : `${state.profile.childName}'s view`}
+          </button>
         </div>
       </header>
       <main id="main" className="mx-auto max-w-[1120px] px-5 pb-16 pt-5 md:px-8 md:pt-8">
