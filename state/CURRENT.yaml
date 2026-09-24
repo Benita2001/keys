@@ -40,6 +40,7 @@ current_truth:
   prestocks_live_proof: PASS
   cresco_frontend_pr_1: MERGED
   cresco_web_ci: PASS
+  cresco_live_proof_lane_ui: IMPLEMENTED_WEB_CI_PASS
   cresco_devnet_execution_bridge: IMPLEMENTED_PROOF_PENDING
   cresco_demo_runtime_mode: SERVER_HELD_DEVNET_DEMO
   cresco_execution_asset: DEMO_TOKEN
