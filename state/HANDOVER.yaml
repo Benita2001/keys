@@ -68,10 +68,14 @@ canonical_truth:
     cresco_web_ci: PASS
     cresco_live_proof_lane_ui: IMPLEMENTED_WEB_CI_PASS
     cresco_devnet_execution_bridge: PASS_PROVEN_HTTP_TO_SOLANA_DEVNET
-    cresco_devnet_execution_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36008701813"
-    cresco_devnet_execution_signature: "2GqHrafL46sU3RMDEEb8AChHzwgRqkMT5fjn5GiMyqomqkrEukrnywDCmGZrNtnRLkNGYMVjdPowyh5HrKtGdytn"
+    cresco_devnet_execution_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36034651466"
+    cresco_devnet_execution_signature: "3pFf5gFTQANbeJkxdLLdZho2iwgtsmXS36WdQroGPoUwuF7txaxRzQrJf2mcMajBj7BsnvrAEj5a148erm6TboP1"
     cresco_devnet_mandate: "AnBnNwACbwQ7KMN46jBoDS5pxsek2AdHV6X1B1uA7hXp"
-    cresco_bridge_evidence: evidence/solana/CRESCO-HTTP-DEVNET-EXECUTION-BRIDGE-PROOF-2026-09-24.md
+    cresco_current_proof_asset: AAPL
+    cresco_current_pyth_feed_id: 922
+    cresco_aapl_live_entitlement_proof_run: "https://github.com/Faadil1/keys/actions/runs/36035283447"
+    cresco_bridge_evidence: evidence/solana/CRESCO-AAPL-HTTP-DEVNET-EXECUTION-PROOF-2026-09-24.md
+    cresco_historical_tsla_bridge_evidence: evidence/solana/CRESCO-HTTP-DEVNET-EXECUTION-BRIDGE-PROOF-2026-09-24.md
     cresco_demo_runtime_mode: SERVER_HELD_DEVNET_DEMO
     cresco_execution_asset: DEMO_TOKEN
     cresco_execution_route: POST_/api/v0.2/actions/execute
@@ -123,6 +127,18 @@ ownership:
       - backend support for Benita integration
       - preserve canonical devnet Solana/Pyth runtime
 
+current_pyth_proof:
+  symbol: Equity.US.AAPL/USD
+  feed_id: 922
+  entitlement_run: "https://github.com/Faadil1/keys/actions/runs/36035283447"
+  devnet_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36034651466"
+  execution_signature: "3pFf5gFTQANbeJkxdLLdZho2iwgtsmXS36WdQroGPoUwuF7txaxRzQrJf2mcMajBj7BsnvrAEj5a148erm6TboP1"
+  verification: ONCHAIN_PYTH_LAZER
+  authority_effect: NONE
+  execution_asset: DEMO_TOKEN
+  evidence: evidence/solana/CRESCO-AAPL-HTTP-DEVNET-EXECUTION-PROOF-2026-09-24.md
+  historical_tsla_status: HISTORICAL_VALID_PROOF
+
 security:
   devnet_secret_name: DEVNET_KEYPAIR_JSON
   pyth_secret_name: PYTH_PRO_API_KEY
@@ -138,7 +154,9 @@ truth_boundaries:
   - no brokerage/custody claim
   - no legal ownership claim from token/SPL balance
   - no mainnet deployment claim
-  - verified live Pyth evidence is TSLA on current trial, not AAPL
+  - current trial proves live AAPL evidence and signed payload availability
+  - current devnet bridge proves AAPL feed 922 with ONCHAIN_PYTH_LAZER
+  - historical TSLA proofs remain valid evidence
   - market evidence does not create authority
   - v0.2 bounded demo-token capital execution is proven on local Solana and devnet
   - base bounded capital path is proven with a demo/mock SPL token
