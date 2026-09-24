@@ -122,10 +122,10 @@ export default function AboutPage() {
           <Detail k="Solana program (devnet)" v={PROGRAM_ID} mono />
           <Detail
             k="Money execution from this app"
-            v={caps.execution === "keys-runtime" ? "Family lane stays demo; separate TSLA proof lane is available" : "Not connected (demo only)"}
+            v={caps.execution === "keys-runtime" ? "Family lane stays demo; separate AAPL proof lane is available" : "Not connected (demo only)"}
           />
           <Detail k="Mandate version" v={`v${state.mandate.version} · nonce ${state.mandate.nonce}`} />
-          <Detail k="Proven live market feed" v="Pyth Pro Equity.US.TSLA/USD (server-side only)" />
+          <Detail k="Proven live market feed" v="Pyth Pro Equity.US.AAPL/USD (server-side only)" />
         </dl>
         <a
           className="mt-3 inline-block text-[13px] font-extrabold text-blue hover:underline"
@@ -139,7 +139,7 @@ export default function AboutPage() {
         <div className="mt-4 rounded-[16px] border border-line-soft bg-surface-soft p-3.5">
           <p className="text-[13px] font-extrabold text-navy-strong">Live Solana proof lane</p>
           <p className="mt-1 text-[12.5px] font-semibold text-ink-2">
-            Runs a $5 TSLA-bounded action through the KEYS devnet program using a demo/mock SPL token and live signed Pyth market
+            Runs a $5 AAPL-bounded action through the KEYS devnet program using a demo/mock SPL token and live signed Pyth market
             truth. This is not a real share purchase, brokerage or custody flow.
           </p>
           <ActionButton
