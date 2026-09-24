@@ -10,5 +10,8 @@
   "vars": {
     "KEYS_CORS_ORIGIN": "https://cresco-lac.vercel.app",
     "KEYS_DEMO_LIVE_EQUITY": "AAPL"
-  }
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
 }
