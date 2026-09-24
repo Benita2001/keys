@@ -131,6 +131,32 @@ Build the product experience in this order:
 9. **Same action** → ALLOW.
 10. **Old authorization** → STALE / REFUSE.
 
+## Optional sponsor surface — PreStocks
+
+PreStocks is a secondary representation / Practice surface and must not replace the core Maya demo spine.
+
+Available routes:
+
+- `GET /api/v0.2/integrations/prestocks`
+- `GET /api/v0.2/integrations/prestocks/:symbol`
+
+Use it to show that:
+
+`underlying company != token representation != direct equity ownership != holder eligibility != KEYS authority`
+
+Default frontend behavior must remain fail-closed:
+
+- eligibility unknown;
+- execution not eligible;
+- Practice available;
+- authority effect none.
+
+Canonical live PreStocks proof:
+
+https://github.com/Faadil1/keys/actions/runs/35969672666
+
+The judge-facing sequence should remain **My Key first**. PreStocks may appear inside Learn / Practice or a representation detail surface, not as a sponsor dashboard.
+
 ## Canonical runtime proof
 
 Program:
