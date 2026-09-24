@@ -154,7 +154,7 @@ Current runtime mode:
 Truth boundary:
 
 - capital asset = demo/mock SPL token;
-- market truth = live signed Pyth TSLA evidence;
+- market truth = live signed Pyth AAPL evidence;
 - network = Solana devnet;
 - real minor securities execution = false;
 - brokerage/custody = false.
@@ -169,7 +169,7 @@ Body:
 
 ```json
 {
-  "asset": "TSLA",
+  "asset": "AAPL",
   "type": "BUY",
   "notional": 5,
   "expectedNonce": 3,
@@ -199,7 +199,7 @@ Confirmed proof shape includes:
     "executionAsset": "DEMO_TOKEN",
     "pyth": {
       "source": "PYTH_PRO",
-      "feedId": 1435,
+      "feedId": 922,
       "verification": "ONCHAIN_PYTH_LAZER",
       "authorityEffect": "NONE"
     }
@@ -215,7 +215,11 @@ Current idempotency scope:
 
 That means duplicate keys are deduplicated inside the active backend process. It is **not** yet a durable cross-region/serverless exactly-once guarantee.
 
-The stable runtime bootstrap + real execution smoke is attached to the `solana-devnet-authority-proof` workflow. Until that new smoke run returns PASS, this bridge is **IMPLEMENTED / PROOF PENDING**.
+The stable AAPL runtime bootstrap + real execution smoke is **PASS / PROVEN** in `devnet-execution-bridge` run `36034651466`.
+
+Current AAPL entitlement/signed-payload proof: https://github.com/Faadil1/keys/actions/runs/36035283447
+
+Current AAPL devnet bridge proof: https://github.com/Faadil1/keys/actions/runs/36034651466
 
 See `docs/CRESCO-BACKEND-DELTA-2026-09-24.md`.
 
