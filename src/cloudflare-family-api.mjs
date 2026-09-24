@@ -40,24 +40,32 @@ function bearerToken(request) {
   return match?.[1] || null;
 }
 
-async function requireGuardian(env, request) {
+async function validateSession(env, request) {
   const token = bearerToken(request);
-  if (!token) return json({ error: "GUARDIAN_SESSION_REQUIRED" }, 401);
+  if (!token) return null;
 
   const validated = await familyJson(env, "/session/validate", {
     method: "POST",
     body: { token }
   });
+  if (validated.status !== 200 || validated.body?.valid !== true) return null;
+  return validated.body;
+}
 
-  if (
-    validated.status !== 200 ||
-    validated.body?.valid !== true ||
-    validated.body?.role !== "guardian"
-  ) {
-    return json({ error: "GUARDIAN_SESSION_REQUIRED" }, 403);
+async function requireFamilySession(env, request, allowedRoles = ["child", "guardian"]) {
+  const session = await validateSession(env, request);
+  if (!session) return json({ error: "FAMILY_SESSION_REQUIRED" }, 401);
+  if (!allowedRoles.includes(session.role)) {
+    return json({ error: "ROLE_NOT_ALLOWED" }, 403);
   }
-
   return null;
+}
+
+async function requireGuardian(env, request) {
+  const denied = await requireFamilySession(env, request, ["guardian"]);
+  if (!denied) return null;
+  const status = denied.status === 401 ? 401 : 403;
+  return json({ error: "GUARDIAN_SESSION_REQUIRED" }, status);
 }
 
 function currentAssetRule(family, runtime) {
@@ -383,6 +391,8 @@ export async function handleFamilyApi(request, env) {
   }
 
   if (method === "GET" && path === "/api/v0.2/family/state") {
+    const denied = await requireFamilySession(env, request);
+    if (denied) return denied;
     const out = await familyJson(env, "/state");
     return json(out.body, out.status);
   }
@@ -393,11 +403,15 @@ export async function handleFamilyApi(request, env) {
   }
 
   if (method === "POST" && path === "/api/v0.2/family/link") {
+    const denied = await requireFamilySession(env, request, ["child"]);
+    if (denied) return denied;
     const out = await familyJson(env, "/link", { method: "POST", body });
     return json(out.body, out.status);
   }
 
   if (method === "GET" && path === "/api/v0.2/mandates/current") {
+    const denied = await requireFamilySession(env, request);
+    if (denied) return denied;
     const { runtime, family } = await loadRuntimeAndFamily(env);
     return json({
       contractVersion: "0.2",
@@ -415,6 +429,8 @@ export async function handleFamilyApi(request, env) {
   }
 
   if (method === "POST" && path === "/api/v0.2/actions/evaluate") {
+    const denied = await requireFamilySession(env, request, ["child"]);
+    if (denied) return denied;
     const { runtime, family } = await loadRuntimeAndFamily(env);
     return json({
       ...evaluationForReserve(family, runtime, body),
@@ -424,10 +440,14 @@ export async function handleFamilyApi(request, env) {
   }
 
   if (method === "POST" && path === "/api/v0.2/actions/execute") {
+    const denied = await requireFamilySession(env, request, ["child"]);
+    if (denied) return denied;
     return handleExecute(env, body);
   }
 
   if (method === "POST" && path === "/api/v0.2/boundary-requests") {
+    const denied = await requireFamilySession(env, request, ["child"]);
+    if (denied) return denied;
     const { family } = await loadRuntimeAndFamily(env);
     const evaluation = body.evaluation || {};
     const out = await familyJson(env, "/requests", {
@@ -450,6 +470,8 @@ export async function handleFamilyApi(request, env) {
     method === "GET" &&
     ["/api/v0.2/boundary-requests", "/api/v0.2/boundary-requests/mine"].includes(path)
   ) {
+    const denied = await requireFamilySession(env, request);
+    if (denied) return denied;
     const suffix = url.searchParams.get("status")
       ? "?status=" + encodeURIComponent(url.searchParams.get("status"))
       : "";
@@ -498,6 +520,8 @@ export async function handleFamilyApi(request, env) {
   }
 
   if (method === "GET" && path === "/api/v0.2/balances") {
+    const denied = await requireFamilySession(env, request);
+    if (denied) return denied;
     const out = await familyJson(env, "/state");
     return json({
       money: out.body.balances.money,
@@ -508,16 +532,22 @@ export async function handleFamilyApi(request, env) {
   }
 
   if (method === "POST" && path === "/api/v0.2/learning/progress") {
+    const denied = await requireFamilySession(env, request, ["child"]);
+    if (denied) return denied;
     const out = await familyJson(env, "/learning", { method: "POST", body });
     return json(out.body, out.status);
   }
 
   if (method === "GET" && path === "/api/v0.2/learning/summary") {
+    const denied = await requireFamilySession(env, request);
+    if (denied) return denied;
     const out = await familyJson(env, "/learning");
     return json(out.body, out.status);
   }
 
   if (method === "GET" && path === "/api/v0.2/portfolio") {
+    const denied = await requireFamilySession(env, request);
+    if (denied) return denied;
     const mode = url.searchParams.get("mode") || "money";
     if (mode !== "money") return null;
     const out = await familyJson(env, "/portfolio");
