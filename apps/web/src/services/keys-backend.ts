@@ -42,30 +42,65 @@ const PUBLIC_HOSTED_KEYS_API =
 
 let override: Partial<KeysConfig> | null = null;
 
-const BACKEND_SESSION_KEY = "cresco-keys-session-v1";
+type BackendRole = "child" | "guardian";
 
-function backendSessionToken() {
+const BACKEND_SESSION_KEYS: Record<BackendRole, string> = {
+  child: "cresco-keys-session-child-v1",
+  guardian: "cresco-keys-session-guardian-v1",
+};
+const BACKEND_ACTIVE_ROLE_KEY = "cresco-keys-session-active-role-v1";
+
+function backendSessionToken(role?: BackendRole | null) {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(BACKEND_SESSION_KEY);
+    const resolved =
+      role ??
+      (window.localStorage.getItem(BACKEND_ACTIVE_ROLE_KEY) as BackendRole | null);
+    if (resolved && BACKEND_SESSION_KEYS[resolved]) {
+      return window.localStorage.getItem(BACKEND_SESSION_KEYS[resolved]);
+    }
+    return (
+      window.localStorage.getItem(BACKEND_SESSION_KEYS.child) ??
+      window.localStorage.getItem(BACKEND_SESSION_KEYS.guardian)
+    );
   } catch {
     return null;
   }
 }
 
-function saveBackendSessionToken(token: string) {
+function saveBackendSessionToken(token: string, role: BackendRole) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(BACKEND_SESSION_KEY, token);
+    window.localStorage.setItem(BACKEND_SESSION_KEYS[role], token);
+    window.localStorage.setItem(BACKEND_ACTIVE_ROLE_KEY, role);
   } catch {
     // Storage may be unavailable; the current call still completed safely.
   }
 }
 
+function requiredRoleForRequest(path: string, method = "GET"): BackendRole | null {
+  const upper = method.toUpperCase();
+  if (path === "/api/v0.2/mandates/transition") return "guardian";
+  if (/\/api\/v0\.2\/boundary-requests\/[^/]+\/decision$/.test(path)) return "guardian";
+  if (path === "/api/v0.2/funding/deposits") return "guardian";
+
+  if (path === "/api/v0.2/family/link") return "child";
+  if (path === "/api/v0.2/actions/evaluate") return "child";
+  if (path === "/api/v0.2/actions/execute") return "child";
+  if (path === "/api/v0.2/learning/progress") return "child";
+  if (path === "/api/v0.2/boundary-requests" && upper === "POST") return "child";
+
+  return null;
+}
+
 export function clearBackendSessionToken() {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.removeItem(BACKEND_SESSION_KEY);
+    window.localStorage.removeItem(BACKEND_SESSION_KEYS.child);
+    window.localStorage.removeItem(BACKEND_SESSION_KEYS.guardian);
+    window.localStorage.removeItem(BACKEND_ACTIVE_ROLE_KEY);
+    // Clean up the pre-role-split key if it exists from an older deployment.
+    window.localStorage.removeItem("cresco-keys-session-v1");
   } catch {
     // Demo session cleanup is best-effort.
   }
@@ -118,7 +153,9 @@ export function keysApiUrl() {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = backendSessionToken();
+  const token = backendSessionToken(
+    requiredRoleForRequest(path, init?.method ?? "GET"),
+  );
   const res = await fetch(`${keysConfig().url}${path}`, {
     ...init,
     headers: {
@@ -279,7 +316,7 @@ export async function createBackendDemoSession(
     method: "POST",
     body: JSON.stringify({ role: backendRole, displayName }),
   });
-  saveBackendSessionToken(result.token);
+  saveBackendSessionToken(result.token, backendRole);
   return {
     role: result.role === "guardian" ? "parent" : "child",
     displayName: result.displayName,
@@ -535,7 +572,13 @@ export async function executeAction(body: ExecuteRequest): Promise<ExecuteResult
   try {
     res = await fetch(`${keysConfig().url}/api/v0.2/actions/execute`, {
       method: "POST",
-      headers: { "content-type": "application/json", "idempotency-key": body.idempotencyKey },
+      headers: {
+        "content-type": "application/json",
+        "idempotency-key": body.idempotencyKey,
+        ...(backendSessionToken("child")
+          ? { authorization: `Bearer ${backendSessionToken("child")}` }
+          : {}),
+      },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(keysConfig().timeoutMs),
     });
