@@ -46,6 +46,7 @@ The API currently exposes real product symbols, Solana contract addresses, mark 
 - `src/prestocks-adapter.mjs`
 - `scripts/prestocks-live-proof.mjs`
 - `.github/workflows/prestocks-live-proof.yml`
+- canonical live proof: https://github.com/Faadil1/keys/actions/runs/35969672666
 - `GET /api/v0.2/integrations/prestocks`
 - `GET /api/v0.2/integrations/prestocks/:symbol`
 
