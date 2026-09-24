@@ -161,7 +161,7 @@ export type ActionEvaluation = {
   mandateVersion?: number;
   mandateNonce?: number;
   /** Where the decision came from. "local-preview" is never authority. */
-  source: "keys-backend-draft" | "keys-runtime" | "local-preview";
+  source: "keys-backend" | "keys-runtime" | "local-preview";
 };
 
 /** learningContext — short contextual explanation. Never a score. */
