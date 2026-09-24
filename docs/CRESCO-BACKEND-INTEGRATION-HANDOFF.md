@@ -53,7 +53,8 @@ Cloudflare Worker
 | `GET /api/v0.2/learning/summary` | Shared progress/minutes |
 | `GET /api/v0.2/portfolio?mode=money` | Persisted Money holdings/activity |
 | `GET /api/v0.2/market/quotes?symbols=...` | Pyth quote surface; only FRESH evidence is live |
-| `GET /api/v0.2/market/series?... ` | Explicitly UNAVAILABLE until a real history provider exists |
+| `GET /api/v0.2/market/series?... ` | Authenticated Pyth Pro History for configured entitled feeds; fail-closed otherwise |
+| `POST /api/v0.2/proofs/concurrency` | Guardian-only no-trade hosted proof of shared Durable Object reservation serialization |
 | `GET /api/v0.2/integrations/prestocks` | Live PreStocks catalog, fail-closed for execution eligibility |
 | `GET /api/v0.2/integrations/prestocks/:symbol` | One PreStocks representation |
 
@@ -83,7 +84,7 @@ The 10-symbol UI universe has an API surface. This does **not** mean 10 live fee
 - A configured but stale feed is labeled delayed.
 - A missing/unentitled feed returns `UNAVAILABLE`; it is never converted to zero and never falsely labeled live.
 - Frontend sample data remains visibly sample when live evidence is unavailable.
-- Historical chart API currently returns `UNAVAILABLE / HISTORY_PROVIDER_NOT_CONNECTED`; the UI may use clearly labeled sample history for learning.
+- AAPL historical chart data is now served from Pyth Pro History when entitled; unavailable/unconfigured history still falls back to clearly labeled sample data.
 
 AAPL is the current proven Money/Pyth execution asset. TSLA remains valid historical proof.
 
@@ -119,7 +120,7 @@ These are **not bugs or unfinished demo requirements** and must not be faked:
 - real card/bank deposit provider;
 - brokerage, custody, real securities execution or mainnet settlement;
 - live Pyth entitlement/feed mapping for every UI symbol;
-- real historical market-data provider;
+- broader live/history entitlement coverage for every UI symbol;
 - legal minor-account/compliance rollout by jurisdiction.
 
 They belong to a production architecture pass after the hackathon.
