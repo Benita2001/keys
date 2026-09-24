@@ -8,12 +8,6 @@ use anchor_lang::solana_program::{
 use anchor_spl::token_interface::{
     self, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
-use pyth_lazer_protocol::{
-    message::SolanaMessage,
-    payload::{PayloadData, PayloadPropertyValue},
-    ChannelId,
-};
-
 declare_id!("ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk");
 
 pub const STAGE_LEARN: u8 = 0;
@@ -32,7 +26,8 @@ pub const PYTH_LAZER_PROGRAM_ID: Pubkey =
     pubkey!("pytd2yyk641x7ak7mkaasSJVXh6YYZnC7wTmtgAyxPt");
 pub const PYTH_LAZER_STORAGE_ID: Pubkey =
     pubkey!("3rdJbqfnagQ4yx9HXJViD4zc4xpiSqmFsKpPuSCQVyQL");
-pub const PYTH_LAZER_FIXED_RATE_1000_CHANNEL_ID: u8 = 4;
+pub const PYTH_SOLANA_FORMAT_MAGIC: u32 = 2_182_742_457;
+pub const PYTH_PAYLOAD_FORMAT_MAGIC: u32 = 2_479_346_549;
 
 // Anchor discriminator for Pyth Lazer's global:verify_message instruction.
 // Source: the official Pyth Lazer Solana IDL.
@@ -616,54 +611,105 @@ fn parse_verified_market_evidence(
     max_market_age_seconds: u32,
     max_confidence_bps: u32,
 ) -> Result<VerifiedMarketEvidence> {
-    let message = SolanaMessage::deserialize_slice(pyth_message)
-        .map_err(|_| error!(KeysError::PythMessageInvalid))?;
-    let data = PayloadData::deserialize_slice_le(&message.payload)
-        .map_err(|_| error!(KeysError::PythPayloadInvalid))?;
-
+    // The Pyth Lazer program has already verified the Ed25519 signature and
+    // trusted signer before this parser is reached. KEYS parses only the small
+    // subset of the public Solana payload schema that it explicitly requests:
+    // price, exponent, confidence, publisherCount, marketSession and
+    // feedUpdateTimestamp. Keeping this parser minimal avoids embedding the
+    // full off-chain protocol SDK in the SBF binary.
+    let mut message = ByteReader::new(pyth_message);
+    require_eq!(
+        message.read_u32_le()?,
+        PYTH_SOLANA_FORMAT_MAGIC,
+        KeysError::PythMessageInvalid
+    );
+    message.skip(64)?; // signature
+    message.skip(32)?; // public key
+    let payload_len = usize::from(message.read_u16_le()?);
+    let payload = message.read_slice(payload_len)?;
     require!(
-        data.channel_id == ChannelId(PYTH_LAZER_FIXED_RATE_1000_CHANNEL_ID),
+        message.remaining() == 0,
+        KeysError::PythMessageInvalid
+    );
+
+    let mut reader = ByteReader::new(payload);
+    require_eq!(
+        reader.read_u32_le()?,
+        PYTH_PAYLOAD_FORMAT_MAGIC,
+        KeysError::PythPayloadInvalid
+    );
+    let payload_timestamp_us = reader.read_u64_le()?;
+    let channel_id = reader.read_u8()?;
+    // Accept Pyth fixed-rate channels (50ms, 200ms, 1000ms). Freshness is
+    // enforced independently by the Mandate, so faster fixed-rate channels are
+    // not weaker evidence.
+    require!(
+        matches!(channel_id, 2 | 3 | 4),
         KeysError::PythChannelMismatch
     );
-    require!(data.feeds.len() == 1, KeysError::PythPayloadInvalid);
 
-    let feed = &data.feeds[0];
-    require_eq!(
-        feed.feed_id.0,
-        expected_feed_id,
-        KeysError::PythFeedMismatch
-    );
+    let feed_count = reader.read_u8()?;
+    require_eq!(feed_count, 1, KeysError::PythPayloadInvalid);
+    let feed_id = reader.read_u32_le()?;
+    require_eq!(feed_id, expected_feed_id, KeysError::PythFeedMismatch);
 
+    let property_count = reader.read_u8()?;
     let mut price_mantissa: Option<i64> = None;
     let mut exponent: Option<i16> = None;
     let mut confidence_mantissa: Option<i64> = None;
     let mut feed_update_time_us: Option<u64> = None;
 
-    for property in &feed.properties {
-        match property {
-            PayloadPropertyValue::Price(Some(price)) => {
-                price_mantissa = Some(price.mantissa_i64());
+    for _ in 0..property_count {
+        let property_id = reader.read_u8()?;
+        match property_id {
+            0 => {
+                // Price: option is encoded as i64, where 0 means None.
+                let value = reader.read_i64_le()?;
+                if value != 0 {
+                    price_mantissa = Some(value);
+                }
             }
-            PayloadPropertyValue::Exponent(value) => {
-                exponent = Some(*value);
+            3 => {
+                // PublisherCount.
+                let _ = reader.read_u16_le()?;
             }
-            PayloadPropertyValue::Confidence(Some(confidence)) => {
-                confidence_mantissa = Some(confidence.mantissa_i64());
+            4 => {
+                // Exponent.
+                exponent = Some(reader.read_i16_le()?);
             }
-            PayloadPropertyValue::FeedUpdateTimestamp(Some(timestamp)) => {
-                feed_update_time_us = Some(timestamp.as_micros());
+            5 => {
+                // Confidence: same option-price encoding as Price.
+                let value = reader.read_i64_le()?;
+                if value != 0 {
+                    confidence_mantissa = Some(value);
+                }
             }
-            _ => {}
+            9 => {
+                // MarketSession.
+                let _ = reader.read_i16_le()?;
+            }
+            12 => {
+                // FeedUpdateTimestamp: u8 presence flag followed by u64 micros.
+                let present = reader.read_u8()?;
+                if present != 0 {
+                    feed_update_time_us = Some(reader.read_u64_le()?);
+                }
+            }
+            _ => return err!(KeysError::PythPayloadUnsupportedProperty),
         }
     }
+
+    require!(
+        reader.remaining() == 0,
+        KeysError::PythPayloadInvalid
+    );
 
     let price_mantissa =
         price_mantissa.ok_or(KeysError::PythPriceMissing)?;
     let exponent = exponent.ok_or(KeysError::PythExponentMissing)?;
     let confidence_mantissa =
         confidence_mantissa.ok_or(KeysError::PythConfidenceMissing)?;
-    let publish_time_us =
-        feed_update_time_us.unwrap_or_else(|| data.timestamp_us.as_micros());
+    let publish_time_us = feed_update_time_us.unwrap_or(payload_timestamp_us);
 
     require!(price_mantissa > 0, KeysError::PythPriceInvalid);
     require!(confidence_mantissa >= 0, KeysError::PythConfidenceInvalid);
@@ -673,7 +719,6 @@ fn parse_verified_market_evidence(
         .ok()
         .and_then(|seconds: u64| seconds.checked_mul(1_000_000))
         .ok_or(KeysError::Overflow)?;
-    // Allow a small clock skew but reject materially future-dated evidence.
     require!(
         publish_time_us <= now_us.saturating_add(5_000_000),
         KeysError::PythTimestampInvalid
@@ -701,6 +746,86 @@ fn parse_verified_market_evidence(
         unit_price_micro_usd,
         publish_time_us,
     })
+}
+
+struct ByteReader<'a> {
+    data: &'a [u8],
+    offset: usize,
+}
+
+impl<'a> ByteReader<'a> {
+    fn new(data: &'a [u8]) -> Self {
+        Self { data, offset: 0 }
+    }
+
+    fn remaining(&self) -> usize {
+        self.data.len().saturating_sub(self.offset)
+    }
+
+    fn read_slice(&mut self, len: usize) -> Result<&'a [u8]> {
+        let end = self
+            .offset
+            .checked_add(len)
+            .ok_or(KeysError::Overflow)?;
+        let slice = self
+            .data
+            .get(self.offset..end)
+            .ok_or(KeysError::PythPayloadInvalid)?;
+        self.offset = end;
+        Ok(slice)
+    }
+
+    fn skip(&mut self, len: usize) -> Result<()> {
+        let _ = self.read_slice(len)?;
+        Ok(())
+    }
+
+    fn read_u8(&mut self) -> Result<u8> {
+        Ok(*self
+            .read_slice(1)?
+            .first()
+            .ok_or(KeysError::PythPayloadInvalid)?)
+    }
+
+    fn read_u16_le(&mut self) -> Result<u16> {
+        let bytes: [u8; 2] = self
+            .read_slice(2)?
+            .try_into()
+            .map_err(|_| error!(KeysError::PythPayloadInvalid))?;
+        Ok(u16::from_le_bytes(bytes))
+    }
+
+    fn read_i16_le(&mut self) -> Result<i16> {
+        let bytes: [u8; 2] = self
+            .read_slice(2)?
+            .try_into()
+            .map_err(|_| error!(KeysError::PythPayloadInvalid))?;
+        Ok(i16::from_le_bytes(bytes))
+    }
+
+    fn read_u32_le(&mut self) -> Result<u32> {
+        let bytes: [u8; 4] = self
+            .read_slice(4)?
+            .try_into()
+            .map_err(|_| error!(KeysError::PythPayloadInvalid))?;
+        Ok(u32::from_le_bytes(bytes))
+    }
+
+    fn read_u64_le(&mut self) -> Result<u64> {
+        let bytes: [u8; 8] = self
+            .read_slice(8)?
+            .try_into()
+            .map_err(|_| error!(KeysError::PythPayloadInvalid))?;
+        Ok(u64::from_le_bytes(bytes))
+    }
+
+    fn read_i64_le(&mut self) -> Result<i64> {
+        let bytes: [u8; 8] = self
+            .read_slice(8)?
+            .try_into()
+            .map_err(|_| error!(KeysError::PythPayloadInvalid))?;
+        Ok(i64::from_le_bytes(bytes))
+    }
 }
 
 fn price_to_micro_usd(mantissa: i64, exponent: i16) -> Result<u64> {
@@ -1205,6 +1330,8 @@ pub enum KeysError {
     PythMessageInvalid,
     #[msg("Pyth signed payload is invalid.")]
     PythPayloadInvalid,
+    #[msg("Pyth signed payload contains a property this KEYS verifier did not request.")]
+    PythPayloadUnsupportedProperty,
     #[msg("Pyth Lazer signature verification failed.")]
     PythSignatureVerificationFailed,
     #[msg("Pyth Lazer channel does not match the mandate integration channel.")]
