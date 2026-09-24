@@ -18,13 +18,13 @@ This file maps Benita’s observations to the current KEYS/Cresco implementation
 - v0.2 contract: frozen.
 - Mandate read/update API: implemented; limits/status changes commit to Solana Devnet.
 - Browser-supplied authority: removed; evaluate/execute load current server/on-chain state.
-- Family-wide period/balance serialization: Durable Object reservations protect the current executable Family lane across tabs/devices.
+- Family-wide period/balance serialization: Durable Object reservations protect one shared budget across tabs/devices; hosted proof now exercises concurrent AAPL/TSLA-labeled reservations without claiming TSLA execution.
 - Execute endpoint: implemented with Devnet proof.
 - Boundary requests: persisted, listed and decided server-side.
 - Allow once: exact request id + asset + ceiling + nonce + single successful use; on-chain receipt deployment proof is the final Devnet upgrade gate.
-- Double-spend protection: durable idempotency/reservations.
+- Double-spend protection: durable idempotency/reservations, with hosted concurrency smoke PASS.
 - Market quotes: fail-closed API for the UI universe; only entitled Pyth evidence is labeled live.
-- History: not fabricated; the API returns HISTORY_PROVIDER_NOT_CONNECTED and the UI labels sample history.
+- History: AAPL now uses authenticated Pyth Pro History through Cloudflare for supported periods; missing/unentitled history still fails closed with no fabricated points.
 - Signing model: explicit SERVER_HELD_DEVNET_DEMO signer for the hackathon.
 - Child/guardian accounts: role-scoped demo sessions + shared Family state; not KYC.
 - Funding: guardian-only test credit; no real payment.
