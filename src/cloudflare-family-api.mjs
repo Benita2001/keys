@@ -34,6 +34,32 @@ async function familyJson(env, path, options) {
   return { status: response.status, body };
 }
 
+function bearerToken(request) {
+  const value = request.headers.get("authorization") || "";
+  const match = value.match(/^Bearer\s+(.+)$/i);
+  return match?.[1] || null;
+}
+
+async function requireGuardian(env, request) {
+  const token = bearerToken(request);
+  if (!token) return json({ error: "GUARDIAN_SESSION_REQUIRED" }, 401);
+
+  const validated = await familyJson(env, "/session/validate", {
+    method: "POST",
+    body: { token }
+  });
+
+  if (
+    validated.status !== 200 ||
+    validated.body?.valid !== true ||
+    validated.body?.role !== "guardian"
+  ) {
+    return json({ error: "GUARDIAN_SESSION_REQUIRED" }, 403);
+  }
+
+  return null;
+}
+
 function currentAssetRule(family, runtime) {
   return {
     asset: "AAPL",
@@ -382,6 +408,8 @@ export async function handleFamilyApi(request, env) {
   }
 
   if (method === "POST" && path === "/api/v0.2/mandates/transition") {
+    const denied = await requireGuardian(env, request);
+    if (denied) return denied;
     return handleMandateTransition(env, body);
   }
 
@@ -433,6 +461,8 @@ export async function handleFamilyApi(request, env) {
       ? path.match(/^\/api\/v0\.2\/boundary-requests\/([^/]+)\/decision$/)
       : null;
   if (decisionMatch) {
+    const denied = await requireGuardian(env, request);
+    if (denied) return denied;
     const id = decisionMatch[1];
     const first = await familyJson(env, `/requests/${id}/decision`, {
       method: "POST",
@@ -460,6 +490,8 @@ export async function handleFamilyApi(request, env) {
   }
 
   if (method === "POST" && path === "/api/v0.2/funding/deposits") {
+    const denied = await requireGuardian(env, request);
+    if (denied) return denied;
     const out = await familyJson(env, "/funding", { method: "POST", body });
     return json(out.body, out.status);
   }
