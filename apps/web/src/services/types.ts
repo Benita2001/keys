@@ -23,8 +23,8 @@ export type Capabilities = {
   backend: "none" | "keys-v0.2-frozen";
   marketData: "mock" | "mock-with-live-aapl";
   moneyMode: "demo" | "runtime";
-  funding: "demo";
-  auth: "demo";
+  funding: "demo" | "devnet-test";
+  auth: "demo" | "backend-demo";
   execution: "demo-not-executed" | "keys-runtime";
 };
 
@@ -85,7 +85,12 @@ export interface MandateService {
 }
 
 export interface FundingService {
-  addMoney(input: { amount: number }): Promise<{ status: "DEMO_CREDITED"; amount: number }>;
+  addMoney(input: { amount: number }): Promise<{
+    status: "DEMO_CREDITED" | "DEVNET_TEST_CREDITED";
+    amount: number;
+    availableBalance?: number;
+    realPaymentTaken?: false;
+  }>;
 }
 
 export interface AuthService {
