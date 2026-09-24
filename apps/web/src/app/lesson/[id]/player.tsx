@@ -8,6 +8,10 @@ import { ActionButton, BackButton, XPBadge } from "@/components/ui/primitives";
 import { useModuleStates } from "@/hooks/data";
 import { lessonById, moduleById } from "@/mocks/learning";
 import { useStore } from "@/state/store";
+import {
+  keysBackendConfigured,
+  persistLearningProgress,
+} from "@/services/keys-backend";
 
 export function LessonPlayer({ lessonId }: { lessonId: string }) {
   const lesson = lessonById(lessonId)!;
@@ -28,6 +32,15 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
   const advance = () => {
     if (isLast) {
       dispatch({ type: "completeLesson", lessonId: lesson.id, xp: lesson.xp });
+      if (keysBackendConfigured()) {
+        void persistLearningProgress({
+          lessonId: lesson.id,
+          xp: alreadyDone ? 0 : lesson.xp,
+          minutes: lesson.minutes,
+        }).catch(() => {
+          // The lesson remains usable offline; backend sync can recover later.
+        });
+      }
       setDone(true);
       return;
     }
