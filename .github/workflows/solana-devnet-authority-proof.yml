@@ -180,14 +180,16 @@ jobs:
           BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
           BALANCE=${BALANCE:-0}
 
-          # Solana's official faucet guidance directs automated agents to the
-          # proof-of-work faucet when RPC airdrops are rate-limited. Mine only
-          # the small devnet shortfall required for this program upgrade.
-          if [ "$BALANCE" -lt 2500000000 ]; then
-            echo "PROOF devnet_pow_faucet=START balance_lamports=$BALANCE"
+          # Solana's documented proof-of-work faucet supports target-lamports.
+          # Mine the actual shortfall required by the upgrade rather than a fixed
+          # amount that can leave the payer below the deployment target.
+          TARGET_BALANCE_LAMPORTS=2500000000
+          if [ "$BALANCE" -lt "$TARGET_BALANCE_LAMPORTS" ]; then
+            SHORTFALL_LAMPORTS=$((TARGET_BALANCE_LAMPORTS - BALANCE))
+            echo "PROOF devnet_pow_faucet=START balance_lamports=$BALANCE shortfall_lamports=$SHORTFALL_LAMPORTS"
             cargo install devnet-pow
             set +e
-            POW_OUT=$(devnet-pow mine -d 3 --reward 0.02 --no-infer -t 600000000 -ud 2>&1)
+            POW_OUT=$(devnet-pow mine --target-lamports "$SHORTFALL_LAMPORTS" -ud 2>&1)
             POW_RC=$?
             set -e
             echo "$POW_OUT"
@@ -197,6 +199,10 @@ jobs:
           BALANCE=$(solana balance --lamports --url https://api.devnet.solana.com 2>/dev/null | tr -dc '0-9' || true)
           BALANCE=${BALANCE:-0}
           echo "PROOF devnet_balance_lamports=$BALANCE"
+          if [ "$BALANCE" -lt "$TARGET_BALANCE_LAMPORTS" ]; then
+            echo "DEVNET_PROOF=BLOCKED_POW_FUNDING target_lamports=$TARGET_BALANCE_LAMPORTS actual_lamports=$BALANCE"
+            exit 1
+          fi
 
           set +e
           DEPLOY_OUT=$(solana program deploy target/deploy/keys.so --program-id "$PROGRAM_ID" --url https://api.devnet.solana.com --keypair "$HOME/.config/solana/id.json" 2>&1)
