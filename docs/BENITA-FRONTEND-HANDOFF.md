@@ -70,7 +70,7 @@ Primary product routes:
 - `POST /api/v0.2/actions/evaluate`
 - `POST /api/v0.2/boundary-requests`
 
-New Cresco devnet bridge (implemented; canonical smoke proof pending):
+Cresco devnet bridge (PASS / PROVEN on the current AAPL proof lane):
 
 - `GET /api/v0.2/demo/runtime`
 - `POST /api/v0.2/actions/execute`
