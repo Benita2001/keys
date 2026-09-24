@@ -53,7 +53,7 @@ export default function StartPage() {
         />
       </label>
       <p className="mt-3 rounded-[14px] bg-surface-soft px-3.5 py-3 text-[12.5px] font-semibold text-ink-2">
-        Demo sign-in: Cresco doesn&apos;t create an account or send email yet. Your progress is saved on this device only.
+        Demo sign-in: no email is sent and no production account is created. When the KEYS backend is available, family progress and requests sync through the demo backend.
       </p>
     </OnboardingFrame>
   );
