@@ -46,7 +46,7 @@ describe("ModeSwitch", () => {
     const dialog = screen.getByRole("dialog", { name: "Money Mode" });
     expect(dialog).toBeInTheDocument();
     expect(dialog.contains(document.activeElement)).toBe(true); // Q011: focus moves into the sheet
-    expect(screen.getByText(/Solana Devnet test capital/i)).toBeInTheDocument();
+    expect(screen.getByText(/Devnet test capital/i)).toBeInTheDocument();
     expect(screen.getByText(/does not buy real securities/i)).toBeInTheDocument();
   });
 });
