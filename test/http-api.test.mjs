@@ -61,7 +61,8 @@ test('HTTP adapter exposes health and contract version', async () => {
   const result = await routeKeysHttp({ method: 'GET', path: '/health' });
   assert.equal(result.status, 200);
   assert.equal(result.body.ok, true);
-  assert.equal(result.body.contractVersion, '0.1');
+  assert.equal(result.body.contractVersion, '0.2');
+  assert.equal(result.body.legacyContractVersion, '0.1');
 });
 
 test('HTTP adapter exposes fail-closed backend capabilities', async () => {
@@ -374,7 +375,7 @@ test('v0.2 demo exposes frozen bounded-autonomy semantics', async () => {
   assert.equal(result.body.contractVersion, '0.2');
   assert.equal(result.body.currentMandate.status, 'ACTIVE');
   assert.equal(result.body.truthBoundary.realMinorSecuritiesExecution, false);
-  assert.equal(result.body.truthBoundary.onchainPythVerification, false);
+  assert.equal(result.body.truthBoundary.onchainPythVerification, true);
 });
 
 test('v0.2 action endpoint allows an in-bounds action with backend-owned market evidence', async () => {
