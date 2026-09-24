@@ -14,6 +14,7 @@ jobs:
     env:
       DEVNET_PAYER: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
       TARGET_LAMPORTS: "2500000000"
+      DEVNET_KEYPAIR_JSON: ${{ secrets.DEVNET_KEYPAIR_JSON }}
     steps:
       - name: Request only the required Devnet shortfall from provider faucet
         shell: bash
@@ -86,10 +87,17 @@ jobs:
           fi
 
           echo "PROOF provider_faucets_unavailable_trying_pow=1"
+          if [ -z "${DEVNET_KEYPAIR_JSON:-}" ]; then
+            echo "DEVNET_TOPUP=BLOCKED_MISSING_KEYPAIR_SECRET"
+            exit 1
+          fi
+          mkdir -p "$HOME/.config/solana"
+          printf '%s' "$DEVNET_KEYPAIR_JSON" > "$HOME/.config/solana/id.json"
+          chmod 600 "$HOME/.config/solana/id.json"
           cargo install devnet-pow
 
           set +e
-          pow_out=$(devnet-pow mine -d 3 --reward 0.02 --no-infer -t "$TARGET_LAMPORTS" 2>&1)
+          pow_out=$(devnet-pow -k "$HOME/.config/solana/id.json" -u https://api.devnet.solana.com -c confirmed mine -d 3 --reward 0.02 --no-infer -t "$TARGET_LAMPORTS" 2>&1)
           pow_rc=$?
           set -e
           echo "$pow_out"

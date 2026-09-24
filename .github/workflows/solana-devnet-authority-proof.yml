@@ -249,7 +249,7 @@ jobs:
               echo "PROOF devnet_pow_faucet=START balance_lamports=$BALANCE shortfall_lamports=$SHORTFALL_LAMPORTS"
               cargo install devnet-pow
               set +e
-              POW_OUT=$(devnet-pow mine -d 3 --reward 0.02 --no-infer -t "$TARGET_BALANCE_LAMPORTS" 2>&1)
+              POW_OUT=$(devnet-pow -k "$HOME/.config/solana/id.json" -u https://api.devnet.solana.com -c confirmed mine -d 3 --reward 0.02 --no-infer -t "$TARGET_BALANCE_LAMPORTS" 2>&1)
               POW_RC=$?
               set -e
               echo "$POW_OUT"
