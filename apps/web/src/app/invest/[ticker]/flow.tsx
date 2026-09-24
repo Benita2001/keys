@@ -487,7 +487,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
 
 const SOURCE_LABEL: Record<ActionEvaluation["source"], string> = {
   "keys-runtime": "KEYS runtime",
-  "keys-backend-draft": "KEYS backend (draft)",
+  "keys-backend": "KEYS backend",
   "local-preview": "local preview",
 };
 
