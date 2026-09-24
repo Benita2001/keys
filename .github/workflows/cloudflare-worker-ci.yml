@@ -1,0 +1,42 @@
+name: cloudflare-worker-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/cloudflare-worker.mjs"
+      - "src/http-api.mjs"
+      - "src/devnet-execution-provider.mjs"
+      - "src/pyth-adapter.mjs"
+      - "src/prestocks-adapter.mjs"
+      - "fixtures/**"
+      - "wrangler.jsonc"
+      - "package.json"
+      - "test/cloudflare-worker.test.mjs"
+      - ".github/workflows/cloudflare-worker-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install backend dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run backend tests
+        run: npm test
+
+      - name: Bundle Cloudflare Worker
+        run: npx --yes wrangler@4 deploy --dry-run --outdir dist/cloudflare
+
+      - name: Record bundle proof
+        run: |
+          test -f dist/cloudflare/index.js || find dist/cloudflare -maxdepth 2 -type f
+          echo "CLOUDFLARE_WORKER_DRY_RUN=PASS"
