@@ -23,7 +23,7 @@ Canonical program:
 6. Stale authorization/execution material refuses after the change.
 7. The same previously refused larger action succeeds after the human widen.
 8. Pause/downward authority blocks execution.
-9. Live authenticated Pyth Pro/Lazer TSLA evidence is verified inside the Solana capital path.
+9. Live authenticated Pyth Pro/Lazer AAPL evidence is verified inside the Solana capital path.
 10. Pyth-derived USD notional is load-bearing.
 11. A notional breach refuses with `PythNotionalExceeded`.
 12. A precommitted max-price condition refuses with `MarketConditionInvalidated`.
@@ -54,9 +54,9 @@ The proven path is:
 
 Canonical live feed in the proof:
 
-`Equity.US.TSLA/USD` — feed id `1435`.
+`Equity.US.AAPL/USD` — feed id `922`.
 
-The current trial does not prove live AAPL entitlement.
+The current trial now proves live AAPL entitlement, signed Solana-payload availability, and confirmed devnet execution through `ONCHAIN_PYTH_LAZER` in run `36034651466`. Historical TSLA proofs remain valid.
 
 ## Learning reality
 
