@@ -52,8 +52,7 @@ export default function ParentSignIn() {
         />
       </label>
       <p className="mt-3 rounded-[14px] bg-surface-soft px-3.5 py-3 text-[12.5px] font-semibold text-ink-2">
-        Demo sign-in: parent accounts, identity checks and family linking aren&apos;t connected yet. Nothing is sent or stored beyond this
-        device.
+        Demo sign-in: KEYS issues a temporary guardian session so authority-changing actions are role-gated. This is not identity verification, KYC or a production account.
       </p>
     </OnboardingFrame>
   );
