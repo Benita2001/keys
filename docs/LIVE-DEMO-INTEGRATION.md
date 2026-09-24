@@ -60,7 +60,7 @@ Family reads use either role. This closes the previous “same browser means sam
 
 Quotes endpoint supports the UI universe, but only fresh entitled Pyth evidence is labeled live. Missing feeds stay sample/unavailable.
 
-Historical series are not fabricated; the current API says `HISTORY_PROVIDER_NOT_CONNECTED`.
+AAPL historical series are now fetched server-side from authenticated Pyth Pro History for supported periods. Unentitled or unconfigured history still fails closed with no fabricated points.
 
 ## PreStocks
 
