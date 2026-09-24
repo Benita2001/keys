@@ -34,6 +34,12 @@ current_truth:
   pyth_signed_solana_payload_availability_v0_2: PASS
   onchain_pyth_verification_v0_2: PASS_LOCAL_AND_DEVNET_LIVE_PYTH
   contextual_learning_layer_spec: LOCKED
+  stocklana_bounty_integration_gate: PASS_WITH_SELECTIVE_INTEGRATION
+  pyth_bounty: GO_ALREADY_EARNED
+  prestocks_bounty: CONDITIONAL_GO_REPRESENTATION_PROOF_REQUIRED
+  tessera_bounty: CONDITIONAL_GO_REPRESENTATION_PROOF_REQUIRED
+  clawpump_bounty: SIDECAR_ONLY
+  meteora_bounty: CONDITIONAL_ON_REAL_DBC_USE
   real_minor_execution: OUT_OF_SCOPE
 
 canonical_solana:
@@ -96,6 +102,7 @@ v0_2_target:
     technical_gate: docs/TECHNICAL-REALITY-GATE-BOUNDED-AUTONOMY.md
     architecture_delta: docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md
     learning_layer: docs/FAMILY-LEARNING-LAYER.md
+    bounty_gate: docs/STOCKLANA-BOUNTY-INTEGRATION-GATE.md
 
 sponsor_tracks:
   stocklana_main: ACTIVE
