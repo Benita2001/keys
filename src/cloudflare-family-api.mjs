@@ -1,5 +1,9 @@
 import { evaluateBoundedAction } from "./bounded-autonomy.mjs";
 import { configuredDevnetExecutionProviderFromEnv } from "./devnet-execution-provider.mjs";
+import {
+  PYTH_PRO_EQUITY_FEEDS,
+  fetchPythProSnapshot,
+} from "./pyth-adapter.mjs";
 
 const FAMILY_NAME = "stocklana-demo-family";
 
@@ -264,6 +268,49 @@ async function handleExecute(env, body) {
   });
 }
 
+const MARKET_UNIVERSE = [
+  "AAPL",
+  "NVDA",
+  "TSLA",
+  "NFLX",
+  "AMZN",
+  "MSFT",
+  "META",
+  "MCD",
+  "SPY",
+  "QQQ",
+];
+
+async function marketQuote(symbol) {
+  const normalized = String(symbol || "").toUpperCase();
+  const feed = PYTH_PRO_EQUITY_FEEDS[normalized];
+  if (!feed) {
+    return {
+      symbol: normalized,
+      status: "UNAVAILABLE",
+      source: "PYTH_PRO",
+      reasonCode: "PYTH_FEED_NOT_CONFIGURED",
+    };
+  }
+
+  const snapshot = await fetchPythProSnapshot({
+    apiKey: process.env.PYTH_PRO_API_KEY,
+    feed,
+  });
+
+  return {
+    symbol: normalized,
+    tokenizedSymbol: normalized + "x",
+    source: "PYTH_PRO",
+    feedId: feed.feedId,
+    status: snapshot.status,
+    price: snapshot.price ?? null,
+    publishTime: snapshot.publishTime ?? null,
+    confidenceBps: snapshot.confidenceBps ?? null,
+    reasonCode: snapshot.reasonCode ?? null,
+  };
+}
+
 export async function handleFamilyApi(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -272,6 +319,41 @@ export async function handleFamilyApi(request, env) {
     ["POST", "PUT", "PATCH"].includes(method)
       ? await request.clone().json().catch(() => ({}))
       : {};
+
+  if (method === "GET" && path === "/api/v0.2/market/quotes") {
+    const requested = (url.searchParams.get("symbols") || MARKET_UNIVERSE.join(","))
+      .split(",")
+      .map((item) => item.trim().toUpperCase())
+      .filter((item) => MARKET_UNIVERSE.includes(item));
+
+    const quotes = await Promise.all(requested.map(marketQuote));
+    return json({
+      contractVersion: "0.2",
+      type: "V0_2_MARKET_QUOTES",
+      quotes,
+      truthBoundary: {
+        onlyFreshPythIsLive: true,
+        unavailableIsNeverZero: true,
+      },
+    });
+  }
+
+  if (method === "GET" && path === "/api/v0.2/market/series") {
+    const symbol = String(url.searchParams.get("symbol") || "").toUpperCase();
+    const period = String(url.searchParams.get("period") || "1M");
+    return json({
+      contractVersion: "0.2",
+      type: "V0_2_MARKET_SERIES",
+      symbol,
+      period,
+      status: "UNAVAILABLE",
+      points: [],
+      reasonCode: "HISTORY_PROVIDER_NOT_CONNECTED",
+      truthBoundary: {
+        fabricatedHistory: false,
+      },
+    });
+  }
 
   if (method === "GET" && path === "/api/v0.2/family/state") {
     const out = await familyJson(env, "/state");
