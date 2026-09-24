@@ -76,12 +76,15 @@ async function loadRuntimeAndFamily(env) {
 }
 
 function evaluationForReserve(family, runtime, body) {
+  const requestedNotional = Number(
+    body.notional ?? body.action?.notional ?? body.action?.amount ?? 0
+  );
   const action = {
-    asset: String(body.asset || "").toUpperCase(),
-    type: String(body.type || "BUY").toUpperCase(),
-    amount: Number(body.notional || 0),
-    notional: Number(body.notional || 0),
-    expectedNonce: body.expectedNonce
+    asset: String(body.asset ?? body.action?.asset ?? "").toUpperCase(),
+    type: String(body.type ?? body.action?.type ?? "BUY").toUpperCase(),
+    amount: requestedNotional,
+    notional: requestedNotional,
+    expectedNonce: body.expectedNonce ?? body.action?.expectedNonce
   };
   const result = evaluateBoundedAction({
     mandate: family.mandate,
