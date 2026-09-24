@@ -36,12 +36,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error \
-            -X POST \
-            -H "content-type: application/json" \
-            --data '{"role":"child","displayName":"Hosted Smoke Child"}' \
-            "$KEYS_API_URL/api/v0.2/auth/demo-session" \
-            | tee /tmp/child-session.json
+          for attempt in $(seq 1 24); do
+            curl --fail --silent --show-error \
+              -X POST \
+              -H "content-type: application/json" \
+              --data '{"role":"child","displayName":"Hosted Smoke Child"}' \
+              "$KEYS_API_URL/api/v0.2/auth/demo-session" \
+              > /tmp/child-session.json
+
+            if node -e '
+              const fs = require("fs");
+              const x = JSON.parse(fs.readFileSync("/tmp/child-session.json","utf8"));
+              process.exit(x.role === "child" && typeof x.token === "string" && x.token.length > 10 ? 0 : 1);
+            '; then
+              cat /tmp/child-session.json
+              break
+            fi
+
+            echo "Waiting for the latest Cloudflare deployment (attempt $attempt/24)..."
+            sleep 10
+          done
+
           node -e '
             const fs = require("fs");
             const x = JSON.parse(fs.readFileSync("/tmp/child-session.json","utf8"));
