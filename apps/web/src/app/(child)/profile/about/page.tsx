@@ -2,9 +2,15 @@
 
 import { ChevronDown } from "lucide-react";
 import { useToast } from "@/components/ui/feedback";
+import { useState } from "react";
 import { ActionButton, Card, PageHeader, SectionHeader, Toggle } from "@/components/ui/primitives";
 import { getCapabilities } from "@/services";
-import { keysApiUrl } from "@/services/keys-backend";
+import {
+  executeAction,
+  fetchDevnetDemoRuntime,
+  keysApiUrl,
+  newIdempotencyKey,
+} from "@/services/keys-backend";
 import { useStore } from "@/state/store";
 
 const PROGRAM_ID = "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk";
@@ -14,6 +20,59 @@ export default function AboutPage() {
   const toast = useToast();
   const caps = getCapabilities();
   const flags = state.demoFlags;
+  const [proofRunning, setProofRunning] = useState(false);
+  const [liveProof, setLiveProof] = useState<{
+    status: "idle" | "success" | "refused" | "error";
+    message?: string;
+    signature?: string;
+  }>({ status: "idle" });
+
+  async function runLiveDevnetProof() {
+    if (caps.execution !== "keys-runtime" || proofRunning) return;
+    setProofRunning(true);
+    setLiveProof({ status: "idle" });
+
+    try {
+      const runtime = await fetchDevnetDemoRuntime();
+      const result = await executeAction({
+        asset: runtime.asset,
+        type: "BUY",
+        notional: 5,
+        expectedNonce: runtime.mandate.nonce,
+        idempotencyKey: newIdempotencyKey(),
+      });
+
+      if (
+        result.outcome === "EXECUTED" &&
+        result.proof?.status === "RUNTIME_CONFIRMED" &&
+        result.proof.simulated === false &&
+        result.proof.signature
+      ) {
+        setLiveProof({
+          status: "success",
+          message: "Confirmed on Solana devnet with live Pyth market truth.",
+          signature: result.proof.signature,
+        });
+      } else if (result.outcome === "REFUSED") {
+        setLiveProof({
+          status: "refused",
+          message: `KEYS refused the action: ${result.evaluation.reasonCode}`,
+        });
+      } else {
+        setLiveProof({
+          status: "error",
+          message: "The runtime did not return a confirmed proof. Nothing is shown as executed.",
+        });
+      }
+    } catch {
+      setLiveProof({
+        status: "error",
+        message: "The live devnet proof lane is unavailable right now.",
+      });
+    } finally {
+      setProofRunning(false);
+    }
+  }
 
   const truths = [
     {
@@ -58,7 +117,7 @@ export default function AboutPage() {
           <ChevronDown aria-hidden className="size-5 text-ink-3 transition-transform group-open:rotate-180" />
         </summary>
         <dl className="mt-3 space-y-2 text-[13px]">
-          <Detail k="Authority engine" v="KEYS bounded-autonomy Mandate (contract v0.2, draft)" />
+          <Detail k="Authority engine" v="KEYS bounded-autonomy Mandate (contract v0.2, frozen)" />
           <Detail k="Backend" v={caps.backend === "none" ? "Not configured, using the local policy preview" : `KEYS API at ${keysApiUrl()}`} />
           <Detail k="Solana program (devnet)" v={PROGRAM_ID} mono />
           <Detail
@@ -76,6 +135,45 @@ export default function AboutPage() {
         >
           View program on Solana Explorer
         </a>
+
+        <div className="mt-4 rounded-[16px] border border-line-soft bg-surface-soft p-3.5">
+          <p className="text-[13px] font-extrabold text-navy-strong">Live Solana proof lane</p>
+          <p className="mt-1 text-[12.5px] font-semibold text-ink-2">
+            Runs a $5 TSLA-bounded action through the KEYS devnet program using a demo/mock SPL token and live signed Pyth market
+            truth. This is not a real share purchase, brokerage or custody flow.
+          </p>
+          <ActionButton
+            className="mt-3"
+            variant="secondary"
+            disabled={caps.execution !== "keys-runtime" || proofRunning}
+            onClick={runLiveDevnetProof}
+          >
+            {proofRunning
+              ? "Running devnet proof…"
+              : caps.execution === "keys-runtime"
+                ? "Run live devnet proof"
+                : "Live proof backend not connected"}
+          </ActionButton>
+
+          {liveProof.status !== "idle" ? (
+            <div
+              role="status"
+              className="mt-3 rounded-[12px] border border-line-soft bg-surface px-3 py-2.5 text-[12.5px] font-semibold text-ink-2"
+            >
+              <p>{liveProof.message}</p>
+              {liveProof.signature ? (
+                <a
+                  className="mt-1.5 inline-block font-extrabold text-blue hover:underline"
+                  href={`https://explorer.solana.com/tx/${liveProof.signature}?cluster=devnet`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View transaction on Solana
+                </a>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </details>
 
       <section className="mt-6">
