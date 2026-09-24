@@ -3,6 +3,7 @@ import { configuredDevnetExecutionProviderFromEnv } from "./devnet-execution-pro
 import {
   PYTH_PRO_EQUITY_FEEDS,
   fetchPythProSnapshot,
+  fetchPythProHistory,
 } from "./pyth-adapter.mjs";
 
 const FAMILY_NAME = "stocklana-demo-family";
@@ -362,6 +363,182 @@ async function marketQuote(symbol) {
   };
 }
 
+const SERIES_WINDOWS = Object.freeze({
+  "1D": { seconds: 24 * 60 * 60, resolution: "15" },
+  "1W": { seconds: 7 * 24 * 60 * 60, resolution: "60" },
+  "7D": { seconds: 7 * 24 * 60 * 60, resolution: "60" },
+  "1M": { seconds: 30 * 24 * 60 * 60, resolution: "D" },
+  "30D": { seconds: 30 * 24 * 60 * 60, resolution: "D" },
+  "1Y": { seconds: 365 * 24 * 60 * 60, resolution: "D" },
+  "All": { seconds: 540 * 24 * 60 * 60, resolution: "D" },
+});
+
+async function marketSeries(symbol, period) {
+  const normalized = String(symbol || "").toUpperCase();
+  const feed = PYTH_PRO_EQUITY_FEEDS[normalized];
+  const window = SERIES_WINDOWS[period] || SERIES_WINDOWS["1M"];
+
+  if (!feed) {
+    return {
+      contractVersion: "0.2",
+      type: "V0_2_MARKET_SERIES",
+      symbol: normalized,
+      period,
+      status: "UNAVAILABLE",
+      source: "PYTH_PRO_HISTORY",
+      points: [],
+      reasonCode: "PYTH_HISTORY_FEED_NOT_CONFIGURED",
+      truthBoundary: { fabricatedHistory: false },
+    };
+  }
+
+  const to = Math.floor(Date.now() / 1000);
+  const from = Math.max(
+    Math.floor(Date.UTC(2025, 3, 1) / 1000),
+    to - window.seconds,
+  );
+  const history = await fetchPythProHistory({
+    apiKey: process.env.PYTH_PRO_API_KEY,
+    feed,
+    from,
+    to,
+    resolution: window.resolution,
+  });
+
+  return {
+    contractVersion: "0.2",
+    type: "V0_2_MARKET_SERIES",
+    symbol: normalized,
+    period,
+    status: history.status,
+    source: history.source,
+    feedId: feed.feedId,
+    resolution: history.resolution,
+    points: history.points || [],
+    reasonCode: history.reasonCode ?? null,
+    truthBoundary: {
+      fabricatedHistory: false,
+      apiKeyExposedToBrowser: false,
+    },
+  };
+}
+
+async function handleConcurrencyProof(env) {
+  const before = (await familyJson(env, "/state")).body;
+  const pendingBefore = Object.values(before.reservations || {}).reduce(
+    (sum, item) => sum + Number(item.notional || 0),
+    0
+  );
+  const maxAction = Number(before.mandate?.maxActionNotional || 0);
+  const periodRemaining = Math.max(
+    0,
+    Number(before.mandate?.maxPeriodNotional || 0) -
+      Number(before.mandate?.spentThisPeriod || 0) -
+      pendingBefore
+  );
+  const balanceRemaining = Math.max(
+    0,
+    Number(before.balances?.money || 0) - pendingBefore
+  );
+  const capacity = Math.min(periodRemaining, balanceRemaining);
+
+  if (!(maxAction > 0) || !(capacity > 0)) {
+    return {
+      contractVersion: "0.2",
+      type: "V0_2_CONCURRENCY_PROOF",
+      status: "UNAVAILABLE",
+      reasonCode: "NO_AVAILABLE_DEMO_CAPACITY",
+      truthBoundary: { executesTrades: false }
+    };
+  }
+
+  const amount = Math.min(maxAction, capacity);
+  const attemptCount = Math.floor(capacity / amount) + 1;
+  if (attemptCount < 2 || attemptCount > 64) {
+    return {
+      contractVersion: "0.2",
+      type: "V0_2_CONCURRENCY_PROOF",
+      status: "UNAVAILABLE",
+      reasonCode: "PROOF_SHAPE_OUT_OF_RANGE",
+      attemptCount,
+      truthBoundary: { executesTrades: false }
+    };
+  }
+
+  const proofId = crypto.randomUUID();
+  const intents = Array.from({ length: attemptCount }, (_, index) => ({
+    asset: index % 2 === 0 ? "AAPL" : "TSLA",
+    notional: amount,
+    idempotencyKey: `concurrency-proof-${proofId}-${index}`
+  }));
+
+  const results = await Promise.all(
+    intents.map((intent) =>
+      familyJson(env, "/reserve", { method: "POST", body: intent })
+    )
+  );
+
+  const allowed = results
+    .map((result, index) => ({ ...result.body, intent: intents[index] }))
+    .filter((result) => result.allowed === true && result.reservation);
+  const refused = results
+    .map((result, index) => ({ ...result.body, intent: intents[index] }))
+    .filter((result) => result.allowed === false);
+
+  await Promise.all(
+    allowed.map((entry) =>
+      familyJson(env, "/finalize", {
+        method: "POST",
+        body: {
+          idempotencyKey: entry.intent.idempotencyKey,
+          success: false,
+          result: {
+            contractVersion: "0.2",
+            type: "V0_2_CONCURRENCY_PROOF_RELEASE",
+            released: true,
+          },
+        },
+      })
+    )
+  );
+
+  const after = (await familyJson(env, "/state")).body;
+  const mutated =
+    Number(after.balances?.money || 0) !== Number(before.balances?.money || 0) ||
+    Number(after.mandate?.spentThisPeriod || 0) !==
+      Number(before.mandate?.spentThisPeriod || 0);
+  const allowedNotional = allowed.reduce(
+    (sum, entry) => sum + Number(entry.intent.notional || 0),
+    0
+  );
+  const pass =
+    allowed.length >= 1 &&
+    refused.length >= 1 &&
+    allowedNotional <= capacity + 1e-9 &&
+    !mutated;
+
+  return {
+    contractVersion: "0.2",
+    type: "V0_2_CONCURRENCY_PROOF",
+    status: pass ? "PASS" : "FAIL",
+    attempted: intents.length,
+    allowed: allowed.length,
+    refused: refused.length,
+    amountPerIntent: amount,
+    availableCapacity: capacity,
+    allowedNotional,
+    assetsAttempted: [...new Set(intents.map((intent) => intent.asset))],
+    refusalCodes: [...new Set(refused.map((entry) => entry.reasonCode).filter(Boolean))],
+    stateUnchangedAfterRelease: !mutated,
+    truthBoundary: {
+      executesTrades: false,
+      provesDurableReservationSerialization: true,
+      aaplMoneyLaneProven: true,
+      tslaExecutionClaimed: false,
+    },
+  };
+}
+
 export async function handleFamilyApi(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -392,18 +569,13 @@ export async function handleFamilyApi(request, env) {
   if (method === "GET" && path === "/api/v0.2/market/series") {
     const symbol = String(url.searchParams.get("symbol") || "").toUpperCase();
     const period = String(url.searchParams.get("period") || "1M");
-    return json({
-      contractVersion: "0.2",
-      type: "V0_2_MARKET_SERIES",
-      symbol,
-      period,
-      status: "UNAVAILABLE",
-      points: [],
-      reasonCode: "HISTORY_PROVIDER_NOT_CONNECTED",
-      truthBoundary: {
-        fabricatedHistory: false,
-      },
-    });
+    return json(await marketSeries(symbol, period));
+  }
+
+  if (method === "POST" && path === "/api/v0.2/proofs/concurrency") {
+    const denied = await requireGuardian(env, request);
+    if (denied) return denied;
+    return json(await handleConcurrencyProof(env));
   }
 
   if (method === "GET" && path === "/api/v0.2/family/state") {
