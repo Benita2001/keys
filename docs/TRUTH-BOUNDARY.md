@@ -50,10 +50,19 @@ Now additionally **proven on a local Solana validator with live authenticated Py
 - fail-closed refusal when a precommitted max-price condition is invalidated;
 - market evidence has no authority-widening effect.
 
-Still pending:
+Canonical devnet confirmation is now **PASS**.
 
-- canonical devnet confirmation of the Pyth-integrated path;
-- frozen frontend/backend contract v0.2.
+The frozen current integration contract is:
+
+`docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
+
+Still not claimed:
+
+- real tokenized-stock execution;
+- brokerage/custody;
+- legal minor securities ownership;
+- mainnet execution;
+- universal issuer/venue/jurisdiction eligibility.
 
 ## Not claimed
 
