@@ -80,7 +80,7 @@ export default function AboutPage() {
       body:
         caps.marketData === "mock"
           ? "Company prices and charts are samples for learning, not live quotes. Every company maps to a real tokenized stock on Solana, like AAPLx."
-          : "Prices are samples, except Tesla, which shows live Pyth market data from the KEYS backend when it's available.",
+          : "Fresh Pyth quotes are labeled Live when the backend has an entitled feed; unavailable symbols remain clearly sample data. AAPL is the current proven Money proof asset.",
     },
     {
       title: "Practice",
@@ -90,7 +90,7 @@ export default function AboutPage() {
       title: "Money Mode",
       body:
         caps.execution === "keys-runtime"
-          ? "Money Mode stays a demo for the Family journey. A separate technical proof lane below can run a bounded demo-token action through the KEYS program on Solana devnet using live Pyth market truth."
+          ? "Money Mode uses bounded Solana Devnet test capital with a demo SPL token and live Pyth market truth for the proven AAPL lane. It is not brokerage, custody or a real securities purchase."
           : "Money Mode is a demo. It isn't connected to a bank, broker or custodian, so no real money moves and nothing is bought.",
     },
     {
@@ -122,7 +122,7 @@ export default function AboutPage() {
           <Detail k="Solana program (devnet)" v={PROGRAM_ID} mono />
           <Detail
             k="Money execution from this app"
-            v={caps.execution === "keys-runtime" ? "Family lane stays demo; separate AAPL proof lane is available" : "Not connected (demo only)"}
+            v={caps.execution === "keys-runtime" ? "AAPL Money lane executes on Solana Devnet with demo-token capital" : "Not connected (demo only)"}
           />
           <Detail k="Mandate version" v={`v${state.mandate.version} · nonce ${state.mandate.nonce}`} />
           <Detail k="Proven live market feed" v="Pyth Pro Equity.US.AAPL/USD (server-side only)" />
