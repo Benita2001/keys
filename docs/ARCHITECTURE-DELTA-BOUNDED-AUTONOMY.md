@@ -171,26 +171,27 @@ A principal can approve one specific boundary action without permanently widenin
 
 This should be nonce-bound and consumed exactly once.
 
-## Pyth integration delta
+## Pyth integration delta — PROVEN
 
-Current:
-- backend REST fetch;
-- normalized price/confidence/freshness;
-- unsigned `leUnsigned` demo shape;
-- policy evaluator consumes the result off-chain.
+The target path is now proven on local Solana and the canonical devnet program:
 
-Target:
-- fetch/subscribe server-side with Pyth Pro API key;
-- request signed Solana payload;
-- include payload with execution transaction;
-- verify in Solana using Pyth Pro/Lazer SVM tooling;
-- derive notional / freshness / confidence / precommitted condition in the execution path.
+- Pyth Pro API key stays server-side;
+- backend requests the signed Solana-format Pyth payload;
+- the transaction carries the signed payload;
+- Ed25519 verification plus the canonical Pyth Lazer verifier are used in the KEYS capital path;
+- KEYS derives deterministic micro-USD notional from the verified market message;
+- freshness, confidence, feed identity, notional limits and precommitted price conditions can stop execution;
+- market evidence never grants or widens human authority.
 
-Three product uses, in order:
+Canonical devnet proof:
+
+https://github.com/Faadil1/keys/actions/runs/35959137364
+
+Three product uses remain:
 
 1. **Execution truth:** convert token quantity to mandate quote notional; UNKNOWN/STALE => REFUSE.
-2. **Boundary-request validity:** expire a request when its own committed market condition no longer holds.
-3. **Review evidence:** compare T0 market state with later outcome without using P&L as a competence score.
+2. **Boundary-request validity:** expire/refuse when a committed market condition no longer holds.
+3. **Review evidence:** explain market context without using P&L as a competence score.
 
 ## Learning delta
 
@@ -235,7 +236,7 @@ The v0.2 frontend contract must expose at least:
 - `transition` with version/nonce;
 - `staleAuthorization` proof.
 
-Benita remains frontend owner. Backend v0.2 contract is owned by Faadil and is **not yet frozen**.
+Benita remains frontend owner. Backend v0.2 contract is owned by Faadil and is **FROZEN FOR FRONTEND INTEGRATION** at `docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`.
 
 ## Demo spine
 
