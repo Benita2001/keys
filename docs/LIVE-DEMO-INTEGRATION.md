@@ -150,11 +150,11 @@ Capital asset:
 
 Market truth:
 
-live signed Pyth TSLA evidence, verified through the KEYS/Pyth Lazer on-chain path.
+live signed Pyth AAPL evidence (`Equity.US.AAPL/USD`, feed `922`), verified through the KEYS/Pyth Lazer on-chain path.
 
 This is **not** embedded-wallet production architecture, real securities execution, brokerage or custody.
 
-The stable-runtime bootstrap and HTTP execution smoke proof run in the `solana-devnet-authority-proof` workflow. Until that new smoke passes, keep the bridge labeled **IMPLEMENTED / PROOF PENDING**.
+The stable AAPL runtime bootstrap and HTTP execution smoke are **PASS / PROVEN** in `devnet-execution-bridge` run `36034651466`.
 
 See:
 
