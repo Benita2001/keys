@@ -3,7 +3,7 @@
 Audience: backend owner (KEYS v0.2 runtime, Solana, Pyth).
 Frontend: `apps/web` (Next.js 16, TypeScript). Contract status: the backend v0.2 contract is **FROZEN** (`docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`). This document reflects the merged Cresco frontend and current backend integration truth.
 
-**Read first:** nothing in the frontend executes capital. Money Mode is demo state with honest labels. The only backend calls the frontend makes today are listed in §1.
+**Read first:** the normal Family Money lane remains demo/policy-only with honest labels. The separate Technical details proof lane can execute the bounded demo/mock SPL-token path on Solana devnet and surface a real confirmed signature. The backend calls used by Cresco are listed in §1.
 
 > **Current delta:** see `docs/CRESCO-BACKEND-DELTA-2026-09-24.md`. The stable devnet execution bridge is intentionally AAPL market truth + demo/mock SPL token + server-held devnet demo signer. It does not replace the broader production architecture sections below.
 
