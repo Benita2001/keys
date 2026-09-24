@@ -193,17 +193,18 @@ export function createDevnetExecutionProvider({
 
     const rules = await rpc.getProgramAccounts(DEVNET_KEYS_PROGRAM_ID, {
       commitment: 'confirmed',
-      filters: [
-        { dataSize: ASSET_RULE_ACCOUNT_SIZE },
-        { memcmp: { offset: 8, bytes: mandateAddress.toBase58() } }
-      ]
+      filters: [{ dataSize: ASSET_RULE_ACCOUNT_SIZE }]
     });
 
     const parsedRules = rules
       .map(({ pubkey, account }) =>
         parseAssetRuleAccount(pubkey, Buffer.from(account.data))
       )
-      .filter((rule) => rule.pythFeedId === DEMO_FEED_ID);
+      .filter(
+        (rule) =>
+          rule.mandate.equals(mandateAddress) &&
+          rule.pythFeedId === DEMO_FEED_ID
+      );
 
     if (parsedRules.length !== 1) {
       throw new Error(
