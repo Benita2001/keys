@@ -122,14 +122,14 @@ function Loaded({ asset }: { asset: MarketAsset }) {
           <PeriodSelector options={PERIODS} value={period as (typeof PERIODS)[number]} onChange={setPeriod} label="Chart period" />
           <div className="mt-2 min-h-[130px]">
             {series.status === "success" ? (
-              <PriceChart points={series.data} trend={asset.dayChangePercent} label={`${asset.companyName} sample price, ${period}`} height={130} />
+              <PriceChart points={series.data} trend={asset.dayChangePercent} label={`${asset.companyName} price history, ${period}`} height={130} />
             ) : series.status === "error" ? (
               <ErrorState onRetry={series.reload} />
             ) : (
               <Skeleton className="h-[130px] w-full" />
             )}
           </div>
-          <p className="text-[11.5px] font-semibold text-ink-3">Chart history is sample data for learning.</p>
+          <p className="text-[11.5px] font-semibold text-ink-3">Chart history uses Pyth when the configured feed is entitled; otherwise Cresco falls back to clearly labeled sample data.</p>
         </div>
       </div>
 
