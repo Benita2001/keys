@@ -1,4 +1,5 @@
 name: devnet-execution-bridge
+# Current-main verification reuses the already-deployed canonical program.
 
 concurrency:
   group: keys-devnet-execution-bridge
