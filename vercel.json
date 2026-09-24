@@ -8,7 +8,7 @@
   ],
   "functions": {
     "api/**/*.mjs": {
-      "maxDuration": 10
+      "maxDuration": 30
     }
   }
 }
