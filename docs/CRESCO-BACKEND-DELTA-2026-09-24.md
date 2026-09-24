@@ -1,7 +1,16 @@
 # Cresco / Benita — Backend Delta after v0.2 Freeze
 
+> **HISTORICAL / SUPERSEDED.** This file records the delta that existed while the Cresco branch was being integrated. Do not use its “Still real gaps” section as current state. Current implementation truth is in:
+> - `docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md`
+> - `docs/CRESCO-FRONTEND-IMPLEMENTATION-SUMMARY.md`
+> - `docs/STOCKLANA-SUBMISSION-PACKAGING-2026-09-24.md`
+> - `state/CURRENT.yaml`
+>
+> The Family demo is now stateful and hosted: role-scoped demo sessions, server-owned Mandate evaluation, persistent boundary requests, durable idempotency/reservations, test funding, learning/portfolio sync, AAPL Devnet execution, fail-closed market quotes and WebKit/iPhone QA are implemented. Production auth/KYC, embedded wallets, fiat rails, custody/brokerage, mainnet and all-symbol live/history remain intentionally outside the hackathon truth boundary.
+
+
 Date: 2026-09-24  
-Status: **CURRENT BACKEND TRUTH — OVERRIDES STALE ASSUMPTIONS IN PR #1 HANDOFF**
+Status: **HISTORICAL SNAPSHOT — SUPERSEDED BY CURRENT HANDOFF + STATE**
 
 This document exists because the Cresco frontend branch was created against an older KEYS backend snapshot.
 
