@@ -5,10 +5,9 @@
  * intended xStocks-style tokenized product on Solana. Prices and daily changes
  * below are illustrative samples, marked dataStatus "mock" / priceSource "mock".
  *
- * The only live market evidence the repository currently proves is Pyth Pro
- * Equity.US.TSLA/USD (docs/TRUTH-BOUNDARY.md). When a KEYS backend is
- * configured, MarketDataService may overlay that single live price; nothing
- * else here is live.
+ * The hosted KEYS backend may overlay an entitled Pyth quote when it is FRESH.
+ * AAPL is the current proven Money proof asset; TSLA retains historical proof.
+ * Unentitled/unconfigured symbols remain these clearly labeled sample values.
  */
 import type { MarketAsset, Period, PricePoint } from "@/domain/types";
 
