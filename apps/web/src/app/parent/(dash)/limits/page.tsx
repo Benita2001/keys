@@ -25,7 +25,8 @@ export default function ParentLimitsPage() {
   const [paused, setPaused] = useState(m.status === "PAUSED");
   const [confirm, setConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const assets = allAssetSnapshots().filter((a) => a.moneyModeStatus !== "unavailable");
+  const assets = allAssetSnapshots();
+  const provenMoneyAsset = "AAPL";
   const child = state.profile.childName;
 
   const changed =
@@ -89,6 +90,9 @@ export default function ParentLimitsPage() {
 
       <section className="mt-5">
         <SectionHeader title="Companies allowed" />
+        <p className="mb-3 text-[12.5px] font-semibold text-ink-3">
+          The current live Money proof lane is AAPL on Solana Devnet. Other companies stay available in Practice until their own execution representation and market evidence are connected.
+        </p>
         <Card className="divide-y divide-line-soft px-4">
           {assets.map((a) => (
             <div key={a.ticker} className="flex items-center gap-3 py-2.5">
@@ -96,11 +100,33 @@ export default function ParentLimitsPage() {
               <span className="flex-1 text-[14px] font-bold text-navy">
                 {a.companyName} <span className="text-ink-3">{a.ticker}</span>
               </span>
-              <Toggle
-                checked={allowed.includes(a.ticker)}
-                onChange={(v) => setAllowed((p) => (v ? [...p, a.ticker] : p.filter((t) => t !== a.ticker)))}
-                label={`Allow ${a.companyName}`}
-              />
+              <div className="flex items-center gap-3">
+                {a.ticker === provenMoneyAsset ? (
+                  <span className="hidden text-[11px] font-extrabold text-green-strong sm:inline">
+                    Devnet Money proof
+                  </span>
+                ) : (
+                  <span className="hidden text-[11px] font-bold text-ink-3 sm:inline">
+                    Practice only
+                  </span>
+                )}
+                <Toggle
+                  checked={a.ticker === provenMoneyAsset && allowed.includes(a.ticker)}
+                  disabled={a.ticker !== provenMoneyAsset}
+                  onChange={(v) =>
+                    setAllowed((p) =>
+                      v
+                        ? Array.from(new Set([...p.filter((t) => t === provenMoneyAsset), provenMoneyAsset]))
+                        : p.filter((t) => t !== provenMoneyAsset),
+                    )
+                  }
+                  label={
+                    a.ticker === provenMoneyAsset
+                      ? `Allow ${a.companyName} in Money Mode`
+                      : `${a.companyName} is Practice-only in the current Devnet demo`
+                  }
+                />
+              </div>
             </div>
           ))}
         </Card>
