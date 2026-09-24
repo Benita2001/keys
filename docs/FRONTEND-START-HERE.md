@@ -1,7 +1,7 @@
 # Benita — Frontend Start Here (v0.2 transition)
 
 Date: 2026-09-24  
-Status: **PRODUCT RELOCKED; V0.2 BACKEND CONTRACT NOT YET FROZEN**
+Status: **V0.2 CONTRACT FROZEN; INTEGRATION READY**
 
 You still own the KEYS frontend and product experience.
 
@@ -74,13 +74,16 @@ Primary surfaces should now communicate:
 
 ## Backend coordination
 
-The old v0.1 fixture/API remains useful as historical proof, but it is no longer the frozen target for the new experience.
+The old v0.1 fixture/API remains historical proof only.
 
-Faadil owns the v0.2 backend build and will freeze a new semantic contract after:
+The current frozen integration contract is:
 
-- permission-matrix Mandate;
-- program-controlled vault execution;
-- signed on-chain Pyth verification;
-- boundary request / explicit widen semantics.
+`docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
+
+The canonical Solana devnet + live Pyth proof is:
+
+https://github.com/Faadil1/keys/actions/runs/35959137364
+
+Faadil now maintains the backend/proof and supports integration issues. Benita can integrate against the frozen v0.2 semantics.
 
 Do not redesign around TSLA or AAPL availability. The mechanism remains asset-independent and actual live assets must always be labeled truthfully.
