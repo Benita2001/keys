@@ -1,0 +1,40 @@
+name: webkit-mobile-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - ".github/workflows/webkit-mobile-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  webkit-iphone:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install app
+        run: npm ci
+
+      - name: Install Playwright for QA only
+        run: npm install --no-save --no-package-lock @playwright/test@1.55.0
+
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: Build Cresco
+        run: npm run build
+
+      - name: Run iPhone WebKit QA
+        run: npx playwright test --project=webkit
