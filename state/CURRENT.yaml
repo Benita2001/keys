@@ -40,9 +40,9 @@ current_truth:
   prestocks_live_proof: PASS
   cresco_frontend_pr_1: MERGED
   cresco_web_ci: PASS
-  cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36036451930"
+  cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36054614070"
   current_node_ci: PASS
-  current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36036452042"
+  current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36054828960"
   cresco_aapl_migration: PASS_FULL_STACK
   cresco_aapl_bridge_revalidation_run: "https://github.com/Faadil1/keys/actions/runs/36035543689"
   cresco_live_proof_lane_ui: IMPLEMENTED_WEB_CI_PASS
@@ -62,7 +62,7 @@ current_truth:
   backend_vercel_deployment_config: SUPERSEDED_BY_CLOUDFLARE
   backend_cloudflare_worker_config: READY
   cloudflare_worker_dry_run: PASS
-  cloudflare_worker_dry_run_run: "https://github.com/Faadil1/keys/actions/runs/36043084725"
+  cloudflare_worker_dry_run_run: "https://github.com/Faadil1/keys/actions/runs/36054015677"
   cloudflare_authenticated_solana_rpc: CONFIGURED_ONFINALITY
   cloudflare_public_rpc_status: PASS_ONFINALITY
   cloudflare_public_health: PASS
