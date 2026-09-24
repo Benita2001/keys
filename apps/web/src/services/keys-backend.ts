@@ -62,6 +62,15 @@ function saveBackendSessionToken(token: string) {
   }
 }
 
+export function clearBackendSessionToken() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(BACKEND_SESSION_KEY);
+  } catch {
+    // Demo session cleanup is best-effort.
+  }
+}
+
 /** Test hook: override env-derived config. Pass null to reset. */
 export function configureKeysBackend(next: Partial<KeysConfig> | null) {
   override = next;
