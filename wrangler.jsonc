@@ -22,12 +22,11 @@
       }
     ]
   },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_sqlite_classes": [
-        "FamilyState"
-      ]
+  "exports": {
+    "FamilyState": {
+      "type": "durable-object",
+      "state": "created",
+      "storage": "sqlite"
     }
-  ]
+  }
 }
