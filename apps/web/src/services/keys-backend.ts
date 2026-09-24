@@ -12,7 +12,7 @@
  *   GET  /api/v0.2/demo/runtime                 (implemented) stable devnet demo runtime metadata
  *   POST /api/v0.2/actions/execute              (implemented) real devnet demo-token execution bridge
  *
- * The real execution bridge is intentionally scoped to the server-held TSLA
+ * The real execution bridge is intentionally scoped to the server-held AAPL
  * devnet proof lane. Other Cresco assets remain on the product/demo path until
  * their own runtime representation is proven.
  */
@@ -156,7 +156,7 @@ export async function evaluateAction(input: {
 }
 
 /* ------------------------------------------------------------------ */
-/* Execute (proposed v0.2 route)                                       */
+/* Execute (frozen v0.2 technical proof route)                         */
 /* ------------------------------------------------------------------ */
 
 /** Request body for POST /api/v0.2/actions/execute. */
@@ -169,7 +169,7 @@ export type ExecuteRequest = {
   /** Present when a guardian ALLOW_ONCE covers this action. Server must verify it. */
   allowOnceRequestId?: string;
   /**
-   * DRAFT ONLY. Until the server owns the delegate's Mandate (handoff §3.4),
+   * TRANSITIONAL CLIENT CONTEXT. Until the server owns the delegate's Mandate (handoff §3.4),
    * the client sends it so the runtime can evaluate. The final route must
    * ignore this and load the Mandate from the session.
    */
