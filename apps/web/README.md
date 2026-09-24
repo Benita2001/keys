@@ -34,4 +34,6 @@ Prices are samples unless tagged **Live · Pyth**. Money Mode is a demo: no fund
 
 Docs: [design system](../../docs/CRESCO-FRONTEND-DESIGN-SYSTEM.md) · [backend handoff](../../docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md) · [implementation summary](../../docs/CRESCO-FRONTEND-IMPLEMENTATION-SUMMARY.md)
 
-Deploy as its own Vercel project with root directory `apps/web`.
+Live demo: https://cresco-lac.vercel.app (standalone Vercel project `cresco`, deployed from `apps/web`; separate from the KEYS backend project).
+
+Deploy as its own Vercel project with root directory `apps/web`. `next build` typechecks app code via `tsconfig.build.json`; tests (including the backend parity test, which needs the full repo) are typechecked by `npm run typecheck`.

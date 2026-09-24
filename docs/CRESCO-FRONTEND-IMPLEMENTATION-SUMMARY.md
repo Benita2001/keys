@@ -141,6 +141,12 @@ Screenshots (500px-wide phone layout, production build): [`docs/cresco-screens/`
 
 Known gap (accepted, P1): parent/child separation is demo-only. Anyone on the device can open the parent view. Real separation needs backend auth (handoff §3.7); the on-chain program already requires the guardian signature for widening.
 
+## 7c. Deployment
+
+Live: **https://cresco-lac.vercel.app** — a standalone Vercel project (`cresco`) deployed from `apps/web` only. It does not touch the KEYS backend, its `vercel.json`, or any existing Vercel project. No environment variables are set, so it runs in demo mode (local policy preview, sample prices).
+
+Verified on the deployment: all primary routes return 200 (unknown routes 404); full Critical Demo Path ($5 ALLOW with double-click → 1 effect, $20 boundary → request → parent widen to v5/nonce 4 → $20 ALLOW); no console errors.
+
 ## 8. Known limitations
 
 - Illustrations are original hand-built SVG in the mockup's spirit. They're simpler than the mockup's rendered 3D art; a raster illustration pass would get closer.
