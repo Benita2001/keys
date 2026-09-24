@@ -8,12 +8,13 @@
  * Routes used:
  *   GET  /api/v0.1/capabilities                 (exists)
  *   GET  /api/v0.1/demo/live-proof              (exists) live Pyth TSLA evidence if configured
- *   POST /api/v0.2/draft/actions/evaluate       (exists) ALLOW / ESCALATE / REFUSE
- *   POST /api/v0.2/actions/execute              (PROPOSED, see docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md §3.3)
+ *   POST /api/v0.2/actions/evaluate             (frozen) ALLOW / REFUSE
+ *   GET  /api/v0.2/demo/runtime                 (implemented) stable devnet demo runtime metadata
+ *   POST /api/v0.2/actions/execute              (implemented) real devnet demo-token execution bridge
  *
- * The execute route is not built on the backend yet. `npm run mock:keys`
- * starts a local mock that implements the proposed contract and marks every
- * proof `simulated: true`.
+ * The real execution bridge is intentionally scoped to the server-held TSLA
+ * devnet proof lane. Other Cresco assets remain on the product/demo path until
+ * their own runtime representation is proven.
  */
 import type {
   ActionEvaluation,
@@ -67,11 +68,40 @@ export type KeysCapabilities = {
   contractVersion: string;
   mode: string;
   marketEvidence: { status: string };
-  v2Draft?: { status: string; realMinorSecuritiesExecution: boolean };
+  v2?: { status: string; realMinorSecuritiesExecution: boolean };
 };
 
 export function fetchCapabilities() {
   return request<KeysCapabilities>("/api/v0.1/capabilities");
+}
+
+export type DevnetDemoRuntime = {
+  contractVersion: "0.2";
+  type: "V0_2_DEVNET_DEMO_RUNTIME";
+  mode: "SERVER_HELD_DEVNET_DEMO";
+  network: "solana-devnet";
+  asset: "TSLA";
+  programId: string;
+  mandateAddress: string;
+  mandate: {
+    status: "ACTIVE" | "NOT_ACTIVE";
+    stage: number;
+    version: number;
+    nonce: number;
+    maxActionNotionalMicroUsd: number;
+    maxPeriodNotionalMicroUsd: number;
+  };
+  truthBoundary: {
+    executionAsset: "DEMO_TOKEN";
+    serverHeldDemoSigner: true;
+    realMinorSecuritiesExecution: false;
+    brokerageOrCustody: false;
+  };
+};
+
+/** Current server-held TSLA devnet proof lane. Never authority by itself. */
+export function fetchDevnetDemoRuntime() {
+  return request<DevnetDemoRuntime>("/api/v0.2/demo/runtime");
 }
 
 type LiveProof = {
@@ -90,7 +120,7 @@ export async function fetchLiveEquityPrice(): Promise<{ ticker: string; price: n
   return { ticker, price: evidence.price, asOf: evidence.publishTime ?? new Date().toISOString() };
 }
 
-type DraftEvaluation = {
+type BackendEvaluation = {
   decision: ActionEvaluation["decision"];
   reasonCode: ReasonCode;
   requestedNotional?: number;
@@ -106,7 +136,7 @@ function draftMandate(m: CurrentMandate) {
   return { status: m.status, version: m.version, nonce: m.nonce, expiresAt: m.expiresAt };
 }
 
-export async function evaluateActionDraft(input: {
+export async function evaluateAction(input: {
   mandate: CurrentMandate;
   assetRule: AssetRule | null;
   asset: string;
@@ -118,11 +148,11 @@ export async function evaluateActionDraft(input: {
     assetRule: input.assetRule,
     action: { asset: input.asset, type: input.type, amount: input.notional, notional: input.notional },
   };
-  const result = await request<DraftEvaluation>("/api/v0.2/draft/actions/evaluate", {
+  const result = await request<BackendEvaluation>("/api/v0.2/actions/evaluate", {
     method: "POST",
     body: JSON.stringify(body),
   });
-  return { ...result, source: "keys-backend-draft" };
+  return { ...result, source: "keys-backend" };
 }
 
 /* ------------------------------------------------------------------ */
@@ -149,7 +179,7 @@ export type ExecuteRequest = {
 /** Response body for POST /api/v0.2/actions/execute (HTTP 200 for every policy outcome). */
 export type ExecuteResponse = {
   contractVersion: string;
-  evaluation: DraftEvaluation;
+  evaluation: BackendEvaluation;
   executionProof: null | {
     status: "CONFIRMED" | "PENDING";
     network: "solana-devnet";
