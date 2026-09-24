@@ -8,7 +8,9 @@
     "test:anchor": "mocha --timeout 120000 tests/anchor-authority-proof.cjs",
     "demo": "node scripts/demo-run.mjs",
     "api": "node scripts/dev-api.mjs",
-    "proof:prestocks": "node scripts/prestocks-live-proof.mjs"
+    "proof:prestocks": "node scripts/prestocks-live-proof.mjs",
+    "bootstrap:devnet-demo-runtime": "node scripts/bootstrap-devnet-demo-runtime.cjs",
+    "proof:devnet-execution-bridge": "node scripts/devnet-execution-smoke.mjs"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.32.1",
