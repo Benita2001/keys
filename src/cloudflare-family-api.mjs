@@ -204,7 +204,8 @@ async function handleExecute(env, body) {
     body: {
       asset: body.asset,
       notional: body.notional,
-      idempotencyKey: key
+      idempotencyKey: key,
+      allowOnceRequestId: body.allowOnceRequestId || null
     }
   });
 
