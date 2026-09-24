@@ -166,3 +166,120 @@ test("market universe never fabricates a live quote when Pyth is unavailable", a
     else process.env.PYTH_PRO_API_KEY = previous;
   }
 });
+
+
+test("allow-once becomes executable only after chain proof and is consumed once", async () => {
+  const state = new FamilyState(memoryState());
+
+  const createdResponse = await state.fetch(
+    new Request("https://family.internal/requests", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        asset: "AAPL",
+        type: "BUY",
+        notional: 20,
+        standingLimit: 10,
+        reasonCode: "MANDATE_LIMIT_EXCEEDED",
+        reason: "One-time test"
+      })
+    })
+  );
+  const created = await body(createdResponse);
+
+  const decisionResponse = await state.fetch(
+    new Request(`https://family.internal/requests/${created.id}/decision`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ decision: "ALLOW_ONCE" })
+    })
+  );
+  const decided = await body(decisionResponse);
+  assert.equal(decided.request.status, "ALLOW_ONCE_PENDING_CHAIN");
+
+  const beforeChain = await state.fetch(
+    new Request("https://family.internal/reserve", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        asset: "AAPL",
+        notional: 20,
+        idempotencyKey: "allow-before-chain",
+        allowOnceRequestId: created.id
+      })
+    })
+  );
+  const beforeChainBody = await body(beforeChain);
+  assert.equal(beforeChainBody.allowed, false);
+  assert.equal(beforeChainBody.reasonCode, "MANDATE_LIMIT_EXCEEDED");
+
+  const completedResponse = await state.fetch(
+    new Request(
+      `https://family.internal/requests/${created.id}/complete-allowance`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          chainProof: {
+            network: "solana-devnet",
+            allowanceReceipt: "Receipt111111111111111111111111111111111",
+            signature: "Sig1111111111111111111111111111111111111111111111111111111111"
+          }
+        })
+      }
+    )
+  );
+  const completed = await body(completedResponse);
+  assert.equal(completed.request.status, "ALLOWED_ONCE");
+
+  const reserveResponse = await state.fetch(
+    new Request("https://family.internal/reserve", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        asset: "AAPL",
+        notional: 20,
+        idempotencyKey: "allow-once-use",
+        allowOnceRequestId: created.id
+      })
+    })
+  );
+  const reserved = await body(reserveResponse);
+  assert.equal(reserved.allowed, true);
+  assert.equal(reserved.reservation.allowOnceRequestId, created.id);
+
+  await state.fetch(
+    new Request("https://family.internal/finalize", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        idempotencyKey: "allow-once-use",
+        success: true,
+        shares: 0.05,
+        proof: { status: "CONFIRMED" }
+      })
+    })
+  );
+
+  const after = await body(
+    await state.fetch(new Request("https://family.internal/requests"))
+  );
+  const consumed = after.requests.find((item) => item.id === created.id);
+  assert.equal(consumed.status, "ALLOWED_ONCE_USED");
+
+  const reuseResponse = await state.fetch(
+    new Request("https://family.internal/reserve", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        asset: "AAPL",
+        notional: 20,
+        idempotencyKey: "allow-once-reuse",
+        allowOnceRequestId: created.id
+      })
+    })
+  );
+  const reuse = await body(reuseResponse);
+  assert.equal(reuse.allowed, false);
+  assert.equal(reuse.reasonCode, "MANDATE_LIMIT_EXCEEDED");
+});
