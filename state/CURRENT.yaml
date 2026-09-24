@@ -1,6 +1,6 @@
 project: KEYS
 updated_at: "2026-09-24"
-status: V0_2_LOCAL_ONCHAIN_PYTH_PASS_DEVNET_CONFIRMATION_ACTIVE
+status: V0_2_ONCHAIN_PYTH_DEVNET_PASS_FRONTEND_CONTRACT_FROZEN
 candidate: B
 concept_lock: true
 concept_lock_version: 2
@@ -32,7 +32,7 @@ current_truth:
   boundary_human_widen_stale_replay_v0_2: PASS_LOCAL_AND_DEVNET
   pause_downward_authority_v0_2: PASS_LOCAL_AND_DEVNET
   pyth_signed_solana_payload_availability_v0_2: PASS
-  onchain_pyth_verification_v0_2: PASS_LOCAL_LIVE_PYTH
+  onchain_pyth_verification_v0_2: PASS_LOCAL_AND_DEVNET_LIVE_PYTH
   contextual_learning_layer_spec: LOCKED
   real_minor_execution: OUT_OF_SCOPE
 
@@ -63,6 +63,9 @@ canonical_pyth:
   signed_payload_encoding_observed: base64
   local_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35956618933"
   local_onchain_pyth_result: "12 passing"
+  devnet_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35959137364"
+  devnet_onchain_pyth_result: "12 passing"
+  devnet_onchain_pyth_upgrade_signature: "2C2J2G6UzBKhyALk9XfDYMnThyB77cedbhjxtrLXKvE6deJYZAroLKMXF5L9QaZ3fATuZAbJfbfetNkPa2eUH1ge"
   onchain_signed_payload_verification: PASS_LOCAL_LIVE_PYTH
   observed_price_at_proof_time: 379.696
   confidence: 0.019
@@ -98,7 +101,7 @@ collaboration:
   frontend_owner: Benita
   backend_owner: Faadil
   frontend_v0_1_contract_status: HISTORICAL
-  frontend_v0_2_contract_status: DRAFT_RUNTIME_PROOF_PENDING
+  frontend_v0_2_contract_status: FROZEN
   frontend_guidance: "Do not lock the new experience to the v0.1 proposal-per-action semantics. Wait for / coordinate against the v0.2 bounded-autonomy contract."
   backend_immediate_owner: Faadil
 
@@ -127,9 +130,10 @@ truth_boundary:
   - canonical devnet confirmation of the Pyth-integrated path is still pending
 
 active_step:
-  name: BACKEND_V0_2_DEVNET_PYTH_CONFIRMATION
+  name: BENITA_V0_2_FRONTEND_INTEGRATION
   owner: Faadil
   next:
-    - "Confirm the Pyth-integrated bounded-capital path on the canonical devnet program."
-    - "If devnet passes, freeze frontend/backend contract v0.2 against the proven semantics."
-    - "Hand the frozen v0.2 contract to Benita for final integration."
+    - "Benita integrates against docs/FRONTEND-BACKEND-CONTRACT-V0.2.md."
+    - "Keep the judge-facing demo on the proven spine: in-bounds ALLOW -> out-of-bounds REFUSE -> Pyth condition REFUSE -> human widen -> same action ALLOW -> stale authorization REFUSE."
+    - "Preserve Practice/contextual learning without turning it into an authority score."
+    - "Maintain proof/truth boundaries while frontend integration is completed."
