@@ -18,6 +18,7 @@ const INITIAL = {
   requests: [],
   learning: { completedLessons: [], xp: 0, weeklyMinutes: [] },
   activity: [],
+  sessions: {},
   reservations: {},
   executionResults: {}
 };
@@ -63,15 +64,46 @@ export class FamilyState {
 
     if (method === "POST" && path === "/session") {
       const role = body.role === "guardian" ? "guardian" : "child";
-      return json({
-        kind: "devnet-demo",
+      const token = crypto.randomUUID();
+      state.sessions ||= {};
+      state.sessions[token] = {
         role,
         displayName: String(
           body.displayName ||
             (role === "guardian" ? state.profile.parentName : state.profile.childName)
         ).slice(0, 80),
+        createdAt: now()
+      };
+      await this.save(state);
+      return json({
+        kind: "devnet-demo",
+        role,
+        displayName: state.sessions[token].displayName,
         familyId: state.familyId,
-        familyCode: state.familyCode
+        familyCode: state.familyCode,
+        token
+      });
+    }
+
+    if (method === "POST" && path === "/session/validate") {
+      const token = String(body.token || "");
+      const session = state.sessions?.[token] || null;
+      if (!session) return json({ valid: false, role: null }, 401);
+
+      const created = Date.parse(session.createdAt);
+      const expired =
+        !Number.isFinite(created) ||
+        Date.now() - created > 24 * 60 * 60 * 1000;
+      if (expired) {
+        delete state.sessions[token];
+        await this.save(state);
+        return json({ valid: false, role: null }, 401);
+      }
+
+      return json({
+        valid: true,
+        role: session.role,
+        displayName: session.displayName
       });
     }
 
