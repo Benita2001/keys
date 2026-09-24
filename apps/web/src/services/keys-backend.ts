@@ -7,7 +7,7 @@
  *
  * Routes used:
  *   GET  /api/v0.1/capabilities                 (exists)
- *   GET  /api/v0.1/demo/live-proof              (exists) live Pyth TSLA evidence if configured
+ *   GET  /api/v0.1/demo/live-proof              (exists) live Pyth AAPL evidence if configured
  *   POST /api/v0.2/actions/evaluate             (frozen) ALLOW / REFUSE
  *   GET  /api/v0.2/demo/runtime                 (implemented) stable devnet demo runtime metadata
  *   POST /api/v0.2/actions/execute              (implemented) real devnet demo-token execution bridge
@@ -80,7 +80,7 @@ export type DevnetDemoRuntime = {
   type: "V0_2_DEVNET_DEMO_RUNTIME";
   mode: "SERVER_HELD_DEVNET_DEMO";
   network: "solana-devnet";
-  asset: "TSLA";
+  asset: "AAPL";
   programId: string;
   mandateAddress: string;
   mandate: {
@@ -99,7 +99,7 @@ export type DevnetDemoRuntime = {
   };
 };
 
-/** Current server-held TSLA devnet proof lane. Never authority by itself. */
+/** Current server-held AAPL devnet proof lane. Never authority by itself. */
 export function fetchDevnetDemoRuntime() {
   return request<DevnetDemoRuntime>("/api/v0.2/demo/runtime");
 }
