@@ -1,3 +1,5 @@
+> **SUPERSEDED FOR CURRENT KEYS DEPLOYMENT:** Cloudflare Workers is now the active backend hosting path. See `docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md`. This file is retained only as a fallback.
+
 # KEYS Backend — Vercel Deployment
 
 Date: 2026-09-24  
