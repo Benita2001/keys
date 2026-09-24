@@ -42,10 +42,10 @@ export const CANONICAL_DEVNET_EXPLORER =
   `https://explorer.solana.com/address/${CANONICAL_DEVNET_PROGRAM_ID}?cluster=devnet`;
 
 export const CANONICAL_DEVNET_PROOF_RUN =
-  'https://github.com/Faadil1/keys/actions/runs/35905841296';
+  'https://github.com/Faadil1/keys/actions/runs/35959137364';
 
 export const CANONICAL_PYTH_PROOF_RUN =
-  'https://github.com/Faadil1/keys/actions/runs/35910460176';
+  'https://github.com/Faadil1/keys/actions/runs/35959137364';
 
 async function defaultMarketEvidenceProvider({ asset, now }) {
   const feed = PYTH_PRO_EQUITY_FEEDS[asset];
@@ -152,12 +152,14 @@ function capabilitiesForServices(services = {}) {
       route: '/api/v0.1/demo/live-proof',
       solanaProgramId: CANONICAL_DEVNET_PROGRAM_ID
     },
-    v2Draft: {
+    v2: {
       contractVersion: V2_CONTRACT_VERSION,
-      status: 'DRAFT_RUNTIME_PROOF_PENDING',
-      demoRoute: '/api/v0.2/draft/demo/maya',
-      actionEvaluationRoute: '/api/v0.2/draft/actions/evaluate',
-      boundaryRequestRoute: '/api/v0.2/draft/boundary-requests',
+      status: 'FROZEN_RUNTIME_PROVEN',
+      demoRoute: '/api/v0.2/demo/maya',
+      actionEvaluationRoute: '/api/v0.2/actions/evaluate',
+      boundaryRequestRoute: '/api/v0.2/boundary-requests',
+      canonicalDevnetProofRun: CANONICAL_DEVNET_PROOF_RUN,
+      onchainPythVerification: true,
       realMinorSecuritiesExecution: false
     }
   };
@@ -230,7 +232,7 @@ export async function routeKeysHttp({
     };
   }
 
-  if (method === 'GET' && path === '/api/v0.2/draft/demo/maya') {
+  if (method === 'GET' && ['/api/v0.2/demo/maya', '/api/v0.2/draft/demo/maya'].includes(path)) {
     return {
       status: 200,
       headers: JSON_HEADERS,
@@ -238,7 +240,7 @@ export async function routeKeysHttp({
     };
   }
 
-  if (method === 'POST' && path === '/api/v0.2/draft/actions/evaluate') {
+  if (method === 'POST' && ['/api/v0.2/actions/evaluate', '/api/v0.2/draft/actions/evaluate'].includes(path)) {
     const now = body?.now ?? new Date().toISOString();
     const requiresMarketEvidence = body?.assetRule?.requiresMarketEvidence === true;
     let market = null;
@@ -266,13 +268,13 @@ export async function routeKeysHttp({
           market,
           now
         }),
-        type: 'V0_2_DRAFT_ACTION_EVALUATION',
-        runtimeProofStatus: 'DRAFT_RUNTIME_PROOF_PENDING'
+        type: 'V0_2_ACTION_EVALUATION',
+        runtimeProofStatus: 'CANONICAL_DEVNET_RUNTIME_PROVEN'
       }
     };
   }
 
-  if (method === 'POST' && path === '/api/v0.2/draft/boundary-requests') {
+  if (method === 'POST' && ['/api/v0.2/boundary-requests', '/api/v0.2/draft/boundary-requests'].includes(path)) {
     return {
       status: 200,
       headers: JSON_HEADERS,
