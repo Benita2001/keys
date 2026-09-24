@@ -8,6 +8,7 @@ import { formatAmount, formatNumber } from "@/domain/format";
 import { useLevel } from "@/hooks/data";
 import { GOALS } from "@/mocks/family";
 import { useStore } from "@/state/store";
+import { clearBackendSessionToken } from "@/services/keys-backend";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -71,6 +72,7 @@ export default function ProfilePage() {
       <button
         type="button"
         onClick={() => {
+          clearBackendSessionToken();
           dispatch({ type: "signOut" });
           router.push("/");
         }}
