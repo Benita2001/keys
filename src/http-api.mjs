@@ -1,4 +1,5 @@
-import { readFile } from 'node:fs/promises';
+import mayaFixture from '../fixtures/frontend-maya-contract.json' with { type: 'json' };
+import mayaV2Fixture from '../fixtures/frontend-maya-v0.2-contract.json' with { type: 'json' };
 
 import {
   FRONTEND_CONTRACT_VERSION,
@@ -31,14 +32,6 @@ import {
 import {
   configuredDevnetExecutionProviderFromEnv
 } from './devnet-execution-provider.mjs';
-
-const mayaFixture = JSON.parse(
-  await readFile(new URL('../fixtures/frontend-maya-contract.json', import.meta.url), 'utf8')
-);
-
-const mayaV2Fixture = JSON.parse(
-  await readFile(new URL('../fixtures/frontend-maya-v0.2-contract.json', import.meta.url), 'utf8')
-);
 
 const JSON_HEADERS = Object.freeze({
   'content-type': 'application/json; charset=utf-8'
