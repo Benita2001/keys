@@ -42,6 +42,26 @@ const PUBLIC_HOSTED_KEYS_API =
 
 let override: Partial<KeysConfig> | null = null;
 
+const BACKEND_SESSION_KEY = "cresco-keys-session-v1";
+
+function backendSessionToken() {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(BACKEND_SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function saveBackendSessionToken(token: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(BACKEND_SESSION_KEY, token);
+  } catch {
+    // Storage may be unavailable; the current call still completed safely.
+  }
+}
+
 /** Test hook: override env-derived config. Pass null to reset. */
 export function configureKeysBackend(next: Partial<KeysConfig> | null) {
   override = next;
@@ -89,9 +109,14 @@ export function keysApiUrl() {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = backendSessionToken();
   const res = await fetch(`${keysConfig().url}${path}`, {
     ...init,
-    headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    headers: {
+      "content-type": "application/json",
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers ?? {}),
+    },
     signal: AbortSignal.timeout(keysConfig().timeoutMs),
   });
   if (!res.ok) throw new Error(`KEYS backend ${path} responded ${res.status}`);
@@ -240,10 +265,12 @@ export async function createBackendDemoSession(
   const result = await request<{
     role: "guardian" | "child";
     displayName: string;
+    token: string;
   }>("/api/v0.2/auth/demo-session", {
     method: "POST",
     body: JSON.stringify({ role: backendRole, displayName }),
   });
+  saveBackendSessionToken(result.token);
   return {
     role: result.role === "guardian" ? "parent" : "child",
     displayName: result.displayName,
