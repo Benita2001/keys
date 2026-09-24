@@ -1,7 +1,13 @@
-# Frontend / Backend Contract v0.2 — DRAFT
+# Frontend / Backend Contract v0.2 — HISTORICAL DRAFT
 
 Date: 2026-09-24  
-Status: **DRAFT — LOCAL PYTH-INTEGRATED RUNTIME PASS; DEVNET CONFIRMATION PENDING**
+Status: **HISTORICAL / SUPERSEDED — DO NOT INTEGRATE AGAINST THIS FILE**
+
+> Current frozen contract: `docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
+>
+> Canonical devnet Solana + live Pyth proof: https://github.com/Faadil1/keys/actions/runs/35959137364
+>
+> Any statements below describing devnet confirmation as pending are preserved only as historical context and are not current project truth.
 
 This draft lets Benita design against the new product semantics without pretending that the new runtime proof is complete.
 
