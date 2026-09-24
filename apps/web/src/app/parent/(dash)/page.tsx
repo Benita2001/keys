@@ -15,7 +15,7 @@ import {
   PlayCircle,
   Wallet,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { PriceChange, PriceChart, WeeklyBars } from "@/components/finance";
 import { MandateSummaryCard, MoneyBalanceCard } from "@/components/mode";
 import { ErrorState, Skeleton, useToast } from "@/components/ui/feedback";
@@ -28,6 +28,8 @@ import { MODULES } from "@/mocks/learning";
 import { allAssetSnapshots, mandates, seriesFor } from "@/services";
 import { useSingleFlight } from "@/hooks/single-flight";
 import { useStore } from "@/state/store";
+
+const DASHBOARD_CLOCK = Date.now();
 
 const TOPIC_LABEL: Record<string, string> = {
   "money-basics": "Money Basics",
@@ -45,8 +47,6 @@ export default function ParentDashboard() {
   const { assets, view } = usePortfolio("practice");
   const child = state.profile.childName;
   const [rangeDays, setRangeDays] = useState<7 | 30>(30);
-  const [clockNow, setClockNow] = useState(0);
-  useEffect(() => setClockNow(Date.now()), []);
   const pending = state.requests.filter((r) => r.status === "PENDING_HUMAN_DECISION" && !isRequestStale(r, state.mandate));
   const lessonsCompleted = state.priorLessonCount + state.completedLessons.length;
   const topics = MODULES.filter((m) => m.lessonIds.some((id) => state.completedLessons.includes(id))).map((m) => TOPIC_LABEL[m.id]);
@@ -71,7 +71,7 @@ export default function ParentDashboard() {
   });
 
   const learningBars = useMemo(() => {
-    const now = clockNow;
+    const now = DASHBOARD_CLOCK;
     const windowMs = rangeDays * 24 * 60 * 60 * 1000;
     const entries = state.learningMinutes.filter(
       (entry) => now - Date.parse(entry.at) <= windowMs,
@@ -103,7 +103,7 @@ export default function ParentDashboard() {
           .reduce((sum, entry) => sum + entry.minutes, 0),
       };
     });
-  }, [clockNow, rangeDays, state.learningMinutes]);
+  }, [rangeDays, state.learningMinutes]);
 
   const settings = [
     { href: "/parent/limits", icon: <CircleDollarSign className="size-5" />, tone: "blue" as const, title: "Funding & investment limits", sub: "Add money and set limits" },
