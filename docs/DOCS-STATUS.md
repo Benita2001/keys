@@ -17,8 +17,10 @@ Status: **CANONICAL DOCS SYNCHRONIZED TO BOUNDED-AUTONOMY RELOCK**
 - v0.2 explicit human widen + stale execution refusal: **PASS**
 - v0.2 pause/downward authority: **PASS**
 - Pyth signed Solana payload availability: **PASS**
-- v0.2 signed on-chain Pyth verification: **NOT YET BUILT**
-- frontend/backend contract v0.2: **DRAFT — runtime proof pending**
+- v0.2 signed on-chain Pyth verification: **PASS — local + canonical devnet**
+- Pyth-derived USD/notional enforcement: **PASS — devnet**
+- precommitted max-price refusal: **PASS — devnet**
+- frontend/backend contract v0.2: **FROZEN**
 - real minor securities execution: **OUT OF SCOPE**
 - frontend owner: **Benita**
 - backend v0.2 owner: **Faadil**
@@ -49,7 +51,9 @@ Canonical live Pyth proof feed:
 | `docs/SOLANA-AUTHORITY-PROOF.md` | v0.1 Solana evidence | HISTORICAL VALID PROOF |
 | `docs/PYTH-EVIDENCE-PROOF.md` | v0.1 Pyth evidence | HISTORICAL VALID PROOF |
 | `docs/FRONTEND-BACKEND-CONTRACT.md` | original v0.1 semantic contract | HISTORICAL / NOT NEW TARGET |
-| `docs/FRONTEND-BACKEND-CONTRACT-V0.2-DRAFT.md` | bounded-autonomy semantic contract | CURRENT DRAFT |
+| `docs/FRONTEND-BACKEND-CONTRACT-V0.2-DRAFT.md` | bounded-autonomy semantic draft | HISTORICAL DRAFT |
+| `docs/FRONTEND-BACKEND-CONTRACT-V0.2.md` | bounded-autonomy integration contract | CURRENT / FROZEN |
+| `evidence/pyth/DEVNET-ONCHAIN-PYTH-BOUNDARY-PROOF-2026-09-24.md` | canonical devnet live Pyth capital proof | CURRENT EVIDENCE |
 | `evidence/solana/LOCAL-BOUNDED-AUTONOMY-RUNTIME-PROOF-2026-09-23.md` | v0.2 local capital proof | CURRENT EVIDENCE |
 | `evidence/solana/DEVNET-BOUNDED-AUTONOMY-RUNTIME-PROOF-2026-09-23.md` | v0.2 canonical devnet capital proof | CURRENT EVIDENCE |
 | `docs/FRONTEND-START-HERE.md` | Benita transition guide | CURRENT |
@@ -72,11 +76,17 @@ The Pyth proof still truthfully proves authenticated live equity evidence throug
 
 The current v0.2 proof now additionally proves bounded capital execution and the permission-matrix core with a demo SPL token.
 
-Still **not yet proven**:
+Now additionally proven on canonical devnet:
 
-- Pyth-derived USD/notional enforcement inside the Solana program;
-- on-chain signed Pyth verification;
-- real tokenized-stock/minor execution.
+- signed live Pyth verification inside the Solana capital path;
+- Pyth-derived USD/notional enforcement;
+- precommitted max-price refusal.
+
+Still not proven / not claimed:
+
+- real tokenized-stock/minor execution;
+- brokerage/custody;
+- mainnet execution.
 
 ## Ownership
 
