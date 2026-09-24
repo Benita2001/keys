@@ -198,12 +198,7 @@ jobs:
             # bounded shortfall above the current balance.
             REQUIRED_SOL=$(printf '%s\n' "$DEPLOY_OUT" | sed -nE 's/.*insufficient funds for spend \(([0-9.]+) SOL\) \+ fee \(([0-9.]+) SOL\).*/\1 \2/p' | tail -1)
             if [ -n "$REQUIRED_SOL" ]; then
-              TARGET_BALANCE_LAMPORTS=$(python3 - "$REQUIRED_SOL" <<'PY'
-import math, sys
-spend, fee = map(float, sys.argv[1].split())
-print(math.ceil((spend + fee + 0.01) * 1_000_000_000))
-PY
-)
+              TARGET_BALANCE_LAMPORTS=$(python3 -c 'import math,sys; spend,fee=map(float,sys.argv[1].split()); print(math.ceil((spend+fee+0.01)*1_000_000_000))' "$REQUIRED_SOL")
             else
               TARGET_BALANCE_LAMPORTS=$((BALANCE + 600000000))
             fi
@@ -215,12 +210,7 @@ PY
             if [ "$BALANCE" -lt "$TARGET_BALANCE_LAMPORTS" ]; then
               for AIRDROP_ATTEMPT in 1 2 3; do
                 SHORTFALL_LAMPORTS=$((TARGET_BALANCE_LAMPORTS - BALANCE))
-                AIRDROP_SOL=$(python3 - "$SHORTFALL_LAMPORTS" <<'PY'
-import sys
-shortfall = int(sys.argv[1])
-print(f"{min(shortfall / 1_000_000_000 + 0.01, 0.5):.9f}")
-PY
-)
+                AIRDROP_SOL=$(python3 -c 'import sys; shortfall=int(sys.argv[1]); print(f"{min(shortfall/1_000_000_000+0.01,0.5):.9f}")' "$SHORTFALL_LAMPORTS")
                 set +e
                 AIRDROP_OUT=$(solana airdrop "$AIRDROP_SOL" --url https://api.devnet.solana.com 2>&1)
                 AIRDROP_RC=$?
