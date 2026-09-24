@@ -93,6 +93,10 @@ Current v0.2 API semantics:
 - `GET /api/v0.2/demo/maya`
 - `POST /api/v0.2/actions/evaluate`
 - `POST /api/v0.2/boundary-requests`
+- `GET /api/v0.2/demo/runtime` — stable TSLA devnet demo-runtime metadata
+- `POST /api/v0.2/actions/execute` — real devnet demo-token execution bridge
+
+The execution bridge is implemented with a server-held devnet demo signer and live signed Pyth TSLA evidence. Its dedicated stable-runtime smoke workflow is the current proof gate; do not interpret it as production wallet/custody architecture.
 
 The old v0.1 contract remains historical proof only.
 
