@@ -1,0 +1,32 @@
+name: prestocks-live-proof
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/prestocks-adapter.mjs'
+      - 'scripts/prestocks-live-proof.mjs'
+      - 'test/prestocks-adapter.test.mjs'
+      - '.github/workflows/prestocks-live-proof.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  live-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Verify live PreStocks integration
+        run: npm run proof:prestocks
