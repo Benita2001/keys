@@ -10,7 +10,6 @@ on:
       - "package.json"
       - "tests/anchor-authority-proof.cjs"
       - "src/pyth-adapter.mjs"
-      - ".github/workflows/solana-devnet-authority-proof.yml"
   workflow_dispatch:
 
 jobs:
