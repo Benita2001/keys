@@ -131,6 +131,35 @@ Build the product experience in this order:
 9. **Same action** → ALLOW.
 10. **Old authorization** → STALE / REFUSE.
 
+## Cresco execution bridge — implemented / smoke proof pending
+
+The backend now includes:
+
+- `GET /api/v0.2/demo/runtime`
+- `POST /api/v0.2/actions/execute`
+
+The target is a judge-visible real Solana devnet signature produced from Cresco while preserving the current truth boundary.
+
+Runtime mode:
+
+`SERVER_HELD_DEVNET_DEMO`
+
+Capital asset:
+
+`DEMO_TOKEN`
+
+Market truth:
+
+live signed Pyth TSLA evidence, verified through the KEYS/Pyth Lazer on-chain path.
+
+This is **not** embedded-wallet production architecture, real securities execution, brokerage or custody.
+
+The stable-runtime bootstrap and HTTP execution smoke proof run in the `solana-devnet-authority-proof` workflow. Until that new smoke passes, keep the bridge labeled **IMPLEMENTED / PROOF PENDING**.
+
+See:
+
+`docs/CRESCO-BACKEND-DELTA-2026-09-24.md`
+
 ## Optional sponsor surface — PreStocks
 
 PreStocks is a secondary representation / Practice surface and must not replace the core Maya demo spine.
