@@ -105,8 +105,28 @@ jobs:
           anchor build
           echo "PROOF runtime_program_id=$(solana address -k target/deploy/keys-keypair.json)"
 
-      - name: Execute authority proof on local Solana validator
+      - name: Execute authority + Pyth proof on local Solana validator
         shell: bash
+        env:
+          PYTH_PRO_API_KEY: ${{ secrets.PYTH_PRO_API_KEY }}
         run: |
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$HOME/.avm/bin:$PATH"
+
+          # Clone the canonical Pyth Pro/Lazer verifier state from mainnet into the
+          # local validator. Anchor automatically clones the upgradeable program data.
+          cat >> Anchor.toml <<'EOF'
+
+          [test.validator]
+          url = "https://api.mainnet-beta.solana.com"
+
+          [[test.validator.clone]]
+          address = "pytd2yyk641x7ak7mkaasSJVXh6YYZnC7wTmtgAyxPt"
+
+          [[test.validator.clone]]
+          address = "3rdJbqfnagQ4yx9HXJViD4zc4xpiSqmFsKpPuSCQVyQL"
+
+          [[test.validator.clone]]
+          address = "Gx4MBPb1vqZLJajZmsKLg8fGw9ErhoKsR8LeKcCKFyak"
+          EOF
+
           anchor test --skip-build
