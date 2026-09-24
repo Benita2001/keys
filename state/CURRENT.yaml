@@ -40,12 +40,12 @@ canonical_solana:
   network: devnet
   program_id: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk"
   explorer: "https://explorer.solana.com/address/ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk?cluster=devnet"
-  stable_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35931280449"
-  v0_2_bounded_capital_run: "https://github.com/Faadil1/keys/actions/runs/35931280449"
-  v0_2_deploy_signature: "4DsLWRCmDAAMMkWysv6iuruKxeEuVNUojyihRnZnWAfQ9JHuKP4zo5vGyDeHBYALsiJSWoC3r4R9k4FXM5tBnP2h"
+  stable_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/35959137364"
+  v0_2_bounded_capital_run: "https://github.com/Faadil1/keys/actions/runs/35959137364"
+  v0_2_deploy_signature: "2C2J2G6UzBKhyALk9XfDYMnThyB77cedbhjxtrLXKvE6deJYZAroLKMXF5L9QaZ3fATuZAbJfbfetNkPa2eUH1ge"
   upgrade_authority_public_address: "FuKsZH234Zcy11rXPHWwiPwyuhLjth7brBVsd5BD5Nzk"
   v0_1_runtime_result: "4 passing"
-  v0_2_runtime_result: "11 passing"
+  v0_2_runtime_result: "12 passing"
   v0_1_assertions:
     - "unauthorized transition -> REFUSE / ConstraintHasOne"
     - "guardian PROPOSE -> BOUNDED -> ALLOW / version=2 / nonce=1"
@@ -66,7 +66,7 @@ canonical_pyth:
   devnet_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35959137364"
   devnet_onchain_pyth_result: "12 passing"
   devnet_onchain_pyth_upgrade_signature: "2C2J2G6UzBKhyALk9XfDYMnThyB77cedbhjxtrLXKvE6deJYZAroLKMXF5L9QaZ3fATuZAbJfbfetNkPa2eUH1ge"
-  onchain_signed_payload_verification: PASS_LOCAL_LIVE_PYTH
+  onchain_signed_payload_verification: PASS_LOCAL_AND_DEVNET_LIVE_PYTH
   observed_price_at_proof_time: 379.696
   confidence: 0.019
   publish_time: "2026-09-23T19:36:42.000Z"
@@ -102,7 +102,7 @@ collaboration:
   backend_owner: Faadil
   frontend_v0_1_contract_status: HISTORICAL
   frontend_v0_2_contract_status: FROZEN
-  frontend_guidance: "Do not lock the new experience to the v0.1 proposal-per-action semantics. Wait for / coordinate against the v0.2 bounded-autonomy contract."
+  frontend_guidance: "Integrate against docs/FRONTEND-BACKEND-CONTRACT-V0.2.md and the frozen /api/v0.2 semantics; do not use v0.1 proposal-per-action as the product target."
   backend_immediate_owner: Faadil
 
 security:
@@ -124,10 +124,10 @@ truth_boundary:
   - market evidence does not create authority
   - learning completion does not create authority
   - v0.2 proves bounded demo-token capital execution on local Solana and devnet
-  - base bounded-capital path remains proven with a demo/mock SPL token
-  - live Pyth TSLA evidence is now cryptographically verified in the local Solana capital path
-  - Pyth-derived USD notional and a precommitted max-price condition are proven locally
-  - canonical devnet confirmation of the Pyth-integrated path is still pending
+  - base bounded-capital path is proven with a demo/mock SPL token
+  - live Pyth TSLA evidence is cryptographically verified in local Solana and canonical devnet capital paths
+  - Pyth-derived USD notional and a precommitted max-price condition are proven on canonical devnet
+  - market evidence has no authority-widening effect
 
 active_step:
   name: BENITA_V0_2_FRONTEND_INTEGRATION
