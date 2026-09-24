@@ -42,10 +42,14 @@ current_truth:
   cresco_web_ci: PASS
   cresco_live_proof_lane_ui: IMPLEMENTED_WEB_CI_PASS
   cresco_devnet_execution_bridge: PASS_PROVEN_HTTP_TO_SOLANA_DEVNET
-  cresco_devnet_execution_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36008701813"
-  cresco_devnet_execution_signature: "2GqHrafL46sU3RMDEEb8AChHzwgRqkMT5fjn5GiMyqomqkrEukrnywDCmGZrNtnRLkNGYMVjdPowyh5HrKtGdytn"
+  cresco_devnet_execution_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36034651466"
+  cresco_devnet_execution_signature: "3pFf5gFTQANbeJkxdLLdZho2iwgtsmXS36WdQroGPoUwuF7txaxRzQrJf2mcMajBj7BsnvrAEj5a148erm6TboP1"
   cresco_devnet_mandate: "AnBnNwACbwQ7KMN46jBoDS5pxsek2AdHV6X1B1uA7hXp"
-  cresco_bridge_evidence: evidence/solana/CRESCO-HTTP-DEVNET-EXECUTION-BRIDGE-PROOF-2026-09-24.md
+  cresco_current_proof_asset: AAPL
+  cresco_current_pyth_feed_id: 922
+  cresco_aapl_live_entitlement_proof_run: "https://github.com/Faadil1/keys/actions/runs/36035283447"
+  cresco_bridge_evidence: evidence/solana/CRESCO-AAPL-HTTP-DEVNET-EXECUTION-PROOF-2026-09-24.md
+  cresco_historical_tsla_bridge_evidence: evidence/solana/CRESCO-HTTP-DEVNET-EXECUTION-BRIDGE-PROOF-2026-09-24.md
   cresco_demo_runtime_mode: SERVER_HELD_DEVNET_DEMO
   cresco_execution_asset: DEMO_TOKEN
   cresco_execution_route: POST_/api/v0.2/actions/execute
@@ -71,25 +75,30 @@ canonical_solana:
     - "stale review replay -> REFUSE / ConstraintSeeds"
 
 canonical_pyth:
-  proof_run: "https://github.com/Faadil1/keys/actions/runs/35930425544"
-  symbol: Equity.US.TSLA/USD
-  feed_id: 1435
+  proof_run: "https://github.com/Faadil1/keys/actions/runs/36035283447"
+  onchain_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36034651466"
+  symbol: Equity.US.AAPL/USD
+  feed_id: 922
   channel: fixed_rate@1000ms
   status: FRESH
-  proof_mode: OFFCHAIN_AUTHENTICATED_PYTH_PRO
-  current_adapter_format: leUnsigned
+  proof_mode: AUTHENTICATED_PYTH_PRO_PLUS_ONCHAIN_LAZER
+  current_adapter_format: signed_solana_payload
   signed_solana_payload_availability: PASS
   signed_payload_encoding_observed: base64
-  local_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35956618933"
-  local_onchain_pyth_result: "12 passing"
-  devnet_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35959137364"
-  devnet_onchain_pyth_result: "12 passing"
-  devnet_onchain_pyth_upgrade_signature: "2C2J2G6UzBKhyALk9XfDYMnThyB77cedbhjxtrLXKvE6deJYZAroLKMXF5L9QaZ3fATuZAbJfbfetNkPa2eUH1ge"
-  onchain_signed_payload_verification: PASS_LOCAL_AND_DEVNET_LIVE_PYTH
-  observed_price_at_proof_time: 379.696
-  confidence: 0.019
-  publish_time: "2026-09-23T19:36:42.000Z"
-  current_trial_aapl_entitlement: false
+  onchain_signed_payload_verification: PASS_DEVNET_LIVE_PYTH_AAPL
+  observed_price_at_proof_time: 337.34502
+  confidence: 0.04003
+  publish_time: "2026-09-24T17:34:56.000Z"
+  current_trial_aapl_entitlement: true
+  current_aapl_onchain_execution: PASS
+  current_aapl_execution_signature: "3pFf5gFTQANbeJkxdLLdZho2iwgtsmXS36WdQroGPoUwuF7txaxRzQrJf2mcMajBj7BsnvrAEj5a148erm6TboP1"
+  historical_tsla:
+    proof_run: "https://github.com/Faadil1/keys/actions/runs/35930425544"
+    symbol: Equity.US.TSLA/USD
+    feed_id: 1435
+    local_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35956618933"
+    devnet_onchain_pyth_run: "https://github.com/Faadil1/keys/actions/runs/35959137364"
+    status: HISTORICAL_VALID_PROOF
   product_asset_dependency: false
 
 v0_2_target:
@@ -152,12 +161,13 @@ truth_boundary:
   - no mainnet deployment claim
   - no real minor securities execution claim
   - live Pyth claim is limited to verified entitled feeds
-  - current trial does not prove live AAPL access
+  - current Pyth trial now proves live AAPL access and signed payload availability
   - market evidence does not create authority
   - learning completion does not create authority
   - v0.2 proves bounded demo-token capital execution on local Solana and devnet
   - base bounded-capital path is proven with a demo/mock SPL token
-  - live Pyth TSLA evidence is cryptographically verified in local Solana and canonical devnet capital paths
+  - current live Pyth AAPL evidence is cryptographically verified in the canonical devnet capital path
+  - historical TSLA local/devnet Pyth proofs remain valid evidence
   - Pyth-derived USD notional and a precommitted max-price condition are proven on canonical devnet
   - market evidence has no authority-widening effect
 
@@ -170,4 +180,4 @@ active_step:
     - "Configure server-only DEVNET_KEYPAIR_JSON and PYTH_PRO_API_KEY plus CORS for https://cresco-lac.vercel.app."
     - "Point Cresco to the hosted KEYS API with NEXT_PUBLIC_KEYS_API_URL and NEXT_PUBLIC_KEYS_EXECUTION=runtime."
     - "Verify the Live Solana proof lane from the deployed Cresco UI and preserve the demo-token / server-held-devnet-signer truth boundary."
-    - "Keep the Family product spine unchanged; TSLA remains the isolated technical proof lane."
+    - "Keep the Family product spine unchanged; AAPL is the current isolated technical proof lane and TSLA remains historical proof."
