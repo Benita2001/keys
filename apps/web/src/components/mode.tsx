@@ -40,7 +40,20 @@ export function ModeSwitch({ className }: { className?: string }) {
 
   return (
     <>
-      <div role="radiogroup" aria-label="Portfolio mode" className={cn("relative grid h-10 grid-cols-2 rounded-[14px] bg-[#edf1f7] p-1", className)}>
+      <div
+        role="radiogroup"
+        aria-label="Portfolio mode"
+        onKeyDown={(event) => {
+          if (["ArrowLeft", "ArrowUp"].includes(event.key)) {
+            event.preventDefault();
+            choose("practice");
+          } else if (["ArrowRight", "ArrowDown"].includes(event.key)) {
+            event.preventDefault();
+            choose("money");
+          }
+        }}
+        className={cn("relative grid h-10 grid-cols-2 rounded-[14px] bg-[#edf1f7] p-1", className)}
+      >
         <span
           aria-hidden
           className={cn(
@@ -54,6 +67,7 @@ export function ModeSwitch({ className }: { className?: string }) {
             type="button"
             role="radio"
             aria-checked={mode === m}
+            tabIndex={mode === m ? 0 : -1}
             onClick={() => choose(m)}
             className={cn(
               "relative z-10 rounded-[11px] text-[13.5px] font-extrabold transition-colors duration-200",
@@ -96,7 +110,9 @@ export function MoneyIntroSheet({ open, onClose }: { open: boolean; onClose: () 
           </ul>
           <div className="mt-4 rounded-[14px] bg-yellow-soft p-3 text-[13px] font-semibold text-[#7a5207]">
             <DemoMoneyTag className="mb-1.5" />
-            <p>This is a demo. Money Mode isn&apos;t connected to a bank or broker yet, so no real money moves.</p>
+            <p>
+              Money Mode uses Devnet test capital and a demo SPL token. It is not connected to a bank, broker or custodian, and it does not buy real securities.
+            </p>
           </div>
           <ActionButton className="mt-5" onClick={onClose} data-autofocus>
             Got it
