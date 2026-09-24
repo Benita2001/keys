@@ -61,6 +61,33 @@ export class FamilyState {
 
     if (method === "GET" && path === "/state") return json(state);
 
+    if (method === "POST" && path === "/session") {
+      const role = body.role === "guardian" ? "guardian" : "child";
+      return json({
+        kind: "devnet-demo",
+        role,
+        displayName: String(
+          body.displayName ||
+            (role === "guardian" ? state.profile.parentName : state.profile.childName)
+        ).slice(0, 80),
+        familyId: state.familyId,
+        familyCode: state.familyCode
+      });
+    }
+
+    if (method === "POST" && path === "/link") {
+      const linked =
+        String(body.code || "").trim().toUpperCase() === state.familyCode;
+      if (linked) {
+        state.profile.parentLinked = true;
+        await this.save(state);
+      }
+      return json(
+        { linked, familyId: linked ? state.familyId : null },
+        linked ? 200 : 404
+      );
+    }
+
     if (method === "POST" && path === "/sync-mandate") {
       state.mandate = { ...state.mandate, ...(body.mandate || {}), updatedAt: now() };
       await this.save(state);
@@ -182,6 +209,126 @@ export class FamilyState {
         holdings: state.moneyHoldings,
         activity: state.activity
       });
+
+    if (method === "POST" && path === "/reserve") {
+      const key = String(body.idempotencyKey || "");
+      const amount = Number(body.notional || 0);
+      const asset = String(body.asset || "").toUpperCase();
+      if (!key) return json({ error: "IDEMPOTENCY_KEY_REQUIRED" }, 400);
+
+      if (state.executionResults[key])
+        return json({ replay: true, result: state.executionResults[key] });
+      if (state.reservations[key])
+        return json({ replay: true, reservation: state.reservations[key] });
+
+      const pending = Object.values(state.reservations).reduce(
+        (sum, item) => sum + Number(item.notional || 0),
+        0
+      );
+      const allowance = state.requests.find(
+        (r) =>
+          r.status === "ALLOWED_ONCE" &&
+          !r.usedAt &&
+          r.asset === asset &&
+          r.mandateNonce === state.mandate.nonce &&
+          amount <= r.requestedNotional
+      );
+
+      const actionOk = amount <= state.mandate.maxActionNotional;
+      const periodOk =
+        state.mandate.spentThisPeriod + pending + amount <=
+        state.mandate.maxPeriodNotional;
+      const balanceOk = pending + amount <= state.balances.money;
+
+      if ((!actionOk || !periodOk) && !allowance) {
+        return json({
+          allowed: false,
+          reasonCode: !actionOk
+            ? "MANDATE_LIMIT_EXCEEDED"
+            : "PERIOD_LIMIT_EXCEEDED",
+          boundaryRequestAvailable: true
+        });
+      }
+      if (!balanceOk)
+        return json({ allowed: false, reasonCode: "INSUFFICIENT_BALANCE" });
+
+      const reservation = {
+        idempotencyKey: key,
+        asset,
+        notional: amount,
+        mandateNonce: state.mandate.nonce,
+        allowOnceRequestId: allowance?.id || null,
+        createdAt: now()
+      };
+      state.reservations[key] = reservation;
+      await this.save(state);
+      return json({ allowed: true, reservation });
+    }
+
+    if (method === "POST" && path === "/finalize") {
+      const key = String(body.idempotencyKey || "");
+      if (state.executionResults[key])
+        return json({ replay: true, result: state.executionResults[key] });
+
+      const reservation = state.reservations[key];
+      if (!reservation)
+        return json({ error: "RESERVATION_NOT_FOUND" }, 404);
+
+      if (body.success === true) {
+        const amount = Number(reservation.notional);
+        state.balances.money = Math.max(0, state.balances.money - amount);
+        state.mandate.spentThisPeriod += amount;
+
+        if (reservation.allowOnceRequestId) {
+          const index = state.requests.findIndex(
+            (r) => r.id === reservation.allowOnceRequestId
+          );
+          if (index >= 0) {
+            state.requests[index] = {
+              ...state.requests[index],
+              status: "ALLOWED_ONCE_USED",
+              usedAt: now()
+            };
+          }
+        }
+
+        const shares = Math.max(0, Number(body.shares || 0));
+        if (shares > 0) {
+          const existing = state.moneyHoldings.find(
+            (h) => h.ticker === reservation.asset
+          );
+          if (existing) {
+            existing.shares += shares;
+            existing.costBasis += amount;
+          } else {
+            state.moneyHoldings.push({
+              ticker: reservation.asset,
+              shares,
+              costBasis: amount
+            });
+          }
+        }
+
+        state.activity.unshift({
+          id: "act_" + crypto.randomUUID(),
+          kind: "MONEY_EXECUTION",
+          ticker: reservation.asset,
+          amount,
+          shares,
+          proof: body.proof || null,
+          createdAt: now()
+        });
+      }
+
+      const result = body.result || {
+        success: body.success === true,
+        proof: body.proof || null
+      };
+      state.executionResults[key] = result;
+      delete state.reservations[key];
+      await this.save(state);
+      return json({ result, state });
+    }
 
     if (method === "POST" && path === "/reset") {
       const next = copy(INITIAL);
