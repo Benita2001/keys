@@ -1,7 +1,7 @@
 # Stocklana — KEYS Submission Packaging
 
 Date: 2026-09-24  
-Status: **READY AFTER FINAL LIVE DEPLOY SMOKE**
+Status: **HOSTED SMOKE PASS — FINAL SOLANA ALLOW_ONCE UPGRADE GATE REMAINS**
 
 ## Submission target
 
@@ -276,9 +276,10 @@ Show Durable Object:
 - reservation;
 - idempotency;
 - balance/period serialization;
+- hosted multi-asset concurrency proof;
 - finalize confirmed execution.
 
-Explain why two browser tabs cannot independently overspend the same family period boundary.
+Explain why concurrent requests cannot independently overspend the same family period boundary. The hosted proof uses AAPL/TSLA-labeled reservations against one shared budget, but does not claim TSLA Money execution.
 
 ### 3:05–3:45 — requests / roles
 
@@ -297,7 +298,8 @@ Clarify this is role-scoped demo auth, not KYC.
 Show:
 - market quotes route;
 - FRESH/STALE/UNAVAILABLE;
-- no fabricated history;
+- AAPL Pyth Pro History for 7/30-day-style views;
+- fail-closed history for unentitled/unconfigured feeds;
 - PreStocks fail-closed eligibility.
 
 ### 4:20–5:00 — evidence / truth boundary
@@ -366,7 +368,7 @@ No. The current route no longer treats the browser’s Mandate as authority. Eva
 
 ### “What prevents double spending from two tabs?”
 
-A Cloudflare Durable Object serializes the family reservation, period spend and balance check around execution. User intents also carry idempotency keys.
+A Cloudflare Durable Object serializes the family reservation, period spend and balance check around execution. User intents also carry idempotency keys. The hosted smoke now proves this with concurrent AAPL/TSLA-labeled reservations against one shared family budget, then releases the proof reservations without changing spend.
 
 ### “How does Allow once work?”
 
@@ -378,7 +380,7 @@ AAPL is the current entitled/proven Pyth execution lane, not a product dependenc
 
 ### “Are all prices live?”
 
-No. Only fresh entitled Pyth quotes are labeled live. Unavailable symbols stay clearly sample; the backend never converts an unknown price to zero. Historical charts are also labeled sample because a real history provider is not yet connected.
+No. Only fresh entitled Pyth quotes are labeled live. Unavailable symbols stay clearly sample; the backend never converts an unknown price to zero. AAPL history is now fetched server-side from Pyth Pro History for supported periods. Unentitled or unconfigured history still fails closed and the UI keeps its sample fallback clearly labeled.
 
 ### “What is PreStocks doing here?”
 
