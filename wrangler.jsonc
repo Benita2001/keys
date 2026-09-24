@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "keys-api-stocklana",
+  "main": "src/cloudflare-worker.mjs",
+  "compatibility_date": "2026-09-24",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "KEYS_CORS_ORIGIN": "https://cresco-lac.vercel.app",
+    "KEYS_DEMO_LIVE_EQUITY": "AAPL"
+  }
+}
