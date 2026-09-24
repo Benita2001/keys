@@ -51,3 +51,104 @@ console.log(
   )
 );
 console.log('DEVNET_HTTP_EXECUTION_BRIDGE=PASS');
+
+
+const allowanceRequestId =
+  `ci-allow-once-${process.env.GITHUB_RUN_ID ?? Date.now()}`;
+let allowanceGrant = null;
+let allowanceError = null;
+
+for (let attempt = 1; attempt <= 20; attempt += 1) {
+  try {
+    allowanceGrant = await provider.grantAllowanceOnce({
+      requestId: allowanceRequestId,
+      expectedNonce: state.mandate.nonce,
+      maxNotional: 12,
+    });
+    allowanceError = null;
+    break;
+  } catch (error) {
+    allowanceError = error;
+    if (attempt === 20) break;
+    console.log(
+      `PROOF allow_once_wait attempt=${attempt} reason=${String(
+        error?.message ?? error,
+      ).slice(0, 180)}`,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 15_000));
+  }
+}
+
+if (!allowanceGrant) {
+  throw new Error(
+    `DEVNET_ALLOW_ONCE_GRANT_FAILED:${String(
+      allowanceError?.message ?? allowanceError,
+    )}`,
+  );
+}
+
+const onceResult = await provider.execute({
+  asset: 'AAPL',
+  type: 'BUY',
+  // Bootstrap fixes the standing action boundary at $10.
+  // $12 therefore proves that the explicit one-time receipt, not the standing
+  // Mandate, is authorizing this one action.
+  notional: 12,
+  expectedNonce: state.mandate.nonce,
+  idempotencyKey:
+    `ci-allow-once-use-${process.env.GITHUB_RUN_ID ?? Date.now()}`,
+  allowOnceRequestId: allowanceRequestId,
+});
+
+if (
+  onceResult.evaluation?.decision !== 'ALLOW' ||
+  onceResult.executionProof?.status !== 'CONFIRMED' ||
+  onceResult.executionProof?.oneTimeAllowance?.consumed !== true ||
+  onceResult.executionProof?.oneTimeAllowance?.requestId !== allowanceRequestId
+) {
+  throw new Error(
+    `DEVNET_ALLOW_ONCE_EXECUTION_FAILED:${JSON.stringify(onceResult)}`,
+  );
+}
+
+const reuseResult = await provider.execute({
+  asset: 'AAPL',
+  type: 'BUY',
+  notional: 12,
+  expectedNonce: state.mandate.nonce,
+  idempotencyKey:
+    `ci-allow-once-reuse-${process.env.GITHUB_RUN_ID ?? Date.now()}`,
+  allowOnceRequestId: allowanceRequestId,
+});
+
+if (
+  reuseResult.evaluation?.decision !== 'REFUSE' ||
+  reuseResult.evaluation?.reasonCode !== 'AllowanceAlreadyUsed'
+) {
+  throw new Error(
+    `DEVNET_ALLOW_ONCE_REUSE_NOT_REFUSED:${JSON.stringify(reuseResult)}`,
+  );
+}
+
+console.log(
+  JSON.stringify(
+    {
+      status: 'PASS',
+      proof: 'ALLOW_ONCE_ONCHAIN_SINGLE_USE',
+      grantSignature: allowanceGrant.signature,
+      allowanceReceipt: allowanceGrant.allowanceReceipt,
+      requestHash: allowanceGrant.requestHash,
+      executionSignature: onceResult.executionProof.signature,
+      consumed: onceResult.executionProof.oneTimeAllowance.consumed,
+      reuseDecision: reuseResult.evaluation.decision,
+      reuseReasonCode: reuseResult.evaluation.reasonCode,
+      mandateNonce: state.mandate.nonce,
+      standingActionNotionalUsd:
+        Number(state.mandate.maxActionNotionalMicroUsd) / 1_000_000,
+      oneTimeNotionalUsd: 12,
+    },
+    null,
+    2,
+  ),
+);
+console.log('DEVNET_ALLOW_ONCE_PROOF=PASS');
