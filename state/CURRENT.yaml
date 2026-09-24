@@ -59,11 +59,12 @@ current_truth:
   cresco_execution_asset: DEMO_TOKEN
   cresco_execution_route: POST_/api/v0.2/actions/execute
   cresco_runtime_route: GET_/api/v0.2/demo/runtime
-  backend_vercel_deployment_config: READY
-  backend_vercel_project_creation: MANUAL_REQUIRED
+  backend_vercel_deployment_config: SUPERSEDED_BY_CLOUDFLARE
+  backend_cloudflare_worker_config: READY
+  backend_cloudflare_deployment: PENDING_USER_ACCOUNT_CONNECTION
   backend_public_url: PENDING
   backend_default_cors_origin: "https://cresco-lac.vercel.app"
-  backend_deployment_guide: docs/VERCEL-BACKEND-DEPLOYMENT.md
+  backend_deployment_guide: docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md
   tessera_bounty: HOLD_WATCH
   clawpump_bounty: HOLD_OUTSIDE_CORE
   meteora_bounty: HOLD_OUTSIDE_CORE
@@ -186,8 +187,8 @@ active_step:
   owner: Faadil
   support_owner: Benita
   next:
-    - "Create/import the KEYS backend Vercel project from Faadil1/keys using docs/VERCEL-BACKEND-DEPLOYMENT.md."
-    - "Configure server-only DEVNET_KEYPAIR_JSON and PYTH_PRO_API_KEY plus CORS for https://cresco-lac.vercel.app."
+    - "Connect Faadil1/keys to Cloudflare Workers Builds using docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md."
+    - "Configure Cloudflare Worker secrets DEVNET_KEYPAIR_JSON and PYTH_PRO_API_KEY; CORS is already pinned to https://cresco-lac.vercel.app."
     - "Point Cresco to the hosted KEYS API with NEXT_PUBLIC_KEYS_API_URL and NEXT_PUBLIC_KEYS_EXECUTION=runtime."
     - "Verify the Live Solana proof lane from the deployed Cresco UI and preserve the demo-token / server-held-devnet-signer truth boundary."
     - "Keep the Family product spine unchanged; AAPL is the current isolated technical proof lane and TSLA remains historical proof."
