@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CompanyCard, CompanyCardSkeleton } from "@/components/finance";
-import { DataStatusTag, EmptyState, ErrorState } from "@/components/ui/feedback";
+import { EmptyState, ErrorState } from "@/components/ui/feedback";
 import { Chip, PageHeader, SearchInput } from "@/components/ui/primitives";
 import type { AssetCategory, PricePoint } from "@/domain/types";
 import { useAssets } from "@/hooks/data";
@@ -45,7 +45,7 @@ export default function ExplorePage() {
 
   return (
     <div className="animate-rise mx-auto max-w-[920px]">
-      <PageHeader title="Explore" right={assets.status === "success" ? <DataStatusTag status="mock" className="mt-2" /> : null} />
+      <PageHeader title="Explore" />
       <div className="mt-4">
         <SearchInput value={query} onChange={setQuery} placeholder="Search companies, industries..." label="Search companies" />
       </div>
@@ -77,7 +77,7 @@ export default function ExplorePage() {
         )}
       </div>
       <p className="mt-4 text-center text-[12px] font-semibold text-ink-3">
-        Prices shown are samples for learning. Each company maps to a tokenized stock on Solana (for example, AAPLx).
+        Fresh entitled Pyth quotes are labeled Live · Pyth. Other prices and all chart history remain clearly labeled sample data for learning.
       </p>
     </div>
   );
