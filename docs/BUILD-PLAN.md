@@ -64,21 +64,26 @@ Canonical devnet run:
 
 https://github.com/Faadil1/keys/actions/runs/35931280449
 
-## Gate 6.5 — signed Pyth on-chain enforcement — ACTIVE / FAADIL
+## Gate 6.5 — signed Pyth on-chain enforcement — LOCAL PASS / DEVNET ACTIVE
 
-Already proven:
+Local Solana runtime now proves:
 
-- authenticated live Pyth equity evidence;
-- signed Solana-format Pyth payload availability.
+- live authenticated TSLA Pyth message;
+- Ed25519 + canonical Pyth Lazer verification in the KEYS transaction path;
+- Pyth-derived USD/notional enforcement;
+- notional refusal;
+- precommitted max-price refusal;
+- no authority widening from market evidence.
 
-Next runtime proof:
+Local canonical evidence:
 
-1. verify the signed Pyth payload in the KEYS Anchor path;
-2. enforce freshness/confidence from verified evidence;
-3. derive USD/notional from verified price;
-4. fail closed when a user-precommitted market condition is invalid/stale;
-5. re-run local + canonical devnet proof;
-6. freeze frontend/backend semantic contract v0.2.
+https://github.com/Faadil1/keys/actions/runs/35956618933
+
+Remaining gate:
+
+1. confirm the exact Pyth-integrated runtime on canonical devnet;
+2. freeze frontend/backend semantic contract v0.2;
+3. hand frozen contract to Benita.
 
 ## Gate 7 — Family experience integration — BENITA AFTER FROZEN V0.2 CONTRACT
 
