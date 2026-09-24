@@ -406,10 +406,6 @@ type BackendEvaluation = {
   mandateNonce?: number;
 };
 
-function draftMandate(m: CurrentMandate) {
-  return { status: m.status, version: m.version, nonce: m.nonce, expiresAt: m.expiresAt };
-}
-
 export async function evaluateAction(input: {
   mandate: CurrentMandate;
   assetRule: AssetRule | null;
@@ -418,9 +414,13 @@ export async function evaluateAction(input: {
   notional: number;
 }): Promise<ActionEvaluation> {
   const body = {
-    mandate: draftMandate(input.mandate),
-    assetRule: input.assetRule,
-    action: { asset: input.asset, type: input.type, amount: input.notional, notional: input.notional },
+    action: {
+      asset: input.asset,
+      type: input.type,
+      amount: input.notional,
+      notional: input.notional,
+      expectedNonce: input.mandate.nonce,
+    },
   };
   const result = await request<BackendEvaluation>("/api/v0.2/actions/evaluate", {
     method: "POST",
@@ -440,14 +440,8 @@ export type ExecuteRequest = {
   notional: number;
   expectedNonce: number;
   idempotencyKey: string;
-  /** Present when a guardian ALLOW_ONCE covers this action. Server must verify it. */
+  /** Present when a guardian ALLOW_ONCE covers this action. Server verifies it. */
   allowOnceRequestId?: string;
-  /**
-   * TRANSITIONAL CLIENT CONTEXT. Until the server owns the delegate's Mandate (handoff §3.4),
-   * the client sends it so the runtime can evaluate. The final route must
-   * ignore this and load the Mandate from the session.
-   */
-  draft?: { mandate: ReturnType<typeof draftMandate>; assetRule: AssetRule | null };
 };
 
 /** Response body for POST /api/v0.2/actions/execute (HTTP 200 for every policy outcome). */
@@ -573,7 +567,6 @@ export function buildExecuteRequest(input: {
     expectedNonce: input.mandate.nonce,
     idempotencyKey: input.idempotencyKey,
     allowOnceRequestId: input.allowOnceRequestId,
-    draft: { mandate: draftMandate(input.mandate), assetRule: input.assetRule },
   };
 }
 
