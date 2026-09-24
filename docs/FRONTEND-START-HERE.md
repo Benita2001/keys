@@ -94,4 +94,28 @@ https://github.com/Faadil1/keys/actions/runs/35959137364
 
 Faadil now maintains the backend/proof and supports integration issues. Benita can integrate against the frozen v0.2 semantics.
 
-Do not redesign around TSLA or AAPL availability. The mechanism remains asset-independent and actual live assets must always be labeled truthfully.
+## Sponsor extension available now
+
+Pyth remains part of the core proof.
+
+PreStocks is available as an optional secondary Learn / Practice representation surface:
+
+- `GET /api/v0.2/integrations/prestocks`
+- `GET /api/v0.2/integrations/prestocks/:symbol`
+
+Use PreStocks to help Maya understand **what the on-chain representation actually is**, not as a new homepage hero or as proof of live minor securities execution.
+
+Default PreStocks truth:
+
+- `eligibility.status = UNKNOWN`
+- `executionEligible = false`
+- `practiceAvailable = true`
+- `authorityEffect = NONE`
+
+Canonical PreStocks live proof:
+
+https://github.com/Faadil1/keys/actions/runs/35969672666
+
+Sponsor integrations must extend KEYS without redefining the Family journey.
+
+Do not redesign around TSLA, AAPL or any single sponsor asset. The mechanism remains asset-independent and actual live assets must always be labeled truthfully.
