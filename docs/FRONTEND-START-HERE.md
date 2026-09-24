@@ -80,6 +80,14 @@ The current frozen integration contract is:
 
 `docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`
 
+Use these product routes:
+
+- `GET /api/v0.2/demo/maya`
+- `POST /api/v0.2/actions/evaluate`
+- `POST /api/v0.2/boundary-requests`
+
+Do not build the new product around `/api/v0.1/*` or `/api/v0.2/draft/*`; those remain compatibility/history surfaces only.
+
 The canonical Solana devnet + live Pyth proof is:
 
 https://github.com/Faadil1/keys/actions/runs/35959137364
