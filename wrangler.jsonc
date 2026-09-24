@@ -9,8 +9,7 @@
   },
   "vars": {
     "KEYS_CORS_ORIGIN": "https://cresco-lac.vercel.app",
-    "KEYS_DEMO_LIVE_EQUITY": "AAPL",
-    "SOLANA_DEVNET_RPC_URL": "https://solana-devnet.api.onfinality.io/public"
+    "KEYS_DEMO_LIVE_EQUITY": "AAPL"
   },
   "compatibility_flags": [
     "nodejs_compat"
