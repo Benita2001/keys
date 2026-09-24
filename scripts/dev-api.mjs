@@ -24,7 +24,10 @@ const server = http.createServer(async (req, res) => {
     res.statusCode = result.status;
     res.setHeader('access-control-allow-origin', corsOrigin);
     res.setHeader('access-control-allow-methods', 'GET,POST,OPTIONS');
-    res.setHeader('access-control-allow-headers', 'content-type');
+    res.setHeader(
+      'access-control-allow-headers',
+      'content-type,idempotency-key'
+    );
 
     for (const [name, value] of Object.entries(result.headers ?? {})) {
       res.setHeader(name, value);
