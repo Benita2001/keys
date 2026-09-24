@@ -176,7 +176,7 @@ jobs:
           # the small devnet shortfall required for this program upgrade.
           if [ "$BALANCE" -lt 2800000000 ]; then
             echo "PROOF devnet_pow_faucet=START balance_lamports=$BALANCE"
-            cargo install devnet-pow --locked
+            cargo install devnet-pow
             set +e
             POW_OUT=$(devnet-pow mine --target-lamports 700000000 -ud 2>&1)
             POW_RC=$?
