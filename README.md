@@ -117,7 +117,7 @@ The old v0.1 contract remains historical proof only.
 
 ## Sponsor integrations
 
-KEYS currently targets the Stocklana main track plus two sponsor tracks that strengthen the locked product.
+KEYS currently targets the Stocklana main track plus three sponsor tracks that strengthen the locked product.
 
 ### Pyth — proven
 
@@ -146,6 +146,18 @@ It defaults fail-closed:
 Live proof command:
 
 `npm run proof:prestocks`
+
+### Tessera — live representation integration
+
+KEYS consumes Tessera's public T-Token metadata through:
+
+- `GET /api/v0.2/integrations/tessera`
+- `GET /api/v0.2/integrations/tessera/:asset`
+
+The integration currently exposes T-OpenAI, T-Kalshi and T-SpaceX as **loan participation rights**, not direct equity. KEYS keeps them Learn/Practice-only by default: `executionEligible=false`, `authorityEffect=NONE`.
+
+Live API proof: https://github.com/Faadil1/keys/actions/runs/36112072978  
+Hosted Cloudflare proof: https://github.com/Faadil1/keys/actions/runs/36112229684
 
 See [docs/BOUNTY-INTEGRATION-GATE-2026-09-24.md](docs/BOUNTY-INTEGRATION-GATE-2026-09-24.md).
 
