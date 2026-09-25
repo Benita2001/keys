@@ -1,7 +1,7 @@
 # Benita — Frontend Start Here
 
 Date: 2026-09-24  
-Status: **V0.2 FROZEN / DEVNET FAMILY INTEGRATION READY**
+Status: **V0.2 FROZEN / ALL CURRENT TECHNICAL GATES PASS**
 
 KEYS Family is bounded autonomy:
 
@@ -26,7 +26,7 @@ Cresco production fallback already points to it.
 
 Use `apps/web/src/services/keys-backend.ts`; do not create parallel fetch logic.
 
-The Family demo now supports backend sessions, shared state, current Mandate, evaluate, Devnet execute/proof, requests/guardian decisions, test funding, learning sync, Money portfolio and market quotes.
+The Family demo now supports backend sessions, shared state, current Mandate, evaluate, Devnet execute/proof, persistent requests/guardian decisions, deployed single-use ALLOW_ONCE, test funding, learning sync, Money portfolio, market quotes and authenticated AAPL Pyth Pro history.
 
 See:
 - `docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md`
@@ -59,9 +59,14 @@ Money Mode’s proven AAPL lane uses:
 
 It does not buy real AAPL/AAPLx shares and is not brokerage/custody.
 
+Final `ALLOW_ONCE` proof:
+- upgrade run `36079506597`: **PASS**;
+- bridge run `36082140600`: **PASS**;
+- one grant → one successful execution → second use **REFUSE / AllowanceAlreadyUsed**.
+
 ## Market
 
-The Explore universe may mix Pyth-backed and sample values. Only `FRESH` Pyth is “Live · Pyth”. Historical charts remain sample until a history provider is connected.
+The Explore universe may mix Pyth-backed and sample values. Only `FRESH` Pyth is “Live · Pyth”. AAPL history is now served from authenticated Pyth Pro History for supported periods; unentitled or unconfigured symbols remain explicitly sample/fail-closed rather than being presented as live.
 
 ## Sponsor extension
 
