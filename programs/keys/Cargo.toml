@@ -10,7 +10,7 @@ crate-type = ["cdylib", "lib"]
 name = "keys"
 
 [features]
-default = ["no-log-ix-name"]
+default = []
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
