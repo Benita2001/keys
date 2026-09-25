@@ -1,5 +1,5 @@
 project: KEYS
-handover_version: 20
+handover_version: 21
 updated_at: "2026-09-24"
 status: V0_2_CRESCO_STATEFUL_DEVNET_FAMILY_INTEGRATION_PASS
 
@@ -132,6 +132,13 @@ canonical_truth:
     webkit_iphone_qa: PASS
     webkit_iphone_qa_run: "https://github.com/Faadil1/keys/actions/runs/36115749387"
     backend_default_cors_origin: "https://cresco-lac.vercel.app"
+    cresco_submission_frontend: "https://cresco-lac.vercel.app"
+    cresco_visual_lab: READY_FOR_SEPARATE_CLOUDFLARE_PAGES_DEPLOY
+    cresco_visual_lab_path: apps/visual-lab
+    cresco_visual_lab_ci: PASS
+    cresco_visual_lab_ci_run: "https://github.com/Faadil1/keys/actions/runs/36118245596"
+    cresco_visual_lab_submission_status: NOT_SUBMISSION_CANONICAL
+    cresco_visual_lab_data_mode: READ_ONLY_PYTH_TESSERA_PRESTOCKS
     backend_deployment_guide: docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md
     tessera_bounty: ACTIVE_LIVE_API_INTEGRATED
     tessera_live_proof: PASS
