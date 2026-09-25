@@ -34,10 +34,12 @@ Status: **CANONICAL DOCS SYNCHRONIZED — ALL CURRENT HACKATHON TECHNICAL GATES 
 - market quote API: **IMPLEMENTED / FAIL-CLOSED**
 - market history provider: **PASS — AUTHENTICATED PYTH PRO AAPL HISTORY HOSTED; fail-closed otherwise**
 - iPhone WebKit QA: **PASS — run 36057960806**
-- current Node/API CI: **PASS — run 36082140540**
-- Cloudflare Worker dry-run: **PASS — run 36054015677**
-- hosted state/history/concurrency smoke: **PASS — run 36066208304**
+- current Node/API CI: **PASS — run 36112502744**
+- Cloudflare Worker dry-run: **PASS — run 36112073075**
+- hosted state/history/concurrency/Tessera smoke: **PASS — run 36112229684**
 - final ALLOW_ONCE Devnet proof: **PASS — upgrade run 36079506597; bridge run 36082140600**
+- Tessera public T-Token integration: **PASS — live run 36112072978; hosted run 36112229684**
+- Cresco Tessera Learn/Practice surface: **PASS — web 36112502712; WebKit 36112502709**
 - real minor securities execution: **OUT OF SCOPE**
 - frontend owner: **Benita**
 - backend v0.2 owner: **Faadil**
@@ -81,7 +83,7 @@ Canonical live Pyth proof feed:
 | `docs/FRONTEND-START-HERE.md` | Benita transition guide | CURRENT |
 | `docs/BENITA-FRONTEND-HANDOFF.md` | ownership/handoff | CURRENT |
 | `state/CURRENT.yaml` | machine-readable current truth | CURRENT |
-| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v18 |
+| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v19 |
 
 ## v0.1 evidence remains evidence
 
