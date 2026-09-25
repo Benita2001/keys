@@ -1,13 +1,13 @@
-import { BookOpen, KeyRound, ShieldCheck, Sprout } from "lucide-react";
+import { CheckCircle2, KeyRound, ShieldCheck, Sprout } from "lucide-react";
 import { WelcomeScene } from "@/components/illustrations/people";
 import { Wordmark } from "@/components/shell";
 import { ActionButton } from "@/components/ui/primitives";
 
 const PILLARS = [
-  { icon: BookOpen, title: "Learn", body: "Source-backed market concepts", tone: "text-blue bg-blue-soft" },
-  { icon: Sprout, title: "Practice", body: "Try decisions with virtual money", tone: "text-green-strong bg-green-soft" },
-  { icon: KeyRound, title: "Act", body: "Inside your family-set Key", tone: "text-lavender bg-lavender-soft" },
-  { icon: ShieldCheck, title: "Ask", body: "Only when you reach the boundary", tone: "text-orange-text bg-[#fff0e6]" },
+  { icon: KeyRound, title: "Inside", body: "Act without parent approval", tone: "text-blue bg-blue-soft" },
+  { icon: ShieldCheck, title: "Boundary", body: "A clear edge with a plain reason", tone: "text-orange-text bg-[#fff0e6]" },
+  { icon: CheckCircle2, title: "Once", body: "One request. One use. Key unchanged.", tone: "text-green-strong bg-green-soft" },
+  { icon: Sprout, title: "Grow", body: "Only a guardian creates the next Key", tone: "text-lavender bg-lavender-soft" },
 ];
 
 export default function WelcomePage() {
