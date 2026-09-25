@@ -1,5 +1,6 @@
 name: devnet-execution-bridge
 # Current-main verification reuses the already-deployed canonical program.
+# Revalidate after ALLOW_ONCE Devnet upgrade (slot 503748084).
 
 concurrency:
   group: keys-devnet-execution-bridge
