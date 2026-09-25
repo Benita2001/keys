@@ -2,10 +2,12 @@
 
 import { CheckCircle2, ExternalLink, FlaskConical, Info } from "lucide-react";
 import type { ExecutionProof } from "@/domain/types";
+import { explorerTxUrl as networkExplorerTxUrl, type ExecutionNetwork } from "@/domain/network";
 import { cn } from "./ui/primitives";
 
-export function explorerTxUrl(signature: string) {
-  return `https://explorer.solana.com/tx/${encodeURIComponent(signature)}?cluster=devnet`;
+/** Explorer link for the proof's own network. Devnet links carry ?cluster=devnet. */
+export function explorerTxUrl(signature: string, network: ExecutionNetwork = "solana-devnet") {
+  return networkExplorerTxUrl(signature, network);
 }
 
 export function shortSignature(signature: string) {
@@ -36,13 +38,13 @@ export function ExecutionProofNote({
     return (
       <div className={cn("w-full rounded-[16px] bg-green-soft p-3.5 text-left text-[13px] font-semibold text-green-strong", className)}>
         <p className="flex items-center gap-1.5 font-extrabold">
-          <CheckCircle2 aria-hidden className="size-4" /> Confirmed on Solana devnet
+          <CheckCircle2 aria-hidden className="size-4" /> Practice action confirmed on Solana Devnet
         </p>
         <p className="mt-1 text-navy">
-          {approvalText} This used devnet demo tokens, not real money or shares.
+          {approvalText} Practice capital · no real financial value.
         </p>
         <a
-          href={explorerTxUrl(proof.signature)}
+          href={explorerTxUrl(proof.signature, proof.network ?? "solana-devnet")}
           target="_blank"
           rel="noreferrer"
           className="mt-2 inline-flex items-center gap-1 font-extrabold text-blue-strong hover:underline"
@@ -70,10 +72,10 @@ export function ExecutionProofNote({
   return (
     <div className={cn("w-full rounded-[16px] bg-yellow-soft p-3.5 text-left text-[13px] font-semibold text-[#6f4a06]", className)}>
       <p className="flex items-center gap-1.5 font-extrabold">
-        <Info aria-hidden className="size-4" /> Demo only
+        <Info aria-hidden className="size-4" /> Not sent
       </p>
       <p className="mt-1">
-        {approvalText} Money Mode isn&apos;t connected to real money yet, so nothing was bought and no transaction was sent.
+        {approvalText} No transaction was sent for this action.
       </p>
     </div>
   );
@@ -113,10 +115,10 @@ export function ProofDetails({
   const confirmed = isVerifiableOnChain(proof);
   const summary: [string, string][] = [
     ["Status", confirmed ? "Confirmed" : proof?.status === "RUNTIME_PENDING" ? "Waiting for confirmation" : proof?.simulated ? "Simulated test run" : proof?.status === "PRACTICE_LOCAL" ? "Practice (virtual money)" : "Not sent"],
-    ["Network", proof?.network ? "Solana Devnet" : "—"],
+    ["Network", proof?.network === "solana-mainnet" ? "Solana Mainnet" : proof?.network ? "Solana Devnet" : proof?.status === "PRACTICE_LOCAL" ? "Sandbox (not on-chain)" : "—"],
     ["Action", `${action} · ${asset}`],
     ["Amount", amount],
-    ["Capital", proof?.executionAsset === "DEMO_TOKEN" || proof?.network ? "Devnet demo tokens · not real money or shares" : proof?.status === "PRACTICE_LOCAL" ? "Virtual practice money" : "—"],
+    ["Capital", proof?.network === "solana-devnet" || proof?.executionAsset === "DEMO_TOKEN" ? "Practice capital (Devnet demo token) · no real financial value" : proof?.status === "PRACTICE_LOCAL" ? "Sandbox practice capital · no real financial value" : "—"],
     ["Pyth evidence", proof?.pyth?.status ? `${proof.pyth.status === "FRESH" ? "Fresh" : proof.pyth.status}${typeof proof.pyth.unitPrice === "number" ? ` · $${proof.pyth.unitPrice.toFixed(2)}` : ""}` : "—"],
   ];
   const technical: [string, string][] = [
@@ -142,7 +144,7 @@ export function ProofDetails({
       </dl>
       {confirmed ? (
         <a
-          href={explorerTxUrl(proof.signature)}
+          href={explorerTxUrl(proof.signature, proof.network ?? "solana-devnet")}
           target="_blank"
           rel="noreferrer"
           className="mt-3 inline-flex items-center gap-1 text-[13.5px] font-extrabold text-blue-strong hover:underline"

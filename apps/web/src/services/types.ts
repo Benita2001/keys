@@ -17,15 +17,18 @@ import type {
   SeriesResult,
   Session,
 } from "@/domain/types";
+import type { ExecutionNetwork } from "@/domain/network";
 
 export type Capabilities = {
   /** "none" → frontend runs fully on local demo state. */
   backend: "none" | "keys-v0.2-frozen";
   marketData: "mock" | "mock-with-live-aapl";
-  moneyMode: "demo" | "runtime";
-  funding: "demo" | "devnet-test";
+  /** Practice executes on Solana Devnet through KEYS where a lane exists; otherwise the local sandbox. */
+  practice: "devnet-runtime" | "sandbox-only";
+  practiceFunding: "devnet-test" | "none";
+  /** Money is Solana Mainnet only and never falls back to Devnet. */
+  money: "mainnet-setup-required" | "mainnet-live";
   auth: "demo" | "backend-demo";
-  execution: "demo-not-executed" | "keys-runtime";
 };
 
 export interface MarketDataService {
@@ -34,7 +37,8 @@ export interface MarketDataService {
   getSeries(ticker: string, period: Period): Promise<SeriesResult>;
 }
 
-export type MoneyActionInput = {
+/** Input for a KEYS-governed action (Practice on Devnet today; Money on Mainnet later). */
+export type KeyedActionInput = {
   mandate: CurrentMandate;
   assetRule: AssetRule | null;
   asset: MarketAsset;
@@ -52,12 +56,21 @@ export type MoneyActionInput = {
   recheck?: boolean;
 };
 
-export interface MoneyExecutionService {
-  evaluate(input: MoneyActionInput): Promise<ActionEvaluation>;
-  execute(input: MoneyActionInput): Promise<ExecutionResult>;
+/**
+ * One adapter per execution network. The UI never talks to RPCs or providers.
+ * practiceDevnetExecution → solana-devnet; moneyMainnetExecution → solana-mainnet.
+ */
+export interface CrescoExecutionAdapter {
+  readonly network: ExecutionNetwork;
+  readonly realValue: boolean;
+  /** Whether this adapter can execute the asset right now. */
+  supports(asset: MarketAsset): boolean;
+  evaluate(input: KeyedActionInput): Promise<ActionEvaluation>;
+  execute(input: KeyedActionInput): Promise<ExecutionResult>;
 }
 
-export interface PracticeExecutionService {
+/** Local practice for assets without a Devnet lane. Simulated, never on-chain. */
+export interface PracticeSandboxService {
   buy(input: { asset: MarketAsset; amount: number; cash: number }): Promise<ExecutionResult>;
 }
 
@@ -87,12 +100,15 @@ export interface MandateService {
 }
 
 export interface FundingService {
-  addMoney(input: { amount: number }): Promise<{
-    status: "DEMO_CREDITED" | "DEVNET_TEST_CREDITED";
+  /** Practice capital on Solana Devnet (test credit, no payment, no real value). */
+  addPracticeCapital(input: { amount: number }): Promise<{
+    status: "DEVNET_TEST_CREDITED";
     amount: number;
     availableBalance?: number;
-    realPaymentTaken?: false;
+    realPaymentTaken: false;
   }>;
+  /** Real USDC on Solana Mainnet. Rejects with MainnetSetupRequiredError until Money is live. */
+  depositUsdc(input: { amount: number }): Promise<never>;
 }
 
 export interface AuthService {

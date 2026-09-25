@@ -1,5 +1,7 @@
 import { evaluateBoundedAction } from "./bounded-autonomy.mjs";
 import { configuredDevnetExecutionProviderFromEnv } from "./devnet-execution-provider.mjs";
+import { PRACTICE_DEVNET } from "./cloudflare-family-state.mjs";
+import { isTransientRpcError } from "./solana-rpc.mjs";
 import {
   PYTH_PRO_EQUITY_FEEDS,
   fetchPythProSnapshot,
@@ -121,8 +123,17 @@ function mergedMandate(family, runtime) {
   };
 }
 
+let providerOverride = null;
+/** Test seam: inject a fake Devnet provider. */
+export function setDevnetProviderForTests(provider) {
+  providerOverride = provider;
+}
+function devnetProvider() {
+  return providerOverride ?? configuredDevnetExecutionProviderFromEnv();
+}
+
 async function loadRuntimeAndFamily(env) {
-  const provider = configuredDevnetExecutionProviderFromEnv();
+  const provider = devnetProvider();
   if (!provider) throw new Error("DEVNET_EXECUTION_RUNTIME_UNAVAILABLE");
 
   const [runtime, familyResult] = await Promise.all([
@@ -240,84 +251,275 @@ async function handleMandateTransition(env, body) {
   });
 }
 
-async function handleExecute(env, body) {
-  const { provider, runtime, family } = await loadRuntimeAndFamily(env);
-  const key = String(body.idempotencyKey || "");
 
-  const reserved = await familyJson(env, "/reserve", {
-    method: "POST",
-    body: {
-      asset: body.asset,
-      notional: body.notional,
-      idempotencyKey: key,
-      allowOnceRequestId: body.allowOnceRequestId || null
+/* ------------------------------------------------------------------ */
+/* Practice (Devnet) state view + reconciliation                        */
+/* ------------------------------------------------------------------ */
+
+// Chain reads for passive state polling are rate-limited per isolate.
+const CHAIN_VIEW_TTL_MS = 30_000;
+const PENDING_CHAIN_RECONCILE_AFTER_MS = 30_000;
+let chainViewCache = { at: 0, runtime: null };
+let lastPendingSweepAt = 0;
+
+async function cachedRuntime(provider, { fresh = false } = {}) {
+  if (!fresh && chainViewCache.runtime && Date.now() - chainViewCache.at < CHAIN_VIEW_TTL_MS) {
+    return chainViewCache.runtime;
+  }
+  const runtime = await provider.getState();
+  chainViewCache = { at: Date.now(), runtime };
+  return runtime;
+}
+
+export function resetChainViewCacheForTests() {
+  chainViewCache = { at: 0, runtime: null };
+  lastPendingSweepAt = 0;
+}
+
+/**
+ * Period truth for Practice on Devnet: the on-chain asset rule is authoritative
+ * for spend; the family ledger only adds amounts it is currently holding.
+ */
+export function practicePeriod(family, runtime) {
+  const held = Object.values(family.reservations || {}).reduce(
+    (sum, r) => sum + Number(r.notional || 0),
+    0
+  );
+  const maxPeriod = Number(family.mandate?.maxPeriodNotional || 0);
+  if (!runtime?.assetRule) {
+    const spent = Number(family.mandate?.spentThisPeriod || 0);
+    return {
+      source: "FAMILY_LEDGER_ONLY",
+      startedAt: null,
+      seconds: null,
+      onChainSpent: null,
+      ledgerSpent: spent,
+      held,
+      maxPeriod,
+      remaining: Math.max(0, maxPeriod - spent - held)
+    };
+  }
+  const onChainSpent =
+    Number(runtime.assetRule.spentThisPeriodNotionalMicroUsd || 0) / 1_000_000;
+  const seconds = Number(runtime.assetRule.periodSeconds || 0) || null;
+  const startedAtSec = Number(runtime.assetRule.periodStartedAt || 0);
+  const startedAt = startedAtSec > 0 ? new Date(startedAtSec * 1000).toISOString() : null;
+  const expired = seconds && startedAtSec > 0 && Date.now() / 1000 > startedAtSec + seconds;
+  const spent = expired ? 0 : onChainSpent;
+  return {
+    source: "SOLANA_DEVNET_ASSET_RULE",
+    startedAt,
+    seconds,
+    resetsAt: seconds && startedAt ? new Date((startedAtSec + seconds) * 1000).toISOString() : null,
+    onChainSpent: spent,
+    ledgerSpent: Number(family.mandate?.spentThisPeriod || 0),
+    held,
+    maxPeriod,
+    remaining: Math.max(0, maxPeriod - spent - held)
+  };
+}
+
+function withNetworkNamespaces(family, period) {
+  const practiceActivity = (family.activity || []).filter((a) => a.kind === "MONEY_EXECUTION");
+  const held = period.held;
+  return {
+    ...family,
+    // Explicit network truth. The historical `balances.money` / `moneyHoldings`
+    // fields are Practice capital on Solana Devnet.
+    practice: {
+      ...PRACTICE_DEVNET,
+      programId: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk",
+      capital: "DEMO_TOKEN",
+      balance: Number(family.balances?.money || 0),
+      availableBalance: Math.max(0, Number(family.balances?.money || 0) - held),
+      holdings: (family.moneyHoldings || []).map((h) => ({ ...h, ...PRACTICE_DEVNET })),
+      activity: practiceActivity.map((a) => ({ ...a, ...PRACTICE_DEVNET })),
+      period
+    },
+    money: {
+      mode: "money",
+      network: "solana-mainnet",
+      realValue: true,
+      status: "SETUP_REQUIRED",
+      programId: null,
+      balance: null,
+      holdings: [],
+      requirements: [
+        "MAINNET_KEYS_PROGRAM_DEPLOYMENT",
+        "GUARDIAN_IDENTITY_AND_ELIGIBILITY",
+        "VERIFIED_TOKENIZED_STOCK_ROUTE",
+        "REAL_USDC_FUNDING"
+      ]
     }
-  });
+  };
+}
 
-  if (reserved.body?.result) return json(reserved.body.result);
+async function reconcilePendingChainRequests(env, provider, family, runtime, { force = false } = {}) {
+  const stuck = (family.requests || []).filter(
+    (r) =>
+      (r.status === "WIDEN_PENDING_CHAIN" || r.status === "ALLOW_ONCE_PENDING_CHAIN") &&
+      (force || Date.now() - Date.parse(r.decidedAt || 0) > PENDING_CHAIN_RECONCILE_AFTER_MS)
+  );
+  const results = [];
+  for (const item of stuck) {
+    if (item.status === "WIDEN_PENDING_CHAIN") {
+      // The decision was taken at item.mandateNonce. If the chain nonce moved
+      // past it, the widen transaction landed: finalize app state from chain.
+      if (Number(runtime.mandate.nonce) > Number(item.mandateNonce)) {
+        const out = await familyJson(env, `/requests/${item.id}/complete-widen`, {
+          method: "POST",
+          body: {
+            mandate: mergedMandate(family, runtime),
+            chainProof: {
+              network: "solana-devnet",
+              reconciledFromChain: true,
+              mandateVersion: runtime.mandate.version,
+              mandateNonce: runtime.mandate.nonce,
+              simulated: false
+            }
+          }
+        });
+        results.push({ id: item.id, status: out.body?.request?.status });
+      } else if (item.newLimits) {
+        const current = await handleMandateTransition(env, {
+          expectedNonce: runtime.mandate.nonce,
+          changes: item.newLimits
+        });
+        const transition = await current.json();
+        if (current.ok) {
+          const out = await familyJson(env, `/requests/${item.id}/complete-widen`, {
+            method: "POST",
+            body: { mandate: transition.mandate, chainProof: transition.proof }
+          });
+          results.push({ id: item.id, status: out.body?.request?.status });
+        }
+      }
+    } else {
+      // Granting the allowance is idempotent (an existing receipt is reused).
+      const grant = await provider.grantAllowanceOnce({
+        requestId: item.id,
+        expectedNonce: item.mandateNonce,
+        maxNotional: item.requestedNotional
+      });
+      const out = await familyJson(env, `/requests/${item.id}/complete-allowance`, {
+        method: "POST",
+        body: {
+          chainProof: {
+            network: "solana-devnet",
+            programId: "ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk",
+            signature: grant.signature,
+            allowanceReceipt: grant.allowanceReceipt,
+            requestHash: grant.requestHash,
+            maxNotionalMicroUsd: grant.maxNotionalMicroUsd,
+            expiresAt: grant.expiresAt,
+            reusedExistingReceipt: grant.reusedExistingReceipt === true,
+            reconciled: true,
+            simulated: false
+          }
+        }
+      });
+      results.push({ id: item.id, status: out.body?.request?.status });
+    }
+  }
+  return results;
+}
 
-  if (reserved.body?.reservation && reserved.body.replay) {
-    return json({
-      contractVersion: "0.2",
-      type: "V0_2_ACTION_EXECUTION",
+async function practiceStateView(env) {
+  const familyResult = await familyJson(env, "/state");
+  let family = familyResult.body;
+  const provider = devnetProvider();
+  let runtime = null;
+  if (provider) {
+    try {
+      runtime = await cachedRuntime(provider);
+      const due =
+        Date.now() - lastPendingSweepAt > PENDING_CHAIN_RECONCILE_AFTER_MS &&
+        (family.requests || []).some((r) => /_PENDING_CHAIN$/.test(r.status));
+      if (due) {
+        lastPendingSweepAt = Date.now();
+        const fresh = await cachedRuntime(provider, { fresh: true });
+        const merged = { ...family, mandate: mergedMandate(family, fresh) };
+        const done = await reconcilePendingChainRequests(env, provider, merged, fresh);
+        if (done.length) {
+          runtime = await cachedRuntime(provider, { fresh: true });
+          family = (await familyJson(env, "/state")).body;
+        }
+      }
+    } catch {
+      // Chain view is best effort for reads; the ledger is still returned.
+      runtime = chainViewCache.runtime;
+    }
+  }
+  if (runtime) {
+    const period = practicePeriod(family, runtime);
+    // Chain is authoritative for on-chain spend: reconcile the ledger to it.
+    if (Math.abs(period.onChainSpent - Number(family.mandate?.spentThisPeriod || 0)) > 0.000001) {
+      const mandate = { ...mergedMandate(family, runtime), spentThisPeriod: period.onChainSpent };
+      await familyJson(env, "/sync-mandate", { method: "POST", body: { mandate } });
+      family = { ...family, mandate };
+    }
+    return withNetworkNamespaces(family, practicePeriod(family, runtime));
+  }
+  return withNetworkNamespaces(family, practicePeriod(family, null));
+}
+
+function executionEnvelope(result) {
+  return {
+    contractVersion: "0.2",
+    type: "V0_2_ACTION_EXECUTION",
+    runtimeMode: "SERVER_HELD_DEVNET_DEMO",
+    idempotencyScope: "DURABLE_OBJECT_FAMILY",
+    mode: PRACTICE_DEVNET.mode,
+    network: PRACTICE_DEVNET.network,
+    realValue: PRACTICE_DEVNET.realValue,
+    ...result
+  };
+}
+
+function rpcUnavailable(key, message) {
+  return json(
+    {
+      error: "SOLANA_RPC_UNAVAILABLE",
+      retryable: true,
+      idempotencyKey: key,
+      message: message || "Solana is taking longer than expected. Check again."
+    },
+    503
+  );
+}
+
+function pendingResponse(runtime, key, proof, createdAt) {
+  return json(
+    executionEnvelope({
       evaluation: {
         decision: "ALLOW",
         reasonCode: "EXECUTION_PENDING",
-        mandateVersion: runtime.mandate.version,
-        mandateNonce: runtime.mandate.nonce
+        mandateVersion: runtime?.mandate?.version,
+        mandateNonce: runtime?.mandate?.nonce
       },
       executionProof: {
         status: "PENDING",
         network: "solana-devnet",
-        programId: runtime.programId,
-        mandateVersion: runtime.mandate.version,
-        mandateNonce: runtime.mandate.nonce,
-        executedAt: reserved.body.reservation.createdAt,
+        programId: proof?.programId ?? runtime?.programId,
+        signature: proof?.signature ?? null,
+        mandateVersion: runtime?.mandate?.version,
+        mandateNonce: runtime?.mandate?.nonce,
+        executedAt: createdAt,
         idempotencyKey: key,
         simulated: false
       }
-    });
-  }
+    })
+  );
+}
 
-  if (reserved.body?.allowed === false) {
-    return json({
-      contractVersion: "0.2",
-      type: "V0_2_ACTION_EXECUTION",
-      evaluation: {
-        decision: "REFUSE",
-        reasonCode: reserved.body.reasonCode,
-        boundaryRequestAvailable:
-          reserved.body.boundaryRequestAvailable === true,
-        requestedNotional: Number(body.notional || 0),
-        mandateVersion: runtime.mandate.version,
-        mandateNonce: runtime.mandate.nonce
-      },
-      executionProof: null
-    });
-  }
-
-  const result = await provider.execute({
-    asset: body.asset,
-    type: body.type,
-    notional: body.notional,
-    expectedNonce: runtime.mandate.nonce,
-    idempotencyKey: key,
-    allowOnceRequestId:
-      reserved.body?.reservation?.allowOnceRequestId ||
-      body.allowOnceRequestId ||
-      null
-  });
-
+async function finalizeExecution(env, key, notional, result) {
   const confirmed =
     result.evaluation?.decision === "ALLOW" &&
     result.executionProof?.status === "CONFIRMED";
-
   const priceMicro = Number(result.executionProof?.pyth?.unitPriceMicroUsd || 0);
   const shares =
-    confirmed && priceMicro > 0
-      ? Number(body.notional || 0) / (priceMicro / 1_000_000)
-      : 0;
-
+    confirmed && priceMicro > 0 ? Number(notional || 0) / (priceMicro / 1_000_000) : 0;
+  const envelope = executionEnvelope(result);
   await familyJson(env, "/finalize", {
     method: "POST",
     body: {
@@ -325,23 +527,153 @@ async function handleExecute(env, body) {
       success: confirmed,
       shares,
       proof: result.executionProof || null,
-      result: {
-        contractVersion: "0.2",
-        type: "V0_2_ACTION_EXECUTION",
-        runtimeMode: "SERVER_HELD_DEVNET_DEMO",
-        idempotencyScope: "DURABLE_OBJECT_FAMILY",
-        ...result
-      }
+      result: envelope
     }
   });
+  return envelope;
+}
 
-  return json({
-    contractVersion: "0.2",
-    type: "V0_2_ACTION_EXECUTION",
-    runtimeMode: "SERVER_HELD_DEVNET_DEMO",
-    idempotencyScope: "DURABLE_OBJECT_FAMILY",
-    ...result
+/**
+ * A reservation whose transaction was signed but whose outcome was not observed.
+ * CONFIRMED → finalize; FAILED → finalize as refused; EXPIRED → release (never
+ * landed, safe to retry the same intent); PENDING → still unknown.
+ */
+async function reconcileReservation(env, provider, reservation) {
+  const proof = reservation.pendingProof;
+  const check = await provider.checkSignature({
+    signature: proof.signature,
+    lastValidBlockHeight: proof.lastValidBlockHeight
   });
+  const key = reservation.idempotencyKey;
+  if (check.status === "CONFIRMED") {
+    const { lastValidBlockHeight, ...confirmedProof } = proof;
+    return {
+      status: "CONFIRMED",
+      envelope: await finalizeExecution(env, key, reservation.notional, {
+        evaluation: {
+          decision: "ALLOW",
+          reasonCode: "WITHIN_MANDATE",
+          mandateVersion: proof.mandateVersion,
+          mandateNonce: proof.mandateNonce
+        },
+        executionProof: { ...confirmedProof, status: "CONFIRMED", reconciled: true }
+      })
+    };
+  }
+  if (check.status === "FAILED") {
+    return {
+      status: "FAILED",
+      envelope: await finalizeExecution(env, key, reservation.notional, {
+        evaluation: { decision: "REFUSE", reasonCode: "SOLANA_EXECUTION_REFUSED" },
+        executionProof: null
+      })
+    };
+  }
+  if (check.status === "EXPIRED") {
+    await familyJson(env, "/release", {
+      method: "POST",
+      body: { idempotencyKey: key, force: true, reason: "BLOCKHASH_EXPIRED_NOT_LANDED" }
+    });
+    return { status: "EXPIRED" };
+  }
+  return { status: "PENDING" };
+}
+
+async function handleExecute(env, body) {
+  const key = String(body.idempotencyKey || "");
+  let loaded;
+  try {
+    loaded = await loadRuntimeAndFamily(env);
+  } catch (error) {
+    if (isTransientRpcError(error)) return rpcUnavailable(key);
+    throw error;
+  }
+  const { provider, runtime } = loaded;
+
+  const reserveBody = {
+    asset: body.asset,
+    notional: body.notional,
+    idempotencyKey: key,
+    allowOnceRequestId: body.allowOnceRequestId || null
+  };
+  let reserved = await familyJson(env, "/reserve", { method: "POST", body: reserveBody });
+
+  if (reserved.body?.result) return json(reserved.body.result);
+
+  if (reserved.body?.reservation && reserved.body.replay) {
+    const reservation = reserved.body.reservation;
+    if (!reservation.pendingProof?.signature) {
+      // Another request is executing this intent right now (or crashed pre-send;
+      // the TTL sweep releases that case).
+      return pendingResponse(runtime, key, null, reservation.createdAt);
+    }
+    let outcome;
+    try {
+      outcome = await reconcileReservation(env, provider, reservation);
+    } catch (error) {
+      if (isTransientRpcError(error)) return rpcUnavailable(key);
+      throw error;
+    }
+    if (outcome.envelope) return json(outcome.envelope);
+    if (outcome.status === "PENDING") {
+      return pendingResponse(runtime, key, reservation.pendingProof, reservation.createdAt);
+    }
+    // EXPIRED: nothing landed and the hold is released. Retry the same intent.
+    reserved = await familyJson(env, "/reserve", { method: "POST", body: reserveBody });
+    if (reserved.body?.result) return json(reserved.body.result);
+  }
+
+  if (reserved.body?.allowed === false) {
+    return json(
+      executionEnvelope({
+        evaluation: {
+          decision: "REFUSE",
+          reasonCode: reserved.body.reasonCode,
+          boundaryRequestAvailable: reserved.body.boundaryRequestAvailable === true,
+          requestedNotional: Number(body.notional || 0),
+          mandateVersion: runtime.mandate.version,
+          mandateNonce: runtime.mandate.nonce
+        },
+        executionProof: null
+      })
+    );
+  }
+
+  const reservation = reserved.body?.reservation;
+  let result;
+  try {
+    result = await provider.execute({
+      asset: body.asset,
+      type: body.type,
+      notional: body.notional,
+      expectedNonce: runtime.mandate.nonce,
+      idempotencyKey: key,
+      allowOnceRequestId: reservation?.allowOnceRequestId || body.allowOnceRequestId || null,
+      onBeforeSend: (pendingProof) =>
+        familyJson(env, "/reservation/sending", {
+          method: "POST",
+          body: { idempotencyKey: key, pendingProof }
+        })
+    });
+  } catch (error) {
+    // Pre-send failures never consume capital: release the hold.
+    if (error?.sent === false || isTransientRpcError(error)) {
+      await familyJson(env, "/release", {
+        method: "POST",
+        body: { idempotencyKey: key, reason: "PRE_SEND_FAILURE" }
+      });
+      if (isTransientRpcError(error)) return rpcUnavailable(key);
+    }
+    throw error;
+  }
+
+  if (result.unconfirmed) {
+    // Sent (or maybe sent) but not observed: keep the hold, reconcile on the next check.
+    return pendingResponse(runtime, key, result.executionProof, reservation?.createdAt);
+  }
+
+  // Refusals from the runtime (and confirmed executions) finalize the reservation.
+  return json(await finalizeExecution(env, key, body.notional, result));
 }
 
 const MARKET_UNIVERSE = [
@@ -614,8 +946,38 @@ export async function handleFamilyApi(request, env) {
   if (method === "GET" && path === "/api/v0.2/family/state") {
     const denied = await requireFamilySession(env, request);
     if (denied) return denied;
-    const out = await familyJson(env, "/state");
-    return json(out.body, out.status);
+    return json(await practiceStateView(env));
+  }
+
+  const reconcileMatch =
+    method === "POST"
+      ? path.match(/^\/api\/v0\.2\/boundary-requests\/([^/]+)\/reconcile$/)
+      : null;
+  if (reconcileMatch) {
+    const denied = await requireGuardian(env, request);
+    if (denied) return denied;
+    let loaded;
+    try {
+      loaded = await loadRuntimeAndFamily(env);
+    } catch (error) {
+      if (isTransientRpcError(error)) return rpcUnavailable(null);
+      throw error;
+    }
+    const target = (loaded.family.requests || []).filter((r) => r.id === reconcileMatch[1]);
+    if (!target.length) return json({ error: "REQUEST_NOT_FOUND" }, 404);
+    const results = await reconcilePendingChainRequests(
+      env,
+      loaded.provider,
+      { ...loaded.family, requests: target },
+      loaded.runtime,
+      { force: true }
+    );
+    const family = (await familyJson(env, "/state")).body;
+    return json({
+      reconciled: results,
+      request: family.requests.find((r) => r.id === reconcileMatch[1]),
+      mandate: family.mandate
+    });
   }
 
   if (method === "POST" && path === "/api/v0.2/auth/demo-session") {
@@ -734,6 +1096,26 @@ export async function handleFamilyApi(request, env) {
         method: "POST",
         body
       });
+      // Deciding again on a widen stuck mid-chain reconciles it instead of failing.
+      if (
+        first.status === 409 &&
+        first.body?.request?.status === "WIDEN_PENDING_CHAIN" &&
+        body.decision === "WIDEN_MANDATE"
+      ) {
+        const loaded = await loadRuntimeAndFamily(env);
+        await reconcilePendingChainRequests(
+          env,
+          loaded.provider,
+          { ...loaded.family, requests: [first.body.request] },
+          loaded.runtime,
+          { force: true }
+        );
+        const family = (await familyJson(env, "/state")).body;
+        return json({
+          request: family.requests.find((r) => r.id === id),
+          mandate: family.mandate
+        });
+      }
     }
 
     if (first.status !== 200) {

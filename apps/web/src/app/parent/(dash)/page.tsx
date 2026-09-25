@@ -17,8 +17,8 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PriceChange, PriceChart, WeeklyBars } from "@/components/finance";
-import { MandateSummaryCard, MoneyBalanceCard } from "@/components/mode";
-import { ErrorState, Skeleton, useToast } from "@/components/ui/feedback";
+import { MandateSummaryCard, MoneySetupRequired, PracticeBalanceCard } from "@/components/mode";
+import { ErrorState, NetworkTag, Skeleton, useToast } from "@/components/ui/feedback";
 import { ActionButton, Avatar, Card, IconCircle, SectionHeader } from "@/components/ui/primitives";
 import { formatAmount } from "@/domain/format";
 import { isRequestStale } from "@/domain/policy";
@@ -76,7 +76,7 @@ export default function ParentDashboard() {
     }
     dispatch({ type: "setMandate", mandate: next });
     void refresh({ chain: true });
-    toast(next.status === "PAUSED" ? "Money Mode paused" : "Money Mode resumed");
+    toast(next.status === "PAUSED" ? "Practice Key paused" : "Practice Key resumed");
   });
 
   const learningBars = useMemo(() => {
@@ -149,11 +149,15 @@ export default function ParentDashboard() {
             <Stat icon={<Building2 className="size-4" />} tone="lavender" value={String(state.researched.length)} label="Companies researched" />
           </Card>
 
-          <MoneyBalanceCard
-            balance={state.money.balance}
+          <h2 className="-mb-2 flex items-center gap-2 text-[15px] font-extrabold text-navy-strong">
+            Practice <NetworkTag mode="practice" />
+          </h2>
+          <PracticeBalanceCard
+            balance={state.practiceChain.balance}
+            caption="Available practice capital"
             action={
               <ActionButton size="sm" href="/parent/add-money" arrow>
-                Add money
+                Add
               </ActionButton>
             }
           />
@@ -185,7 +189,7 @@ export default function ParentDashboard() {
 
           <MandateSummaryCard
             mandate={state.mandate}
-            who={`${child}'s current limits`}
+            who={`${child}'s Practice Key`}
             actions={
               <>
                 <ActionButton size="sm" variant="ghost" href="/parent/limits">
@@ -203,6 +207,11 @@ export default function ParentDashboard() {
           <p className="-mt-2 px-1 text-[12.5px] font-semibold text-ink-3">
             You define the boundary. Inside it, {child} can act without asking. You&apos;ll only hear about actions outside it.
           </p>
+
+          <h2 className="-mb-2 flex items-center gap-2 text-[15px] font-extrabold text-navy-strong">
+            Money <NetworkTag mode="money" />
+          </h2>
+          <MoneySetupRequired />
         </div>
 
         {/* Column 2 */}
@@ -212,7 +221,7 @@ export default function ParentDashboard() {
               <h2 className="text-[16px] font-extrabold text-navy-strong">Portfolio Performance</h2>
               {view ? <PriceChange percent={view.totalChangePercent} size="md" /> : null}
             </div>
-            <p className="text-[12px] font-bold text-ink-3">Practice portfolio · sample prices</p>
+            <p className="text-[12px] font-bold text-ink-3">Practice portfolio · sample price trend · no real value</p>
             {assets.status === "error" ? (
               <ErrorState className="mt-3" onRetry={assets.reload} />
             ) : perf ? (
@@ -274,9 +283,9 @@ export default function ParentDashboard() {
             ))}
           </ul>
           <Card className="p-4">
-            <p className="text-[14px] font-extrabold text-navy-strong">About Money Mode</p>
+            <p className="text-[14px] font-extrabold text-navy-strong">Practice and Money</p>
             <p className="mt-1 text-[13px] font-semibold text-ink-2">
-              Money Mode uses Solana Devnet test capital and a demo SPL token. It is not connected to a bank, broker or custodian and does not represent real securities.
+              Practice runs on Solana Devnet with practice capital (a demo SPL token) and has no real financial value. Money is real, parent-supervised investing on Solana Mainnet; it needs your verification, a supported Mainnet account and real USDC before it opens.
             </p>
           </Card>
         </div>

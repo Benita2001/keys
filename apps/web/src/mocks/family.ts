@@ -1,9 +1,10 @@
 /**
  * DEMO FAMILY FIXTURE — the starting state of the local demo session.
  *
- * Everything here is sample data for the "Alex" demo family. Money Mode values
- * are demo-only: no funding provider, custody or brokerage is connected, and
- * no real money moves (see docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md).
+ * Everything here is sample data for the "Alex" demo family: the local
+ * Practice sandbox and the offline Key preview. Devnet practice capital comes
+ * from the KEYS backend and Mainnet Money is never seeded here
+ * (see docs/CRESCO-NETWORK-ARCHITECTURE.md).
  */
 import type {
   Achievement,
@@ -53,7 +54,6 @@ export const DEMO_PRACTICE_HOLDINGS: Holding[] = PRACTICE_SEED.map((h) => ({
 /** Practice cash is virtual and has no economic value. */
 export const DEMO_PRACTICE_CASH = 751.5;
 
-export const DEMO_MONEY_BALANCE = 50;
 
 export const DEMO_MANDATE: CurrentMandate = {
   status: "ACTIVE",

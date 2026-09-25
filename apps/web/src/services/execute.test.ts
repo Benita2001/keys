@@ -12,7 +12,7 @@ import { isVerifiableOnChain } from "@/components/proof";
 import { assetRuleFor } from "@/domain/policy";
 import { DEMO_MANDATE } from "@/mocks/family";
 import { MOCK_ASSETS } from "@/mocks/market";
-import { moneyExecution } from ".";
+import { practiceDevnetExecution } from ".";
 import {
   buildExecuteRequest,
   configureKeysBackend,
@@ -187,10 +187,10 @@ describe("isolated runtime execute adapter (mock KEYS API)", () => {
   });
 });
 
-describe("Family Money lane uses the configured devnet-test runtime", () => {
-  it("routes an in-bounds Money action through the runtime and surfaces proof", async () => {
+describe("Practice uses the configured KEYS Devnet runtime", () => {
+  it("routes an in-bounds practice action through the runtime and surfaces proof", async () => {
     const mock = await withScenario("confirm");
-    const res = await moneyExecution.execute(familyInput(5, "intent-family-runtime"));
+    const res = await practiceDevnetExecution.execute(familyInput(5, "intent-family-runtime"));
 
     expect(res.outcome).toBe("EXECUTED");
     expect(res.proof?.status).toBe("RUNTIME_CONFIRMED");
@@ -200,13 +200,14 @@ describe("Family Money lane uses the configured devnet-test runtime", () => {
   });
 });
 
-describe("demo mode is unchanged without runtime config", () => {
+describe("without runtime config there is no Devnet lane", () => {
   beforeAll(() => configureKeysBackend(null));
 
-  it("labels the proof DEMO_NOT_EXECUTED", async () => {
-    const res = await moneyExecution.execute(familyInput(5, "intent-demo"));
-    expect(res.outcome).toBe("EXECUTED");
-    expect(res.proof?.status).toBe("DEMO_NOT_EXECUTED");
-    expect(res.proof?.signature).toBeUndefined();
+  it("never executes or fabricates a proof", async () => {
+    expect(practiceDevnetExecution.supports(apple)).toBe(false);
+    const res = await practiceDevnetExecution.execute(familyInput(5, "intent-demo"));
+    expect(res.outcome).toBe("REFUSED");
+    expect(res.evaluation.reasonCode).toBe("ASSET_UNAVAILABLE");
+    expect(res.proof).toBeUndefined();
   });
 });

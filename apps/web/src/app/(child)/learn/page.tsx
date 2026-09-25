@@ -53,7 +53,7 @@ export default function LearnPage() {
       </ol>
 
       <h2 className="mt-7 text-[18px] font-extrabold text-navy-strong">Explore more</h2>
-      <p className="mt-1 text-[13px] font-semibold text-ink-2">Open anytime. These don&apos;t unlock anything in Money Mode.</p>
+      <p className="mt-1 text-[13px] font-semibold text-ink-2">Open anytime. These never unlock anything or change your Key.</p>
       <ul className="mt-3 space-y-3" aria-label="Explore modules">
         {explore.map((m) => {
           const s = modules.find((x) => x.id === m.id)!;
@@ -63,7 +63,7 @@ export default function LearnPage() {
 
       <div className="mt-5">
         <InsightBanner tone="blue">
-          Learning helps you understand what you&apos;re doing. It doesn&apos;t change your Money Mode limits. Those are a family decision.
+          Learning helps you understand what you&apos;re doing. It doesn&apos;t change your Key. That&apos;s a family decision.
         </InsightBanner>
       </div>
     </div>

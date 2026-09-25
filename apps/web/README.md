@@ -56,7 +56,11 @@ Mock proofs are `simulated: true` with `MOCK…` signatures and are labeled "Tes
 
 ## Truth labels
 
-Prices are samples unless tagged **Live · Pyth** (or **Delayed**). Private companies (PreStocks, Tessera) are Learn/Practice only and labeled as economic exposure / loan participation rights, never shares. The current AAPL Money lane executes a **demo SPL token on Solana Devnet** through the KEYS program with Pyth evidence. Test funding is backend demo credit only. Cresco does not claim bank/card funding, brokerage, custody, real AAPL ownership, mainnet or real minor securities execution.
+- **Practice · Solana Devnet**: real market conditions, practice capital, no real financial value. Apple practice runs through the KEYS Devnet program (Key-enforced, real Devnet receipts); other companies and PreStocks/Tessera practice in a local sandbox labeled "not on-chain".
+- **Money · Solana Mainnet**: real money, parent-supervised. **Setup required**: no Mainnet KEYS program, verified guardian account, execution route or USDC funding yet. Money never falls back to Devnet.
+- Prices are samples unless tagged **Live · Pyth** (or **Delayed**). A live price never makes anything available in Money.
+
+See [network architecture](../../docs/CRESCO-NETWORK-ARCHITECTURE.md).
 
 Docs: [design system](../../docs/CRESCO-FRONTEND-DESIGN-SYSTEM.md) · [backend handoff](../../docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md) · [implementation summary](../../docs/CRESCO-FRONTEND-IMPLEMENTATION-SUMMARY.md)
 

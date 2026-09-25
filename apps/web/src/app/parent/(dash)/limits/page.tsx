@@ -3,7 +3,7 @@
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { CompanyLogo } from "@/components/finance";
-import { DemoMoneyTag, useToast } from "@/components/ui/feedback";
+import { NetworkTag, useToast } from "@/components/ui/feedback";
 import { Modal } from "@/components/ui/overlay";
 import { ActionButton, Card, Chip, PageHeader, SectionHeader, Toggle } from "@/components/ui/primitives";
 import { formatAmount } from "@/domain/format";
@@ -64,17 +64,17 @@ export default function ParentLimitsPage() {
 
   return (
     <div className="animate-rise mx-auto max-w-[760px]">
-      <PageHeader title={`${child}'s limits`} subtitle={`Inside these limits, ${child} can act without asking you.`} back="/parent" />
+      <PageHeader title={`${child}'s Practice Key`} subtitle={`Enforced on Solana Devnet. Inside these limits, ${child} can practice without asking you.`} back="/parent" />
 
       <Card className="mt-5 p-4">
         <div className="flex items-center justify-between">
-          <p className="text-[15px] font-extrabold text-navy-strong">Money Mode</p>
+          <p className="flex items-center gap-2 text-[15px] font-extrabold text-navy-strong">Practice Key <NetworkTag mode="practice" /></p>
           <span className="flex items-center gap-3">
             <span className="text-[13px] font-bold text-ink-2">{paused ? "Paused" : "Active"}</span>
-            <Toggle checked={!paused} onChange={(v) => setPaused(!v)} label="Money Mode active" />
+            <Toggle checked={!paused} onChange={(v) => setPaused(!v)} label="Practice Key active" />
           </span>
         </div>
-        <p className="mt-1 text-[13px] font-semibold text-ink-2">Pausing stops Money actions right away. Practice keeps working.</p>
+        <p className="mt-1 text-[13px] font-semibold text-ink-2">Pausing stops Devnet practice actions right away. The sandbox keeps working. Money on Solana Mainnet will have its own Key.</p>
       </Card>
 
       <section className="mt-5">
@@ -102,7 +102,7 @@ export default function ParentLimitsPage() {
       <section className="mt-5">
         <SectionHeader title="Companies allowed" />
         <p className="mb-3 text-[12.5px] font-semibold text-ink-3">
-          The current live Money proof lane is AAPL on Solana Devnet. Other companies stay available in Practice until their own execution representation and market evidence are connected.
+          The Practice Key covers AAPL on Solana Devnet, the proven KEYS lane. Other companies practice in the local sandbox until their own Devnet lane is connected.
         </p>
         <Card className="divide-y divide-line-soft px-4">
           {assets.map((a) => (
@@ -114,11 +114,11 @@ export default function ParentLimitsPage() {
               <div className="flex items-center gap-3">
                 {a.ticker === provenMoneyAsset ? (
                   <span className="hidden text-[11px] font-extrabold text-green-strong sm:inline">
-                    Devnet Money proof
+                    Devnet practice lane
                   </span>
                 ) : (
                   <span className="hidden text-[11px] font-bold text-ink-3 sm:inline">
-                    Practice only
+                    Sandbox only
                   </span>
                 )}
                 <Toggle
@@ -133,8 +133,8 @@ export default function ParentLimitsPage() {
                   }
                   label={
                     a.ticker === provenMoneyAsset
-                      ? `Allow ${a.companyName} in Money Mode`
-                      : `${a.companyName} is Practice-only in the current Devnet demo`
+                      ? `Allow ${a.companyName} in the Practice Key`
+                      : `${a.companyName} practices in the sandbox (no Devnet lane yet)`
                   }
                 />
               </div>
@@ -149,11 +149,11 @@ export default function ParentLimitsPage() {
         </ActionButton>
       </div>
 
-      <Modal open={confirm} onClose={() => setConfirm(false)} title="Confirm new limits" description={<DemoMoneyTag />}>
+      <Modal open={confirm} onClose={() => setConfirm(false)} title="Confirm new limits" description={<NetworkTag mode="practice" />}>
         <ul className="space-y-2 rounded-[16px] border border-line-soft p-3.5 text-[14px] font-semibold">
           <Diff label="Per action" from={formatAmount(m.maxActionNotional)} to={formatAmount(perAction)} />
           <Diff label="Per month" from={formatAmount(m.maxPeriodNotional)} to={formatAmount(perPeriod)} />
-          <Diff label="Money Mode" from={m.status === "PAUSED" ? "Paused" : "Active"} to={paused ? "Paused" : "Active"} />
+          <Diff label="Practice Key" from={m.status === "PAUSED" ? "Paused" : "Active"} to={paused ? "Paused" : "Active"} />
           {added.length ? <li className="text-green-strong">Adding: {added.map(name).join(", ")}</li> : null}
           {removed.length ? <li className="text-ink-2">Removing: {removed.map(name).join(", ")}</li> : null}
         </ul>

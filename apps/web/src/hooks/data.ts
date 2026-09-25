@@ -102,6 +102,8 @@ export function buildPortfolio(mode: Mode, holdings: Holding[], cash: number, as
   const dataStatus: DataStatus = views.some((v) => v.asset.dataStatus === "mock") || views.length === 0 ? "mock" : "live";
   return {
     mode,
+    network: mode === "practice" ? "solana-devnet" : "solana-mainnet",
+    realValue: mode === "money",
     holdings: views,
     totalValue,
     totalCost,
@@ -113,19 +115,36 @@ export function buildPortfolio(mode: Mode, holdings: Holding[], cash: number, as
 }
 
 /** Portfolio for the given mode, valued with the loaded market data. */
+/**
+ * Portfolio for the given mode, valued with the loaded market data.
+ * Practice = Devnet positions (backend) + sandbox positions (local), each tagged.
+ * Money = Mainnet positions only; never derived from Practice records.
+ */
 export function usePortfolio(mode: Mode) {
   const { state } = useStore();
   const assets = useAssets();
   const emptyPractice = state.demoFlags.emptyPractice;
-  const practiceHoldings = state.practice.holdings;
+  const sandboxHoldings = state.sandbox.holdings;
+  const devnetHoldings = state.practiceChain.holdings;
+  const devnetCash = state.practiceChain.synced ? state.practiceChain.balance : 0;
+  const sandboxCash = state.sandbox.cash;
   const moneyHoldings = state.money.holdings;
-  const cash = mode === "practice" ? state.practice.cash : state.money.balance;
+  const moneyCash = state.money.balance ?? 0;
 
   const view = useMemo(() => {
     if (assets.status !== "success") return null;
-    const holdings = mode === "practice" ? (emptyPractice ? [] : practiceHoldings) : moneyHoldings;
-    return buildPortfolio(mode, holdings, cash, assets.data);
-  }, [assets.status, assets.data, mode, emptyPractice, practiceHoldings, moneyHoldings, cash]);
+    if (mode === "money") return buildPortfolio("money", moneyHoldings, moneyCash, assets.data);
+    const holdings: Holding[] = emptyPractice
+      ? []
+      : [
+          ...devnetHoldings.map((h) => ({ ...h, lane: "devnet" as const })),
+          ...sandboxHoldings.map((h) => ({ ...h, lane: "sandbox" as const })),
+        ];
+    return {
+      ...buildPortfolio("practice", holdings, devnetCash + sandboxCash, assets.data),
+      cashBreakdown: { devnet: devnetCash, sandbox: sandboxCash },
+    };
+  }, [assets.status, assets.data, mode, emptyPractice, sandboxHoldings, devnetHoldings, devnetCash, sandboxCash, moneyHoldings, moneyCash]);
 
   return { assets, view };
 }
@@ -189,9 +208,11 @@ export function useAchievements(): Achievement[] {
   const { state } = useStore();
   const stats = useLearningStats();
   const moneyBasics = MODULES.find((m) => m.id === "money-basics")?.lessonIds ?? [];
-  const practiceTickers = new Set(state.practice.holdings.map((h) => h.ticker));
+  const practiceTickers = new Set(
+    [...state.sandbox.holdings, ...state.practiceChain.holdings].map((h) => h.ticker),
+  );
   const earned: Record<AchievementId, boolean> = {
-    "first-investor": practiceTickers.size > 0 || state.moneyReceipts.length > 0,
+    "first-investor": practiceTickers.size > 0 || state.practiceReceipts.length > 0,
     "streak-5": stats.streakDays >= 5,
     "company-detective": stats.researched >= 4,
     "diversification-pro": practiceTickers.size >= 4,

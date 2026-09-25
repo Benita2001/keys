@@ -132,7 +132,7 @@ export default function ExplorePage() {
         {assets.status === "success" && companies.length ? (
           <p className="mt-3 text-[12px] font-semibold text-ink-3">
             Each company maps to a tokenized stock on Solana (for example AAPLx). Prices marked Live come from Pyth; Sample prices are
-            for learning. Only Apple is connected to Money Mode today. Every other company is Practice-only.
+            for learning. Apple practice runs through KEYS on Solana Devnet; other companies practice in the sandbox. Money on Solana Mainnet isn&apos;t set up yet.
           </p>
         ) : null}
       </section>

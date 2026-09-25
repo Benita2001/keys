@@ -1,13 +1,16 @@
 "use client";
 
 /**
- * Local demo session provider.
+ * Cresco session state (a cache, never authority).
  *
- * Until auth, profile and portfolio services exist on the backend, the
- * frontend keeps the demo family's state here and persists it in
- * localStorage. Nothing in this store is authority: Money-mode decisions are
- * made through services/moneyExecution, and learning/XP/P&L fields are never
- * read by any Mandate-changing code path.
+ * Network separation (see domain/network.ts):
+ * - practiceChain: Practice capital on Solana Devnet, synced from the KEYS
+ *   backend (Family Durable Object + Devnet program). Never written locally.
+ * - sandbox: local practice for assets without a Devnet lane. Simulated, not on-chain.
+ * - money: real-value Money on Solana Mainnet. Empty until Mainnet setup is
+ *   proven; nothing on Devnet or in the sandbox can write to it.
+ * The Key (`mandate`) is the Practice Key enforced on Devnet. Learning/XP never
+ * feed any Key-changing path.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import type {
@@ -21,7 +24,6 @@ import type {
 } from "@/domain/types";
 import {
   DEMO_MANDATE,
-  DEMO_MONEY_BALANCE,
   DEMO_PRACTICE_CASH,
   DEMO_PRACTICE_HOLDINGS,
   DEMO_PROFILE,
@@ -50,16 +52,36 @@ export type ActivityItem = {
   idempotencyKey?: string;
 };
 
-export type MoneyReceipt = {
+/** A confirmed Practice execution on Solana Devnet (from the backend). */
+export type PracticeReceipt = {
   id: string;
   ticker: string;
   amount: number;
   shares: number;
   createdAt: string;
   proof?: ExecutionProof;
+  network: "solana-devnet";
+  realValue: false;
 };
 
-/** A Money intent whose outcome isn't confirmed yet. Re-checks must reuse its key. */
+/** Real-value Money on Solana Mainnet. Setup-required until every requirement is proven. */
+export type MainnetMoneyState = {
+  network: "solana-mainnet";
+  realValue: true;
+  status: "setup-required" | "live";
+  balance: number | null;
+  holdings: Holding[];
+};
+
+export const MAINNET_MONEY_SETUP_REQUIRED: MainnetMoneyState = {
+  network: "solana-mainnet",
+  realValue: true,
+  status: "setup-required",
+  balance: null,
+  holdings: [],
+};
+
+/** A Practice (Devnet) intent whose outcome isn't confirmed yet. Re-checks must reuse its key. */
 export type PendingExecution = {
   idempotencyKey: string;
   ticker: string;
@@ -68,7 +90,7 @@ export type PendingExecution = {
 };
 
 export type AppState = {
-  version: 1;
+  version: 2;
   session: Session | null;
   profile: {
     childName: string;
@@ -86,14 +108,19 @@ export type AppState = {
   priorLessonCount: number;
   researched: string[];
   learningMinutes: { at: string; minutes: number }[];
-  practice: { holdings: Holding[]; cash: number };
-  money: { holdings: Holding[]; balance: number };
+  /** Local practice for assets without a Devnet lane. Simulated, not on-chain. */
+  sandbox: { holdings: Holding[]; cash: number };
+  /** Practice capital on Solana Devnet (backend-synced). `balance` is available (minus holds). */
+  practiceChain: { holdings: Holding[]; balance: number; synced: boolean };
+  /** Real-value Money on Solana Mainnet. */
+  money: MainnetMoneyState;
+  /** The Practice Key, enforced by the KEYS program on Solana Devnet. */
   mandate: CurrentMandate;
   requests: BoundaryRequest[];
   activity: ActivityItem[];
   pendingExecutions: PendingExecution[];
-  /** Confirmed Money executions from the backend (Devnet receipts). Cache only. */
-  moneyReceipts: MoneyReceipt[];
+  /** Confirmed Practice executions on Solana Devnet (backend receipts). Cache only. */
+  practiceReceipts: PracticeReceipt[];
   familyCode: string | null;
   /** How each untouched seed lot was last sized: "live" is final, "sample" upgrades once live data arrives. */
   practiceSeedPriced: Record<string, "live" | "sample">;
@@ -108,7 +135,7 @@ export type AppState = {
 };
 
 export const initialState: AppState = {
-  version: 1,
+  version: 2,
   session: null,
   profile: {
     childName: DEMO_PROFILE.childName,
@@ -126,13 +153,14 @@ export const initialState: AppState = {
   priorLessonCount: DEMO_PROFILE.priorLessonCount,
   researched: DEMO_PROFILE.companiesResearched,
   learningMinutes: [],
-  practice: { holdings: DEMO_PRACTICE_HOLDINGS, cash: DEMO_PRACTICE_CASH },
-  money: { holdings: [], balance: DEMO_MONEY_BALANCE },
+  sandbox: { holdings: DEMO_PRACTICE_HOLDINGS, cash: DEMO_PRACTICE_CASH },
+  practiceChain: { holdings: [], balance: 0, synced: false },
+  money: MAINNET_MONEY_SETUP_REQUIRED,
   mandate: DEMO_MANDATE,
   requests: [],
   activity: [],
   pendingExecutions: [],
-  moneyReceipts: [],
+  practiceReceipts: [],
   familyCode: null,
   practiceSeedPriced: {},
   settings: {
@@ -150,7 +178,7 @@ type Action =
   | {
       type: "syncBackend";
       remote: FamilyState;
-      /** On-chain AAPL rule spend (Pyth USD). The stricter of chain/ledger wins. */
+      /** On-chain AAPL rule spend (Pyth USD) read via /demo/runtime (fallback for older backends). */
       chainSpent?: number | null;
     }
   | { type: "signIn"; session: Session }
@@ -161,7 +189,6 @@ type Action =
   | { type: "completeLesson"; lessonId: string; xp: number }
   | { type: "researched"; ticker: string }
   | { type: "practiceBuy"; ticker: string; amount: number; shares: number; reason?: string; proof: ExecutionProof }
-  | { type: "moneyBuy"; ticker: string; amount: number; shares: number; reason?: string; proof: ExecutionProof; usedRequestId?: string; idempotencyKey?: string }
   /** Size the untouched demo practice seed at the prices actually loaded. */
   | { type: "pricePracticeSeed"; prices: Record<string, { price: number; live: boolean }> }
   | { type: "trackPending"; pending: PendingExecution }
@@ -169,7 +196,6 @@ type Action =
   | { type: "addRequest"; request: BoundaryRequest }
   | { type: "decideRequest"; request: BoundaryRequest; mandate: CurrentMandate }
   | { type: "setMandate"; mandate: CurrentMandate }
-  | { type: "addFunds"; amount: number }
   | { type: "setSettings"; settings: Partial<AppState["settings"]> }
   | { type: "setDemoFlags"; flags: Partial<AppState["demoFlags"]> }
   | { type: "reset" };
@@ -187,45 +213,58 @@ export function reducer(state: AppState, action: Action): AppState {
     case "hydrate":
       return action.state;
     case "syncBackend": {
-      const moneyReceipts: MoneyReceipt[] = (action.remote.activity ?? [])
+      const remote = action.remote;
+      // Only Devnet practice executions are accepted into Practice. Anything else is dropped.
+      const practiceReceipts: PracticeReceipt[] = (remote.activity ?? [])
         .filter((a) => a.kind === "MONEY_EXECUTION")
-        .map((a) => ({
+        .map((a) => ({ a, proof: a.proof ? toExecutionProof(a.proof) : undefined }))
+        .filter(({ a, proof }) => (a.network ?? proof?.network ?? "solana-devnet") === "solana-devnet")
+        .map(({ a, proof }) => ({
           id: a.id,
           ticker: a.ticker,
           amount: a.amount,
           shares: a.shares,
           createdAt: a.createdAt,
-          proof: a.proof ? toExecutionProof(a.proof) : undefined,
+          proof,
+          network: "solana-devnet" as const,
+          realValue: false as const,
         }));
       // An unconfirmed intent that the backend has since recorded is no longer pending.
-      const settled = new Set(moneyReceipts.map((r) => r.proof?.idempotencyKey).filter(Boolean));
+      const settled = new Set(practiceReceipts.map((r) => r.proof?.idempotencyKey).filter(Boolean));
       // Held reservations count against balance and period exactly as the backend's
       // reserve check does, so the UI never offers room the ledger won't grant.
-      const held = Object.values(action.remote.reservations ?? {}).reduce((sum, r) => sum + (Number(r.notional) || 0), 0);
+      const held =
+        remote.practice?.period?.held ??
+        Object.values(remote.reservations ?? {}).reduce((sum, r) => sum + (Number(r.notional) || 0), 0);
+      // Chain is authoritative for on-chain spend (newer backends report it directly).
+      const period = remote.practice?.period;
+      const spent =
+        period && typeof period.onChainSpent === "number"
+          ? period.onChainSpent + period.held
+          : Math.max((remote.mandate.spentThisPeriod ?? 0) + held, action.chainSpent ?? 0);
       return {
         ...state,
         pendingExecutions: state.pendingExecutions.filter((p) => !settled.has(p.idempotencyKey)),
         profile: {
           ...state.profile,
-          childName: action.remote.profile.childName,
-          parentName: action.remote.profile.parentName,
-          parentLinked: action.remote.profile.parentLinked,
+          childName: remote.profile.childName,
+          parentName: remote.profile.parentName,
+          parentLinked: remote.profile.parentLinked,
         },
-        mandate: {
-          ...state.mandate,
-          ...action.remote.mandate,
-          spentThisPeriod: Math.max((action.remote.mandate.spentThisPeriod ?? 0) + held, action.chainSpent ?? 0),
+        mandate: { ...state.mandate, ...remote.mandate, spentThisPeriod: spent },
+        practiceChain: {
+          holdings: remote.practice?.holdings ?? remote.moneyHoldings,
+          balance: Math.max(0, (remote.practice?.balance ?? remote.balances.money) - held),
+          synced: true,
         },
-        money: {
-          holdings: action.remote.moneyHoldings,
-          balance: Math.max(0, action.remote.balances.money - held),
-        },
-        requests: action.remote.requests,
-        moneyReceipts,
-        familyCode: action.remote.familyCode ?? state.familyCode,
-        completedLessons: action.remote.learning.completedLessons,
-        xp: action.remote.learning.xp,
-        learningMinutes: action.remote.learning.weeklyMinutes ?? [],
+        // Mainnet Money is never derived from Devnet state.
+        money: state.money,
+        requests: remote.requests,
+        practiceReceipts,
+        familyCode: remote.familyCode ?? state.familyCode,
+        completedLessons: remote.learning.completedLessons,
+        xp: remote.learning.xp,
+        learningMinutes: remote.learning.weeklyMinutes ?? [],
       };
     }
     case "signIn":
@@ -250,33 +289,15 @@ export function reducer(state: AppState, action: Action): AppState {
       if (state.researched.includes(action.ticker)) return state;
       return { ...state, researched: [...state.researched, action.ticker] };
     case "practiceBuy":
+      // Sandbox only (assets without a Devnet lane). Devnet practice comes from sync.
       return {
         ...state,
-        practice: {
-          holdings: addHolding(state.practice.holdings, action.ticker, action.shares, action.amount),
-          cash: Math.max(0, state.practice.cash - action.amount),
+        sandbox: {
+          holdings: addHolding(state.sandbox.holdings, action.ticker, action.shares, action.amount),
+          cash: Math.max(0, state.sandbox.cash - action.amount),
         },
         activity: [
           { id: `a_${Date.now()}`, mode: "practice", ticker: action.ticker, amount: action.amount, shares: action.shares, reason: action.reason, proof: action.proof },
-          ...state.activity,
-        ],
-      };
-    case "moneyBuy":
-      // One user intent is applied at most once, even if a re-check confirms it again.
-      if (action.idempotencyKey && state.activity.some((a) => a.idempotencyKey === action.idempotencyKey)) return state;
-      return {
-        ...state,
-        money: {
-          holdings: addHolding(state.money.holdings, action.ticker, action.shares, action.amount),
-          balance: Math.max(0, state.money.balance - action.amount),
-        },
-        mandate: { ...state.mandate, spentThisPeriod: state.mandate.spentThisPeriod + action.amount },
-        pendingExecutions: state.pendingExecutions.filter((p) => p.idempotencyKey !== action.idempotencyKey),
-        requests: action.usedRequestId
-          ? state.requests.map((r) => (r.id === action.usedRequestId ? { ...r, status: "ALLOWED_ONCE_USED" } : r))
-          : state.requests,
-        activity: [
-          { id: `a_${Date.now()}`, mode: "money", ticker: action.ticker, amount: action.amount, shares: action.shares, reason: action.reason, proof: action.proof, idempotencyKey: action.idempotencyKey },
           ...state.activity,
         ],
       };
@@ -286,7 +307,7 @@ export function reducer(state: AppState, action: Action): AppState {
       // A lot sized at a sample price is re-sized once, when a live price arrives.
       let changed = false;
       const priced = { ...state.practiceSeedPriced };
-      const holdings = state.practice.holdings.map((h) => {
+      const holdings = state.sandbox.holdings.map((h) => {
         const seed = PRACTICE_SEED.find((p) => p.ticker === h.ticker && Math.abs(p.costBasis - h.costBasis) < 0.001);
         const quote = action.prices[h.ticker];
         if (!seed || !quote || !(quote.price > 0)) return h;
@@ -296,7 +317,7 @@ export function reducer(state: AppState, action: Action): AppState {
         changed = true;
         return { ...h, shares: seed.value / quote.price };
       });
-      return changed ? { ...state, practice: { ...state.practice, holdings }, practiceSeedPriced: priced } : state;
+      return changed ? { ...state, sandbox: { ...state.sandbox, holdings }, practiceSeedPriced: priced } : state;
     }
     case "trackPending":
       if (state.pendingExecutions.some((p) => p.idempotencyKey === action.pending.idempotencyKey)) return state;
@@ -313,8 +334,6 @@ export function reducer(state: AppState, action: Action): AppState {
       };
     case "setMandate":
       return { ...state, mandate: action.mandate };
-    case "addFunds":
-      return { ...state, money: { ...state.money, balance: state.money.balance + action.amount } };
     case "setSettings":
       return { ...state, settings: { ...state.settings, ...action.settings } };
     case "setDemoFlags":
@@ -326,7 +345,8 @@ export function reducer(state: AppState, action: Action): AppState {
   }
 }
 
-const STORAGE_KEY = "cresco-demo-v1";
+/** v2: Practice = Devnet, Money = Mainnet. v1 caches used the reversed meaning and are discarded. */
+const STORAGE_KEY = "cresco-demo-v2";
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const isNum = (v: unknown) => typeof v === "number" && Number.isFinite(v);
@@ -344,7 +364,7 @@ export function restoreState(raw: string | null): AppState | null {
   } catch {
     return null;
   }
-  if (!isObj(parsed) || parsed.version !== 1) return null;
+  if (!isObj(parsed) || parsed.version !== 2) return null;
   const m = parsed.mandate;
   const ok =
     isObj(parsed.profile) &&
@@ -353,15 +373,18 @@ export function restoreState(raw: string | null): AppState | null {
     ["ACTIVE", "PAUSED", "REVOKED"].includes(m.status as string) &&
     isNum(m.version) && isNum(m.nonce) && isNum(m.maxActionNotional) && isNum(m.maxPeriodNotional) && isNum(m.spentThisPeriod) &&
     Array.isArray(m.allowedAssets) &&
-    isObj(parsed.practice) && Array.isArray(parsed.practice.holdings) && isNum(parsed.practice.cash) &&
-    isObj(parsed.money) && Array.isArray(parsed.money.holdings) && isNum(parsed.money.balance) &&
+    isObj(parsed.sandbox) && Array.isArray(parsed.sandbox.holdings) && isNum(parsed.sandbox.cash) &&
+    isObj(parsed.practiceChain) && Array.isArray(parsed.practiceChain.holdings) && isNum(parsed.practiceChain.balance) &&
     Array.isArray(parsed.requests) && Array.isArray(parsed.completedLessons) && isNum(parsed.xp);
   if (!ok) return null;
   return {
     ...initialState,
     ...(parsed as Partial<AppState>),
     pendingExecutions: Array.isArray(parsed.pendingExecutions) ? (parsed.pendingExecutions as PendingExecution[]) : [],
-    moneyReceipts: Array.isArray(parsed.moneyReceipts) ? (parsed.moneyReceipts as MoneyReceipt[]) : [],
+    practiceReceipts: Array.isArray(parsed.practiceReceipts) ? (parsed.practiceReceipts as PracticeReceipt[]) : [],
+    // Mainnet Money is never restored from a browser cache.
+    money: MAINNET_MONEY_SETUP_REQUIRED,
+    practiceChain: { ...(parsed.practiceChain as AppState["practiceChain"]), synced: false },
     familyCode: typeof parsed.familyCode === "string" ? parsed.familyCode : null,
     practiceSeedPriced:
       parsed.practiceSeedPriced && typeof parsed.practiceSeedPriced === "object"
@@ -500,23 +523,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * Money state the UI may show. `ready` is false until the backend has synced
- * (or immediately true when no backend is configured, i.e. local demo mode).
+ * Practice-on-Devnet state the UI may show. `ready` is false until the backend
+ * has synced; without a backend there is no Devnet lane at all (`available` false).
  */
-export function useMoneyTruth() {
+export function usePracticeChain() {
   const { state, sync, refresh } = useStore();
-  const ready = sync.status === "off" || sync.status === "synced";
+  const available = sync.status !== "off";
   return {
-    ready,
+    available,
+    ready: sync.status === "synced",
     status: sync.status,
     error: sync.error,
     refresh,
+    network: "solana-devnet" as const,
+    realValue: false as const,
     mandate: state.mandate,
-    balance: state.money.balance,
-    holdings: state.money.holdings,
+    balance: state.practiceChain.balance,
+    holdings: state.practiceChain.holdings,
     requests: state.requests,
-    receipts: state.moneyReceipts,
+    receipts: state.practiceReceipts,
   };
+}
+
+/** Real-value Money on Solana Mainnet. Setup-required until proven. */
+export function useMainnetMoney() {
+  const { state } = useStore();
+  return state.money;
 }
 
 export function useStore() {

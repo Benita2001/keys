@@ -12,6 +12,12 @@ import {
   PYTH_PRO_EQUITY_FEEDS,
   fetchPythProSolanaPayload
 } from './pyth-adapter.mjs';
+import {
+  SolanaRpcUnavailableError,
+  createResilientRpcFetch,
+  isTransientRpcError,
+  parseRpcUrls
+} from './solana-rpc.mjs';
 
 const {
   Connection,
@@ -262,7 +268,19 @@ export function createDevnetExecutionProvider({
   if (!signer?.publicKey) throw new Error('devnet signer is required');
   if (!pythApiKey) throw new Error('Pyth API key is required');
 
-  const rpc = connection ?? new Connection(rpcUrl, 'confirmed');
+  // A dedicated authenticated RPC first, public endpoints only as fallback.
+  const rpcUrls = parseRpcUrls(rpcUrl);
+  const rpc =
+    connection ??
+    new Connection(rpcUrls[0], {
+      commitment: 'confirmed',
+      fetch: createResilientRpcFetch({ urls: rpcUrls }),
+      disableRetryOnRateLimit: true
+    });
+
+  // Discovered once per isolate; getProgramAccounts is the most rate-limited RPC call.
+  let cachedAssetRuleAddress = null;
+  let cachedMintDecimals = null;
 
   const [charter] = PublicKey.findProgramAddressSync(
     [Buffer.from('charter'), signer.publicKey.toBuffer()],
@@ -274,6 +292,26 @@ export function createDevnetExecutionProvider({
   );
 
   async function loadRuntime() {
+    if (cachedAssetRuleAddress) {
+      const [mandateInfo, ruleInfo] = await rpc.getMultipleAccountsInfo(
+        [mandateAddress, cachedAssetRuleAddress],
+        'confirmed'
+      );
+      if (mandateInfo && ruleInfo) {
+        const rule = parseAssetRuleAccount(
+          cachedAssetRuleAddress,
+          Buffer.from(ruleInfo.data)
+        );
+        if (rule.mandate.equals(mandateAddress) && rule.pythFeedId === DEMO_FEED_ID) {
+          return runtimeFrom(
+            parseMandateAccount(Buffer.from(mandateInfo.data)),
+            rule
+          );
+        }
+      }
+      cachedAssetRuleAddress = null;
+    }
+
     const mandateInfo = await rpc.getAccountInfo(mandateAddress, 'confirmed');
     if (!mandateInfo) {
       throw new Error('DEVNET_DEMO_RUNTIME_NOT_BOOTSTRAPPED');
@@ -305,6 +343,11 @@ export function createDevnetExecutionProvider({
     );
 
     const assetRule = parsedRules[0];
+    cachedAssetRuleAddress = assetRule.address;
+    return runtimeFrom(mandate, assetRule);
+  }
+
+  function runtimeFrom(mandate, assetRule) {
     const [vaultTokenAccount] = PublicKey.findProgramAddressSync(
       [
         Buffer.from('vault'),
@@ -329,6 +372,26 @@ export function createDevnetExecutionProvider({
       vaultTokenAccount,
       delegateTokenAccount
     };
+  }
+
+  /**
+   * Reconcile a transaction whose outcome was not observed.
+   * CONFIRMED | FAILED | PENDING | EXPIRED (never landed; safe to retry the intent).
+   */
+  async function checkSignature({ signature, lastValidBlockHeight }) {
+    const statuses = await rpc.getSignatureStatuses([signature], {
+      searchTransactionHistory: true
+    });
+    const status = statuses?.value?.[0] ?? null;
+    if (status?.err) return { status: 'FAILED', error: status.err };
+    if (status && ['confirmed', 'finalized'].includes(status.confirmationStatus)) {
+      return { status: 'CONFIRMED' };
+    }
+    if (!status && Number.isFinite(Number(lastValidBlockHeight))) {
+      const height = await rpc.getBlockHeight('confirmed');
+      if (height > Number(lastValidBlockHeight)) return { status: 'EXPIRED' };
+    }
+    return { status: 'PENDING' };
   }
 
   async function sendManageMandateInstruction(name, args = []) {
@@ -604,7 +667,9 @@ export function createDevnetExecutionProvider({
         maxPeriodAmountBaseUnits: runtime.assetRule.maxPeriodAmount,
         spentThisPeriodBaseUnits: runtime.assetRule.spentThisPeriod,
         spentThisPeriodNotionalMicroUsd:
-          runtime.assetRule.spentThisPeriodNotionalMicroUsd
+          runtime.assetRule.spentThisPeriodNotionalMicroUsd,
+        periodSeconds: runtime.assetRule.periodSeconds,
+        periodStartedAt: runtime.assetRule.periodStartedAt
       },
       truthBoundary: {
         executionAsset: 'DEMO_TOKEN',
@@ -622,7 +687,10 @@ export function createDevnetExecutionProvider({
     notional,
     expectedNonce,
     idempotencyKey,
-    allowOnceRequestId = null
+    allowOnceRequestId = null,
+    // Called with the signed transaction's signature BEFORE it is sent, so the
+    // caller can always reconcile an unobserved outcome.
+    onBeforeSend = null
   }) {
     if (!idempotencyKey || typeof idempotencyKey !== 'string') {
       return {
@@ -796,8 +864,11 @@ export function createDevnetExecutionProvider({
         };
       }
 
-      const mintInfo = await getMint(rpc, rule.mint, 'confirmed', TOKEN_PROGRAM_ID);
-      const scale = 10 ** mintInfo.decimals;
+      if (cachedMintDecimals == null) {
+        const mintInfo = await getMint(rpc, rule.mint, 'confirmed', TOKEN_PROGRAM_ID);
+        cachedMintDecimals = mintInfo.decimals;
+      }
+      const scale = 10 ** cachedMintDecimals;
       const amount = Math.max(
         1,
         Math.floor((requestedNotionalMicroUsd * scale) / unitPriceMicroUsd)
@@ -942,9 +1013,35 @@ export function createDevnetExecutionProvider({
       }).add(ed25519Ix, executionIx);
 
       tx.sign(signer);
+      const signature = anchor.utils.bytes.bs58.encode(tx.signature);
+      const pendingProof = {
+        status: 'PENDING',
+        network: 'solana-devnet',
+        signature,
+        programId: DEVNET_KEYS_PROGRAM_ID.toBase58(),
+        mandateAddress: runtime.mandateAddress.toBase58(),
+        mandateVersion: mandate.version,
+        mandateNonce: mandate.nonce,
+        executedAt: now(),
+        idempotencyKey,
+        simulated: false,
+        asset: DEMO_ASSET,
+        executionAsset: 'DEMO_TOKEN',
+        lastValidBlockHeight: latest.lastValidBlockHeight,
+        pyth: {
+          source: 'PYTH_PRO',
+          feedId: DEMO_FEED_ID,
+          verification: 'ONCHAIN_PYTH_LAZER',
+          status: 'FRESH',
+          authorityEffect: 'NONE',
+          unitPriceMicroUsd,
+          publishTime: snapshot.publishTime ?? null
+        }
+      };
+      if (onBeforeSend) await onBeforeSend(pendingProof);
 
       try {
-        const signature = await rpc.sendRawTransaction(tx.serialize(), {
+        await rpc.sendRawTransaction(tx.serialize(), {
           skipPreflight: false,
           maxRetries: 3
         });
@@ -998,6 +1095,24 @@ export function createDevnetExecutionProvider({
         executionResults.set(idempotencyKey, result);
         return result;
       } catch (error) {
+        // Transport trouble or an unobserved confirmation is NOT a refusal:
+        // the transaction may still land. Report it as submitted/unconfirmed
+        // (not cached) so the caller reconciles by signature.
+        if (
+          isTransientRpcError(error) ||
+          /SOLANA_CONFIRMATION_TIMEOUT/.test(String(error?.message))
+        ) {
+          return {
+            evaluation: evaluation({
+              decision: 'ALLOW',
+              reasonCode: 'EXECUTION_PENDING',
+              mandate,
+              requestedNotionalMicroUsd
+            }),
+            executionProof: pendingProof,
+            unconfirmed: true
+          };
+        }
         const result = {
           evaluation: evaluation({
             decision: 'REFUSE',
@@ -1016,8 +1131,14 @@ export function createDevnetExecutionProvider({
 
     try {
       const result = await promise;
-      executionResults.set(idempotencyKey, result);
+      if (!result.unconfirmed) executionResults.set(idempotencyKey, result);
       return result;
+    } catch (error) {
+      // Nothing was sent (onBeforeSend runs right before sending): safe to retry.
+      if (isTransientRpcError(error)) {
+        throw new SolanaRpcUnavailableError(error.message, { cause: error, sent: false });
+      }
+      throw error;
     } finally {
       executionPromises.delete(idempotencyKey);
     }
@@ -1026,6 +1147,7 @@ export function createDevnetExecutionProvider({
   return {
     getState,
     execute,
+    checkSignature,
     configureMandatePolicy,
     setMandateStatus,
     setCurrentAssetEnabled,
@@ -1044,9 +1166,14 @@ export function configuredDevnetExecutionProviderFromEnv() {
   }
 
   defaultProvider = createDevnetExecutionProvider({
-    rpcUrl:
-      process.env.SOLANA_DEVNET_RPC_URL ??
-      'https://api.devnet.solana.com',
+    // Dedicated provider first (server-only secret), public Devnet last.
+    rpcUrl: [
+      process.env.SOLANA_DEVNET_RPC_URL,
+      process.env.SOLANA_DEVNET_RPC_FALLBACK_URLS,
+      'https://api.devnet.solana.com'
+    ]
+      .filter(Boolean)
+      .join(','),
     signer: parseKeypair(process.env.DEVNET_KEYPAIR_JSON),
     pythApiKey: process.env.PYTH_PRO_API_KEY
   });

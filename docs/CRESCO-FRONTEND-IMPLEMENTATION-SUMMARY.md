@@ -1,5 +1,7 @@
 # Cresco — Frontend Implementation Summary
 
+> **Network architecture correction (2026-09-25):** Practice = Solana Devnet (the proven KEYS lane, practice capital, no real value). Money = Solana Mainnet (real value, parent-supervised), **setup required**. The Devnet AAPL lane below is the **Practice** lane. See `docs/CRESCO-NETWORK-ARCHITECTURE.md`.
+
 Updated: 2026-09-24  
 Workspace: `apps/web`  
 Backend: KEYS v0.2 + Cloudflare Worker + Solana Devnet
@@ -127,3 +129,11 @@ For the Stocklana demo, these must remain honestly labeled rather than simulated
 - **Embedded wallet:** env-gated Privy (email/Google/Apple + Solana embedded wallet) on Profile; identity only.
 - **Tests:** 67 unit/integration tests (adapter, micro-USD, upstream-429 → UNKNOWN, market truth, PreStocks/Tessera mapping, seed pricing, streak) + 14 WebKit iPhone e2e.
 - Integration matrix and backend issues: `docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md`.
+
+## Network architecture pass (2026-09-25)
+
+- `domain/network.ts`: `ExecutionEnvironment` per mode, leak guards (`belongsTo`, `assertNetwork`), network-aware explorer links, verified Mainnet product metadata (AAPLx), `MONEY_REQUIREMENTS`.
+- Adapters: `practiceDevnetExecution` (KEYS Devnet), `practiceSandboxExecution` (local, not on-chain), `moneyMainnetExecution` (hard-gated `SETUP_REQUIRED`). `executionAdapterFor(mode)`.
+- State: `practiceChain` (backend Devnet capital, positions, receipts), `sandbox` (local), `money` (Mainnet, empty until live). Storage bumped to v2 so reversed-meaning v1 caches are discarded; Mainnet Money is never restored from the browser.
+- UI: Practice shows "Solana Devnet · Practice capital · no real financial value" with the Key, "Practice $5", and receipt "Practice action confirmed on Solana Devnet"; Money shows "Solana Mainnet · Real money · parent supervised" and "Money Mode requires parent verification and a supported Mainnet account." Parent dashboard and add-funds separate Practice (Devnet) from Money (Mainnet, USDC deposit unavailable).
+- Tests: 79 unit/integration (incl. network-leakage suite) + 14 WebKit e2e.

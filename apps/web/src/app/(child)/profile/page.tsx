@@ -32,7 +32,7 @@ export default function ProfilePage() {
       title: "Parent or guardian",
       sub: state.profile.parentLinked ? `${state.profile.parentName} is connected` : "Not connected yet",
     },
-    { href: "/profile/about", icon: <Info className="size-5" />, tone: "lavender" as const, title: "How Cresco works", sub: "Prices, demo money and technical details" },
+    { href: "/profile/about", icon: <Info className="size-5" />, tone: "lavender" as const, title: "How Cresco works", sub: "Devnet practice, Mainnet Money and prices" },
     { href: "/parent/sign-in", icon: <UserRound className="size-5" />, tone: "navy" as const, title: "Parent view", sub: "For parents and guardians" },
   ];
 

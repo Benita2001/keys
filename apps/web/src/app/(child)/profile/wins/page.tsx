@@ -90,7 +90,7 @@ export default function WinsPage() {
       )}
 
       <p className="mt-5 text-center text-[12.5px] font-semibold text-ink-3">
-        Wins celebrate learning and curiosity. They never change your Money Mode limits.
+        Wins celebrate learning and curiosity. They never change your Key.
       </p>
     </div>
   );

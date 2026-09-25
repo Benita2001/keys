@@ -1,5 +1,6 @@
 import { routeKeysHttp } from './http-api.mjs';
 import { handleFamilyApi } from './cloudflare-family-api.mjs';
+import { isTransientRpcError } from './solana-rpc.mjs';
 import { FamilyState } from './cloudflare-family-state.mjs';
 export { FamilyState };
 
@@ -71,13 +72,18 @@ export async function handleKeysCloudflareRequest(request, env = {}) {
       }
     );
   } catch (error) {
+    // Upstream Solana RPC trouble is an availability problem, never a refusal.
+    const rpcDown = isTransientRpcError(error);
     return new Response(
       JSON.stringify({
-        error: 'BAD_REQUEST',
-        message: error?.message ?? 'Invalid request'
+        error: rpcDown ? 'SOLANA_RPC_UNAVAILABLE' : 'BAD_REQUEST',
+        retryable: rpcDown,
+        message: rpcDown
+          ? 'Solana is taking longer than expected. Check again.'
+          : error?.message ?? 'Invalid request'
       }),
       {
-        status: 400,
+        status: rpcDown ? 503 : 400,
         headers: withCors(
           { 'content-type': 'application/json; charset=utf-8' },
           request,

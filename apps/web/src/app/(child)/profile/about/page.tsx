@@ -28,7 +28,7 @@ export default function AboutPage() {
   }>({ status: "idle" });
 
   async function runLiveDevnetProof() {
-    if (caps.execution !== "keys-runtime" || proofRunning) return;
+    if (caps.practice !== "devnet-runtime" || proofRunning) return;
     setProofRunning(true);
     setLiveProof({ status: "idle" });
 
@@ -50,7 +50,7 @@ export default function AboutPage() {
       ) {
         setLiveProof({
           status: "success",
-          message: "Confirmed on Solana devnet with live Pyth market truth.",
+          message: "Practice action confirmed on Solana Devnet with live Pyth market truth.",
           signature: result.proof.signature,
         });
       } else if (result.outcome === "REFUSED") {
@@ -80,18 +80,19 @@ export default function AboutPage() {
       body:
         caps.marketData === "mock"
           ? "Company prices and charts are samples for learning, not live quotes. Every company maps to a real tokenized stock on Solana, like AAPLx."
-          : "Fresh Pyth quotes are labeled Live when the backend has an entitled feed; unavailable symbols remain clearly sample data. AAPL is the current proven Money proof asset.",
+          : "Fresh Pyth quotes are labeled Live when the backend has an entitled feed; unavailable symbols remain clearly sample data. A live price never makes anything available in Money Mode.",
     },
     {
-      title: "Practice",
-      body: "Practice uses virtual money. It has no real value and can't be withdrawn.",
-    },
-    {
-      title: "Money Mode",
+      title: "Practice · Solana Devnet",
       body:
-        caps.execution === "keys-runtime"
-          ? "Money Mode uses bounded Solana Devnet test capital with a demo SPL token and live Pyth market truth for the proven AAPL lane. It is not brokerage, custody or a real securities purchase."
-          : "Money Mode is a demo. It isn't connected to a bank, broker or custodian, so no real money moves and nothing is bought.",
+        caps.practice === "devnet-runtime"
+          ? "Real market conditions. Practice capital. No real financial value. Apple practice runs through the KEYS program on Solana Devnet with your Key and live Pyth prices, and you get a real Devnet receipt. Other companies practice in a local sandbox that isn't on-chain."
+          : "Practice uses a local sandbox with virtual money. It has no real value and isn't on-chain.",
+    },
+    {
+      title: "Money · Solana Mainnet",
+      body:
+        "Real money, parent-supervised, on Solana Mainnet. It isn't set up yet: it needs parent verification, a supported Mainnet account, a verified tokenized-stock route, real USDC funding and the Mainnet KEYS program. Money never falls back to Devnet.",
     },
     {
       title: "Limits",
@@ -121,8 +122,12 @@ export default function AboutPage() {
           <Detail k="Backend" v={caps.backend === "none" ? "Not configured, using the local policy preview" : `KEYS API at ${keysApiUrl()}`} />
           <Detail k="Solana program (devnet)" v={PROGRAM_ID} mono />
           <Detail
-            k="Money execution from this app"
-            v={caps.execution === "keys-runtime" ? "AAPL Money lane executes on Solana Devnet with demo-token capital" : "Not connected (demo only)"}
+            k="Practice execution"
+            v={caps.practice === "devnet-runtime" ? "AAPL practice executes on Solana Devnet (demo-token practice capital)" : "Sandbox only (not on-chain)"}
+          />
+          <Detail
+            k="Money execution"
+            v="Solana Mainnet · setup required (no Mainnet program, verified account or funding yet)"
           />
           <Detail k="Mandate version" v={`v${state.mandate.version} · nonce ${state.mandate.nonce}`} />
           <Detail k="Proven live market feed" v="Pyth Pro Equity.US.AAPL/USD (server-side only)" />
@@ -139,18 +144,18 @@ export default function AboutPage() {
         <div className="mt-4 rounded-[16px] border border-line-soft bg-surface-soft p-3.5">
           <p className="text-[13px] font-extrabold text-navy-strong">Live Solana proof lane</p>
           <p className="mt-1 text-[12.5px] font-semibold text-ink-2">
-            Runs a $5 AAPL-bounded action through the KEYS devnet program using a demo/mock SPL token and live signed Pyth market
-            truth. This is not a real share purchase, brokerage or custody flow.
+            Runs a $5 AAPL practice action through the KEYS Devnet program using a demo SPL token and live signed Pyth market
+            truth. Practice capital · no real financial value.
           </p>
           <ActionButton
             className="mt-3"
             variant="secondary"
-            disabled={caps.execution !== "keys-runtime" || proofRunning}
+            disabled={caps.practice !== "devnet-runtime" || proofRunning}
             onClick={runLiveDevnetProof}
           >
             {proofRunning
               ? "Running devnet proof…"
-              : caps.execution === "keys-runtime"
+              : caps.practice === "devnet-runtime"
                 ? "Run live devnet proof"
                 : "Live proof backend not connected"}
           </ActionButton>
@@ -181,7 +186,7 @@ export default function AboutPage() {
         <Card className="divide-y divide-line-soft px-4">
           <ControlRow
             label="Parent connected"
-            hint="Turn off to see Money Mode before a parent sets limits."
+            hint="Turn off to see Practice before a parent sets a Key."
             checked={state.profile.parentLinked}
             onChange={(v) => dispatch({ type: "setProfile", profile: { parentLinked: v } })}
           />

@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { AllocationChart, HoldingRow, InsightBanner, PriceChange, allocationColor } from "@/components/finance";
 import { PlantPot } from "@/components/illustrations/objects";
-import { MandateSummaryCard, MoneyModeUnavailable, MoneySyncState, ModeSwitch, PriceTruthLine, RequestStatusCard } from "@/components/mode";
+import { MandateSummaryCard, MoneySetupRequired, ModeSwitch, PracticeSyncState, PriceTruthLine, RequestStatusCard } from "@/components/mode";
 import { DevnetReceipts } from "@/components/receipts";
-import { DemoMoneyTag, EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
+import { EmptyState, ErrorState, NetworkTag, Provenance, Skeleton } from "@/components/ui/feedback";
 import { ActionButton, Card, PageHeader, PeriodSelector, SectionHeader } from "@/components/ui/primitives";
 import { formatUsd } from "@/domain/format";
 import type { PortfolioView } from "@/domain/types";
 import { usePortfolio } from "@/hooks/data";
 import { allAssetSnapshots, seriesFor } from "@/services";
-import { useMoneyTruth, useStore } from "@/state/store";
+import { usePracticeChain, useStore } from "@/state/store";
 
 const PERIODS = ["1D", "1W", "1M", "1Y", "All"] as const;
 const PERIOD_LABEL: Record<(typeof PERIODS)[number], string> = {
@@ -53,18 +53,24 @@ function insightFor(view: PortfolioView): { text: string; tone: "green" | "yello
 
 export default function PortfolioPage() {
   const { state } = useStore();
-  const money = useMoneyTruth();
+  const chain = usePracticeChain();
   const mode = state.mode;
   const { assets, view } = usePortfolio(mode);
   const [period, setPeriod] = useState<(typeof PERIODS)[number]>("1M");
 
-  const title = mode === "practice" ? "My Practice Portfolio" : "My Money Portfolio";
+  const title = mode === "practice" ? "Practice Portfolio" : "Money Portfolio";
+  // Devnet practice data is shown only once it has synced; the sandbox always works.
+  const chainNotice =
+    mode === "practice" && chain.available && !chain.ready ? (
+      <div className="mb-4">
+        <PracticeSyncState status={chain.status} onRetry={chain.refresh} />
+      </div>
+    ) : null;
 
   let body: React.ReactNode;
-  if (mode === "money" && !money.ready) {
-    body = <MoneySyncState status={money.status} onRetry={money.refresh} />;
-  } else if (mode === "money" && !state.profile.parentLinked) {
-    body = <MoneyModeUnavailable reason="parent" />;
+  if (mode === "money") {
+    // Money = Solana Mainnet. Never derived from Practice records, never a Devnet fallback.
+    body = <MoneySetupRequired />;
   } else if (assets.status === "loading") {
     body = (
       <div className="space-y-4" aria-busy="true">
@@ -78,7 +84,7 @@ export default function PortfolioPage() {
   } else if (view.holdings.length === 0) {
     body = (
       <>
-        {mode === "money" ? <MoneySummary balance={state.money.balance} /> : null}
+        <PracticeBalances view={view} />
         <EmptyState
           className="mt-4"
           art={<PlantPot className="size-20" />}
@@ -97,7 +103,10 @@ export default function PortfolioPage() {
           <PeriodSelector options={PERIODS} value={period} onChange={setPeriod} label="Performance period" />
           <div className="mt-4 flex items-start justify-between gap-3">
             <div>
-              {mode === "money" ? <DemoMoneyTag className="mb-1" /> : null}
+              <p className="mb-1 flex flex-wrap gap-1.5">
+                <NetworkTag mode="practice" />
+                <Provenance kind="no-real-value" />
+              </p>
               <p className="text-[34px] font-black leading-none text-navy-strong tabular">{formatUsd(view.totalValue)}</p>
               <PriceChange percent={change.percent} amount={change.amount} size="md" className="mt-2" />
               <p className="mt-1 text-[12px] font-bold text-ink-3">{PERIOD_LABEL[period]}</p>
@@ -109,9 +118,12 @@ export default function PortfolioPage() {
             <AllocationChart holdings={view.holdings} />
             <ul className="min-w-0 flex-1 space-y-2">
               {view.holdings.map((h, i) => (
-                <li key={h.ticker} className="flex items-center gap-2 text-[13.5px] font-bold">
+                <li key={`${h.lane}-${h.ticker}`} className="flex items-center gap-2 text-[13.5px] font-bold">
                   <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: allocationColor(i) }} />
-                  <span className="flex-1 truncate text-navy">{h.asset.companyName}</span>
+                  <span className="flex-1 truncate text-navy">
+                    {h.asset.companyName}
+                    {h.lane === "devnet" ? <span className="text-ink-3"> · Devnet</span> : null}
+                  </span>
                   <span className="text-ink-2 tabular">{Math.round(h.weight * 100)}%</span>
                 </li>
               ))}
@@ -134,36 +146,31 @@ export default function PortfolioPage() {
               </div>
               <ul className="divide-y divide-line-soft">
                 {view.holdings.map((h) => (
-                  <HoldingRow key={h.ticker} holding={h} href={`/explore/${h.ticker}`} />
+                  <HoldingRow key={`${h.lane}-${h.ticker}`} holding={h} href={`/explore/${h.ticker}`} />
                 ))}
               </ul>
             </Card>
           </section>
 
-          {mode === "practice" ? (
-            <p className="mt-3 text-[13px] font-semibold text-ink-2">
-              Practice balance: <span className="font-extrabold text-navy-strong tabular">{formatUsd(view.cash)}</span> virtual money to
-              invest.
-            </p>
-          ) : (
+          <div className="mt-4">
+            <PracticeBalances view={view} />
+          </div>
+          {chain.ready && state.profile.parentLinked ? (
             <>
-              <div className="mt-4">
-                <MoneySummary balance={view.cash} />
-              </div>
-              <MandateSummaryCard className="mt-4" mandate={state.mandate} who="My limits" />
+              <MandateSummaryCard className="mt-4" mandate={state.mandate} who="My Practice Key" />
               <DevnetReceipts
-                receipts={state.moneyReceipts}
+                receipts={state.practiceReceipts}
                 nameOf={(t) => allAssetSnapshots().find((a) => a.ticker === t)?.companyName ?? t}
               />
             </>
-          )}
+          ) : null}
           <PriceTruthLine view={view} className="mt-4" />
         </div>
       </div>
     );
   }
 
-  const latestRequest = mode === "money" ? state.requests[0] : undefined;
+  const latestRequest = mode === "practice" && chain.ready ? state.requests[0] : undefined;
 
   return (
     <div className="animate-rise">
@@ -177,19 +184,35 @@ export default function PortfolioPage() {
           />
         </div>
       ) : null}
-      <div className="mt-4">{body}</div>
+      <div className="mt-4">
+        {chainNotice}
+        {body}
+      </div>
     </div>
   );
 }
 
-function MoneySummary({ balance }: { balance: number }) {
+/** Practice cash, split by where it lives. Neither has real financial value. */
+function PracticeBalances({ view }: { view: PortfolioView | null }) {
+  const split = view?.cashBreakdown;
+  if (!split) return null;
   return (
-    <Card className="flex items-center justify-between p-4">
-      <div>
-        <p className="text-[12.5px] font-bold text-ink-2">Available to invest</p>
-        <p className="text-[22px] font-extrabold text-navy-strong tabular">{formatUsd(balance)}</p>
+    <Card className="divide-y divide-line-soft px-4 py-1">
+      <div className="flex items-center justify-between gap-3 py-3">
+        <div>
+          <p className="text-[12.5px] font-bold text-ink-2">Practice capital on Solana Devnet</p>
+          <p className="text-[20px] font-extrabold text-navy-strong tabular">{formatUsd(split.devnet)}</p>
+        </div>
+        <NetworkTag mode="practice" />
       </div>
-      <DemoMoneyTag />
+      <div className="flex items-center justify-between gap-3 py-3">
+        <div>
+          <p className="text-[12.5px] font-bold text-ink-2">Sandbox balance</p>
+          <p className="text-[20px] font-extrabold text-navy-strong tabular">{formatUsd(split.sandbox)}</p>
+        </div>
+        <Provenance kind="sandbox" />
+      </div>
+      <p className="py-2.5 text-[12px] font-semibold text-ink-3">Practice capital · no real financial value</p>
     </Card>
   );
 }

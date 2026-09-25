@@ -6,7 +6,7 @@
  * below are illustrative samples, marked dataStatus "mock" / priceSource "mock".
  *
  * The hosted KEYS backend may overlay an entitled Pyth quote when it is FRESH.
- * AAPL is the current proven Money proof asset; TSLA retains historical proof.
+ * AAPL is the proven KEYS Devnet practice lane (AAPLx is the verified Mainnet product, gated).
  * Unentitled/unconfigured symbols remain these clearly labeled sample values.
  */
 import type { MarketAsset, Period, PricePoint } from "@/domain/types";
@@ -33,7 +33,7 @@ const seeds: Seed[] = [
     dayChangePercent: 2.4,
     brand: { background: "#1d1d1f", foreground: "#ffffff", mark: "A" },
     practiceEnabled: true,
-    moneyModeStatus: "demo",
+    moneyModeStatus: "unavailable",
   },
   {
     id: "nvda",
@@ -54,7 +54,7 @@ const seeds: Seed[] = [
     dayChangePercent: 3.1,
     brand: { background: "#0b0b0b", foreground: "#76b900", mark: "N" },
     practiceEnabled: true,
-    moneyModeStatus: "demo",
+    moneyModeStatus: "unavailable",
   },
   {
     id: "nflx",
@@ -75,7 +75,7 @@ const seeds: Seed[] = [
     dayChangePercent: 1.8,
     brand: { background: "#141414", foreground: "#e50914", mark: "N" },
     practiceEnabled: true,
-    moneyModeStatus: "demo",
+    moneyModeStatus: "unavailable",
   },
   {
     id: "mcd",
@@ -96,7 +96,7 @@ const seeds: Seed[] = [
     dayChangePercent: 0.6,
     brand: { background: "#da291c", foreground: "#ffc72c", mark: "M" },
     practiceEnabled: true,
-    moneyModeStatus: "demo",
+    moneyModeStatus: "unavailable",
   },
   {
     id: "amzn",
@@ -117,7 +117,7 @@ const seeds: Seed[] = [
     dayChangePercent: -1.2,
     brand: { background: "#232f3e", foreground: "#ff9900", mark: "a" },
     practiceEnabled: true,
-    moneyModeStatus: "demo",
+    moneyModeStatus: "unavailable",
   },
   {
     id: "tsla",
@@ -138,7 +138,7 @@ const seeds: Seed[] = [
     dayChangePercent: 1.1,
     brand: { background: "#ffffff", foreground: "#e31937", mark: "T" },
     practiceEnabled: true,
-    moneyModeStatus: "demo",
+    moneyModeStatus: "unavailable",
   },
   {
     id: "msft",
@@ -159,7 +159,7 @@ const seeds: Seed[] = [
     dayChangePercent: 0.8,
     brand: { background: "#f3f6fb", foreground: "#0078d4", mark: "M" },
     practiceEnabled: true,
-    moneyModeStatus: "demo",
+    moneyModeStatus: "unavailable",
   },
   {
     id: "meta",
@@ -201,7 +201,7 @@ const seeds: Seed[] = [
     dayChangePercent: 0.4,
     brand: { background: "#102b63", foreground: "#ffffff", mark: "S&P" },
     practiceEnabled: true,
-    moneyModeStatus: "demo",
+    moneyModeStatus: "unavailable",
   },
   {
     id: "qqq",
@@ -222,7 +222,7 @@ const seeds: Seed[] = [
     dayChangePercent: 0.7,
     brand: { background: "#f0edff", foreground: "#6a4fe0", mark: "Q" },
     practiceEnabled: true,
-    moneyModeStatus: "demo",
+    moneyModeStatus: "unavailable",
   },
 ];
 

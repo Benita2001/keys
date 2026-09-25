@@ -34,7 +34,7 @@ describe("BoundaryMessage", () => {
 });
 
 describe("ModeSwitch", () => {
-  it("defaults to Practice and opens the Key explainer the first time", async () => {
+  it("defaults to Practice and explains Money = Solana Mainnet the first time", async () => {
     render(
       <StoreProvider>
         <ModeSwitch />
@@ -43,11 +43,11 @@ describe("ModeSwitch", () => {
     expect(screen.getByRole("radio", { name: "Practice" })).toHaveAttribute("aria-checked", "true");
     await userEvent.click(screen.getByRole("radio", { name: "Money" }));
     expect(screen.getByRole("radio", { name: "Money" })).toHaveAttribute("aria-checked", "true");
-    const dialog = screen.getByRole("dialog", { name: "Your Key" });
+    const dialog = screen.getByRole("dialog", { name: "Money · Solana Mainnet" });
     expect(dialog).toBeInTheDocument();
     expect(dialog.contains(document.activeElement)).toBe(true); // Q011: focus moves into the sheet
-    expect(screen.getByText(/Devnet test capital/i)).toBeInTheDocument();
-    expect(screen.getByText(/does not buy real securities/i)).toBeInTheDocument();
+    expect(screen.getByText(/requires parent verification and a supported Mainnet account/i)).toBeInTheDocument();
+    expect(screen.getByText(/no real financial value/i)).toBeInTheDocument();
   });
 });
 

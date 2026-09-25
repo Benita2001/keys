@@ -3,7 +3,7 @@
  * state, with the KEYS backend used for Money-mode decisions and fresh Pyth
  * quotes when NEXT_PUBLIC_KEYS_API_URL is configured.
  */
-import { assetRuleFor, evaluateBoundedAction } from "@/domain/policy";
+import { assetRuleFor } from "@/domain/policy";
 import type {
   ActionEvaluation,
   CurrentMandate,
@@ -41,10 +41,11 @@ import type {
   FundingService,
   MandateService,
   MarketDataService,
-  MoneyActionInput,
-  MoneyExecutionService,
-  PracticeExecutionService,
+  CrescoExecutionAdapter,
+  KeyedActionInput,
+  PracticeSandboxService,
 } from "./types";
+import { MAINNET_ASSETS, PRACTICE_DEVNET, belongsTo, moneyMainnetLive } from "@/domain/network";
 
 /* ------------------------------------------------------------------ */
 /* Demo controls (used by Profile → About → Demo controls)             */
@@ -72,10 +73,10 @@ export function getCapabilities(): Capabilities {
   return {
     backend: backend ? "keys-v0.2-frozen" : "none",
     marketData: backend ? "mock-with-live-aapl" : "mock",
-    moneyMode: runtime ? "runtime" : "demo",
-    funding: backend ? "devnet-test" : "demo",
+    practice: backend && runtime ? "devnet-runtime" : "sandbox-only",
+    practiceFunding: backend ? "devnet-test" : "none",
+    money: moneyMainnetLive() ? "mainnet-live" : "mainnet-setup-required",
     auth: backend ? "backend-demo" : "demo",
-    execution: runtime ? "keys-runtime" : "demo-not-executed",
   };
 }
 
@@ -105,8 +106,18 @@ function cached<T>(ttlMs: number, load: () => Promise<T>) {
 }
 
 const COMPANY_TICKERS = EXPLORE_ORDER;
-/** The only asset with a proven Money (Devnet) lane today. */
+/** The asset with a proven KEYS Devnet practice lane (and a verified Mainnet product). */
 export const MONEY_PROOF_TICKER = "AAPL";
+
+/** Money status from Mainnet truth only; a Devnet lane or a Pyth price never grants it. */
+function mainnetMoneyStatus(ticker: string): MarketAsset["moneyModeStatus"] {
+  if (!(ticker in MAINNET_ASSETS)) return "unavailable";
+  return moneyMainnetLive() ? "eligible" : "verification-required";
+}
+
+function practiceLaneFor(ticker: string): MarketAsset["practiceLane"] {
+  return devnetLaneAvailable() && PRACTICE_DEVNET_TICKERS.has(ticker) ? "devnet" : "sandbox";
+}
 
 const quotesCache = cached(20_000, () => fetchMarketQuotes(COMPANY_TICKERS));
 const discoveryCache = cached(60_000, () => fetchPythMarketDiscovery());
@@ -164,8 +175,9 @@ export function clearMarketCaches() {
  * Money eligibility follows the proven runtime lane, not price availability.
  */
 async function withBackendTruth(assets: MarketAsset[]): Promise<MarketAsset[]> {
-  if (!keysBackendConfigured()) return assets;
-  const runtime = keysRuntimeExecutionEnabled();
+  if (!keysBackendConfigured()) {
+    return assets.map((a) => ({ ...a, moneyModeStatus: mainnetMoneyStatus(a.ticker), practiceLane: "sandbox" as const }));
+  }
 
   const [quotes, discovery] = await Promise.all([
     quotesCache.get().catch(() => null),
@@ -182,13 +194,15 @@ async function withBackendTruth(assets: MarketAsset[]): Promise<MarketAsset[]> {
 
   const overlaid = await Promise.all(
     assets.map(async (asset): Promise<MarketAsset> => {
-      const moneyModeStatus = runtime ? (asset.ticker === MONEY_PROOF_TICKER ? "eligible" : "unavailable") : asset.moneyModeStatus;
+      const moneyModeStatus = mainnetMoneyStatus(asset.ticker);
+      const practiceLane = practiceLaneFor(asset.ticker);
       const quote = bySymbol.get(asset.ticker);
       if (quote && (quote.status === "FRESH" || quote.status === "STALE") && typeof quote.price === "number" && quote.price > 0) {
         const change = await pythDayChange(asset.ticker);
         return {
           ...asset,
           moneyModeStatus,
+          practiceLane,
           price: quote.price,
           priceSource: "pyth",
           dataStatus: quote.status === "FRESH" ? "live" : "stale",
@@ -202,6 +216,7 @@ async function withBackendTruth(assets: MarketAsset[]): Promise<MarketAsset[]> {
         return {
           ...asset,
           moneyModeStatus,
+          practiceLane,
           price: feed.price,
           priceSource: "pyth",
           dataStatus: "live",
@@ -210,7 +225,7 @@ async function withBackendTruth(assets: MarketAsset[]): Promise<MarketAsset[]> {
           changeSource: "unknown",
         };
       }
-      return { ...asset, moneyModeStatus, changeSource: "sample" };
+      return { ...asset, moneyModeStatus, practiceLane, changeSource: "sample" };
     }),
   );
   return overlaid;
@@ -244,6 +259,7 @@ function preStockToAsset(p: PreStocksRepresentation): MarketAsset | null {
     dataStatus: "live",
     practiceEnabled: p.keysPolicy.practiceAvailable,
     moneyModeStatus: "unavailable",
+    practiceLane: "sandbox",
     asOf: p.market.receivedAt,
     representation: {
       source: "PRESTOCKS",
@@ -290,6 +306,7 @@ function tesseraToAsset(t: TesseraRepresentation): MarketAsset | null {
     dataStatus: "live",
     practiceEnabled: t.keysPolicy.practiceAvailable,
     moneyModeStatus: "unavailable",
+    practiceLane: "sandbox",
     asOf: t.market.receivedAt,
     representation: {
       source: "TESSERA",
@@ -377,7 +394,8 @@ export function allAssetSnapshots(): MarketAsset[] {
 /* Practice execution — local only, virtual capital                    */
 /* ------------------------------------------------------------------ */
 
-export const practiceExecution: PracticeExecutionService = {
+/** Local practice for assets without a Devnet lane. Simulated: never on-chain. */
+export const practiceSandboxExecution: PracticeSandboxService = {
   async buy({ asset, amount, cash }) {
     await latency(420);
     const ok = amount > 0 && amount <= cash;
@@ -400,24 +418,17 @@ export const practiceExecution: PracticeExecutionService = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Money execution — decision from KEYS backend when configured        */
+/* Practice on Solana Devnet — KEYS runtime (decision + execution)      */
 /* ------------------------------------------------------------------ */
 
-function preflight(input: MoneyActionInput): ActionEvaluation | null {
-  if (
-    input.asset.moneyModeStatus === "unavailable" ||
-    (keysRuntimeExecutionEnabled() && input.asset.ticker !== "AAPL")
-  ) {
-    return {
-      decision: "REFUSE",
-      reasonCode: "ASSET_UNAVAILABLE",
-      source: "local-preview",
-    };
-  }
-  return null;
+/** Assets with a proven KEYS Devnet practice lane today. */
+export const PRACTICE_DEVNET_TICKERS = new Set(["AAPL"]);
+
+function devnetLaneAvailable() {
+  return keysBackendConfigured() && keysRuntimeExecutionEnabled();
 }
 
-function allowOnceCovers(input: MoneyActionInput): boolean {
+function allowOnceCovers(input: KeyedActionInput): boolean {
   const r = input.allowOnce;
   return (
     !!r &&
@@ -428,34 +439,26 @@ function allowOnceCovers(input: MoneyActionInput): boolean {
   );
 }
 
-async function decide(input: MoneyActionInput): Promise<ActionEvaluation> {
-  const pre = preflight(input);
-  if (pre) return pre;
-
+async function decideOnDevnet(input: KeyedActionInput): Promise<ActionEvaluation> {
+  if (!practiceDevnetExecution.supports(input.asset)) {
+    return { decision: "REFUSE", reasonCode: "ASSET_UNAVAILABLE", source: "local-preview" };
+  }
   let evaluation: ActionEvaluation;
-  if (keysBackendConfigured()) {
-    try {
-      evaluation = await evaluateAction({
-        mandate: input.mandate,
-        assetRule: input.assetRule,
-        asset: input.asset.ticker,
-        type: input.type,
-        notional: input.amount,
-      });
-    } catch {
-      // Fail closed: an unreachable backend never becomes an ALLOW.
-      return { decision: "REFUSE", reasonCode: "DECISION_UNAVAILABLE", source: "keys-backend" };
-    }
-  } else {
-    evaluation = evaluateBoundedAction({
+  try {
+    evaluation = await evaluateAction({
       mandate: input.mandate,
       assetRule: input.assetRule,
-      action: { asset: input.asset.ticker, type: input.type, notional: input.amount },
+      asset: input.asset.ticker,
+      type: input.type,
+      notional: input.amount,
     });
+  } catch {
+    // Fail closed: an unreachable backend never becomes an ALLOW.
+    return { decision: "REFUSE", reasonCode: "DECISION_UNAVAILABLE", source: "keys-backend" };
   }
 
-  // A human ALLOW_ONCE covers exactly one limit refusal for the same asset,
-  // amount and Mandate nonce. It never changes standing authority.
+  // A guardian ALLOW_ONCE covers exactly one limit refusal for the same asset,
+  // amount and Key nonce. It never changes standing authority.
   if (
     evaluation.decision === "REFUSE" &&
     (evaluation.reasonCode === "MANDATE_LIMIT_EXCEEDED" || evaluation.reasonCode === "PERIOD_LIMIT_EXCEEDED") &&
@@ -465,99 +468,115 @@ async function decide(input: MoneyActionInput): Promise<ActionEvaluation> {
   }
 
   if (evaluation.decision === "ALLOW" && input.amount > input.balance) {
-    return {
-      decision: "REFUSE",
-      reasonCode: "INSUFFICIENT_BALANCE",
-      requestedNotional: input.amount,
-      source: evaluation.source,
-    };
+    return { decision: "REFUSE", reasonCode: "INSUFFICIENT_BALANCE", requestedNotional: input.amount, source: evaluation.source };
   }
   return evaluation;
 }
 
-function sharesFor(input: MoneyActionInput) {
-  return input.amount / input.asset.price;
-}
-
-export const moneyExecution: MoneyExecutionService = {
+export const practiceDevnetExecution: CrescoExecutionAdapter = {
+  network: PRACTICE_DEVNET.network,
+  realValue: PRACTICE_DEVNET.realValue,
+  supports(asset) {
+    return devnetLaneAvailable() && PRACTICE_DEVNET_TICKERS.has(asset.ticker) && !asset.representation;
+  },
   async evaluate(input) {
-    if (!keysBackendConfigured()) await latency(200);
-    return decide(input);
+    return decideOnDevnet(input);
   },
   async execute(input) {
-    if (keysBackendConfigured() && keysRuntimeExecutionEnabled()) {
-      const key = input.idempotencyKey ?? newIdempotencyKey();
-      const refused = (evaluation: ActionEvaluation): ExecutionResult => ({
-        ok: false,
-        outcome: "REFUSED",
-        evaluation,
-        ticker: input.asset.ticker,
-        amount: input.amount,
-        idempotencyKey: key,
-      });
-
-      const pre = preflight(input);
-      if (pre) return refused(pre);
-
-      // 1. Evaluate server-side first (no side effects). Skipped on re-checks of an
-      //    already-submitted intent and when an exact ALLOW_ONCE covers the action;
-      //    execute re-evaluates atomically on the server either way.
-      const coveredOnce = allowOnceCovers(input);
-      if (!input.recheck && !coveredOnce) {
-        const evaluation = await decide(input);
-        if (evaluation.decision !== "ALLOW") return refused(evaluation);
-      }
-
-      // 2. Execute on Solana Devnet with a stable idempotency key.
-      const runtime = await executeAction(
-        buildExecuteRequest({
-          mandate: input.mandate,
-          assetRule: input.assetRule,
-          asset: input.asset.ticker,
-          type: input.type,
-          notional: input.amount,
-          idempotencyKey: key,
-          allowOnceRequestId: coveredOnce ? input.allowOnce?.id : undefined,
-        }),
-      );
-
-      const executed = runtime.outcome === "EXECUTED";
-      return {
-        ok: executed,
-        outcome: runtime.outcome,
-        evaluation: runtime.evaluation,
-        ticker: input.asset.ticker,
-        amount: input.amount,
-        shares: executed ? sharesFor(input) : undefined,
-        idempotencyKey: key,
-        proof: runtime.proof,
-      };
-    }
-
-    await latency(520);
-    const evaluation = await decide(input);
-    const ok = evaluation.decision === "ALLOW";
-    const result: ExecutionResult = {
-      ok,
-      outcome: ok ? "EXECUTED" : "REFUSED",
+    const key = input.idempotencyKey ?? newIdempotencyKey();
+    const refused = (evaluation: ActionEvaluation): ExecutionResult => ({
+      ok: false,
+      outcome: "REFUSED",
       evaluation,
       ticker: input.asset.ticker,
       amount: input.amount,
-      shares: ok ? sharesFor(input) : undefined,
-      idempotencyKey: input.idempotencyKey,
-      proof: ok
-        ? {
-            status: "DEMO_NOT_EXECUTED",
-            mandateVersion: input.mandate.version,
-            mandateNonce: input.mandate.nonce,
-            executedAt: new Date().toISOString(),
-            idempotencyKey: input.idempotencyKey,
-          }
-        : undefined,
+      idempotencyKey: key,
+    });
+    if (!practiceDevnetExecution.supports(input.asset)) {
+      return refused({ decision: "REFUSE", reasonCode: "ASSET_UNAVAILABLE", source: "local-preview" });
+    }
+
+    // 1. Evaluate server-side first (no side effects). Skipped on re-checks of an
+    //    already-submitted intent and when an exact ALLOW_ONCE covers the action;
+    //    execute re-evaluates atomically on the server either way.
+    const coveredOnce = allowOnceCovers(input);
+    if (!input.recheck && !coveredOnce) {
+      const evaluation = await decideOnDevnet(input);
+      if (evaluation.decision !== "ALLOW") return refused(evaluation);
+    }
+
+    // 2. Execute on Solana Devnet with a stable idempotency key.
+    const runtime = await executeAction(
+      buildExecuteRequest({
+        mandate: input.mandate,
+        assetRule: input.assetRule,
+        asset: input.asset.ticker,
+        type: input.type,
+        notional: input.amount,
+        idempotencyKey: key,
+        allowOnceRequestId: coveredOnce ? input.allowOnce?.id : undefined,
+      }),
+    );
+
+    // Network separation: a Practice result must be a Devnet result.
+    if (runtime.proof?.network && !belongsTo("practice", runtime.proof.network)) {
+      return refused({ decision: "REFUSE", reasonCode: "NETWORK_MISMATCH", source: "keys-runtime" });
+    }
+
+    const executed = runtime.outcome === "EXECUTED";
+    return {
+      ok: executed,
+      outcome: runtime.outcome,
+      evaluation: runtime.evaluation,
+      ticker: input.asset.ticker,
+      amount: input.amount,
+      shares: executed ? input.amount / input.asset.price : undefined,
+      idempotencyKey: key,
+      proof: runtime.proof,
     };
-    return result;
   },
 };
+
+/* ------------------------------------------------------------------ */
+/* Money on Solana Mainnet — hard-gated until every requirement exists  */
+/* ------------------------------------------------------------------ */
+
+export class MainnetSetupRequiredError extends Error {
+  constructor() {
+    super("Money Mode requires parent verification and a supported Mainnet account.");
+    this.name = "MainnetSetupRequiredError";
+  }
+}
+
+/**
+ * Money never touches the Devnet runtime. Until a Mainnet KEYS program, a
+ * verified guardian, a verified asset route and real funding all exist, every
+ * call returns SETUP_REQUIRED without contacting any network.
+ */
+export const moneyMainnetExecution: CrescoExecutionAdapter = {
+  network: "solana-mainnet",
+  realValue: true,
+  supports() {
+    return moneyMainnetLive();
+  },
+  async evaluate() {
+    return { decision: "REFUSE", reasonCode: "MAINNET_SETUP_REQUIRED", source: "local-preview" };
+  },
+  async execute(input) {
+    return {
+      ok: false,
+      outcome: "SETUP_REQUIRED",
+      evaluation: { decision: "REFUSE", reasonCode: "MAINNET_SETUP_REQUIRED", source: "local-preview" },
+      ticker: input.asset.ticker,
+      amount: input.amount,
+      idempotencyKey: input.idempotencyKey,
+    };
+  },
+};
+
+export function executionAdapterFor(mode: "practice" | "money"): CrescoExecutionAdapter {
+  return mode === "practice" ? practiceDevnetExecution : moneyMainnetExecution;
+}
 
 /* ------------------------------------------------------------------ */
 /* Boundary requests + guardian decisions                              */
@@ -658,12 +677,14 @@ export const mandates: MandateService = {
 };
 
 export const funding: FundingService = {
-  async addMoney({ amount }) {
-    if (keysBackendConfigured()) {
-      return addDevnetTestFunds(amount);
-    }
-    await latency(500);
-    return { status: "DEMO_CREDITED", amount };
+  async addPracticeCapital({ amount }) {
+    if (!keysBackendConfigured()) throw new Error("Practice on Devnet needs the KEYS backend.");
+    const out = await addDevnetTestFunds(amount);
+    return { ...out, status: "DEVNET_TEST_CREDITED", realPaymentTaken: false };
+  },
+  async depositUsdc() {
+    // Real funding exists only with the Mainnet Money stack. Never faked.
+    throw new MainnetSetupRequiredError();
   },
 };
 

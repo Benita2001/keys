@@ -38,7 +38,7 @@ test("Practice/Money switch supports arrow keys in WebKit", async ({ page }) => 
   await page.keyboard.press("ArrowRight");
   await expect(money).toHaveAttribute("aria-checked", "true");
 
-  const intro = page.getByRole("dialog", { name: "Money Mode" });
+  const intro = page.getByRole("dialog", { name: "Money · Solana Mainnet" });
   if (await intro.isVisible().catch(() => false)) {
     await page.getByRole("button", { name: "Got it" }).click();
   }

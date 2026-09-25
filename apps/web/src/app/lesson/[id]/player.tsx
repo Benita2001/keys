@@ -84,7 +84,7 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
           <div className="mt-6 w-full rounded-[18px] border border-line-soft bg-surface p-4 text-left">
             <p className="text-[14px] font-extrabold text-navy-strong">Put it into practice</p>
             <p className="mt-1 text-[13.5px] font-semibold text-ink-2">
-              Try a small practice investment in a company you know. Want more room in Money Mode someday? That&apos;s a
+              Try a small practice investment in a company you know. Want more room in your Key someday? That&apos;s a
               conversation with {state.profile.parentName}. Lessons don&apos;t change your limits on their own.
             </p>
           </div>

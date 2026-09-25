@@ -48,7 +48,7 @@ export default function ParentConnectPage() {
             </p>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-[14px] font-semibold text-ink-2">
               <li>Your learning progress and streak</li>
-              <li>Your Money Mode balance, limits and requests</li>
+              <li>Your Practice capital on Solana Devnet, your Key and your requests</li>
               <li>A weekly summary</li>
             </ul>
             <p className="mt-4 flex items-center gap-2 text-[15px] font-extrabold text-navy-strong">
@@ -64,7 +64,7 @@ export default function ParentConnectPage() {
           <p className="text-[15px] font-semibold text-ink-2">Show this code to your parent or guardian. They enter it in the parent view.</p>
           <p className="mt-3 text-[32px] font-black tracking-[0.15em] text-navy-strong">CRES-4821</p>
           <p className="mt-1 text-[12px] font-semibold text-ink-3">
-            Devnet demo family code. It syncs the child and guardian views through the KEYS backend; it is not identity verification.
+            Family code for the demo. It syncs the child and guardian views through the KEYS backend; it is not identity verification.
           </p>
           {error ? <p className="mt-3 text-[13px] font-bold text-red-600">{error}</p> : null}
           <ActionButton className="mt-5" onClick={connect} disabled={busy}>

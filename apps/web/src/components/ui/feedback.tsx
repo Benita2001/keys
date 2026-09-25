@@ -3,7 +3,6 @@
 import { CheckCircle2, CloudOff, Info, RefreshCw, WifiOff } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { DataStatus } from "@/domain/types";
-import { keysRuntimeExecutionEnabled } from "@/services/keys-backend";
 import { ActionButton, cn } from "./primitives";
 
 export function Skeleton({ className }: { className?: string }) {
@@ -91,6 +90,11 @@ export type ProvenanceKind =
   | "delayed"
   | "sample"
   | "devnet"
+  | "mainnet"
+  | "sandbox"
+  | "no-real-value"
+  | "real-money"
+  | "verification-required"
   | "practice"
   | "learn-practice"
   | "money-proof"
@@ -106,10 +110,15 @@ const PROVENANCE: Record<ProvenanceKind, { text: string; cls: string; dot?: stri
   delayed: { text: "Delayed", cls: "bg-yellow-soft text-[#8a5406]" },
   sample: { text: "Sample", cls: "bg-surface-soft text-ink-2 border border-line-soft" },
   "sample-chart": { text: "Sample chart", cls: "bg-surface-soft text-ink-2 border border-line-soft" },
-  devnet: { text: "Devnet", cls: "bg-lavender-soft text-[#5b43c9]" },
+  devnet: { text: "Solana Devnet", cls: "bg-lavender-soft text-[#5b43c9]" },
+  mainnet: { text: "Solana Mainnet", cls: "bg-navy text-white", dot: "bg-[#7be49f]" },
+  sandbox: { text: "Sandbox · not on-chain", cls: "bg-surface-soft text-ink-2 border border-line-soft" },
+  "no-real-value": { text: "No real value", cls: "bg-lavender-soft text-[#5b43c9]" },
+  "real-money": { text: "Real money", cls: "bg-navy text-white" },
+  "verification-required": { text: "Verification required", cls: "bg-yellow-soft text-[#8a5406]" },
   practice: { text: "Practice", cls: "bg-blue-soft text-blue-strong" },
   "learn-practice": { text: "Learn / Practice", cls: "bg-blue-soft text-blue-strong" },
-  "money-proof": { text: "Money proof", cls: "bg-navy text-white", dot: "bg-[#7be49f]" },
+  "money-proof": { text: "Devnet practice", cls: "bg-lavender-soft text-[#5b43c9]", dot: "bg-[#8b74f0]" },
   unavailable: { text: "Unavailable", cls: "bg-surface-soft text-ink-2 border border-line-soft" },
 };
 
@@ -150,9 +159,12 @@ export function DataStatusTag({
   return <Provenance kind={kind} className={className} />;
 }
 
-/** Truth label for Money Mode balances: Devnet test capital, never real money. */
-export function DemoMoneyTag({ className }: { className?: string }) {
-  return <Provenance kind="devnet" label={keysRuntimeExecutionEnabled() ? "Devnet test money" : "Demo money"} className={className} />;
+/**
+ * Network truth label. Practice → Solana Devnet (no real value);
+ * Money → Solana Mainnet (real money). Never inferred from copy.
+ */
+export function NetworkTag({ mode, className }: { mode: "practice" | "money"; className?: string }) {
+  return <Provenance kind={mode === "practice" ? "devnet" : "mainnet"} className={className} />;
 }
 
 /* ------------------------------------------------------------------ */

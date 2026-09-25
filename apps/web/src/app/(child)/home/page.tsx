@@ -7,10 +7,7 @@ import { GoalArt } from "@/components/illustrations/objects";
 import { BadgeArt } from "@/components/illustrations/badges";
 import { LessonCard, MissionCard } from "@/components/learning";
 import {
-  HeroSkeleton,
   MoneyHeroCard,
-  MoneyModeUnavailable,
-  MoneySyncState,
   ModeSwitch,
   PracticeHeroCard,
   RequestStatusCard,
@@ -23,11 +20,10 @@ import { useAchievements, useLearningStats, useModuleStates, usePortfolio } from
 import { GOALS } from "@/mocks/family";
 import { LESSONS, MISSION, MODULES, lessonById, moduleById } from "@/mocks/learning";
 import { allAssetSnapshots } from "@/services";
-import { useMoneyTruth, useStore } from "@/state/store";
+import { useStore } from "@/state/store";
 
 export default function HomePage() {
   const { state } = useStore();
-  const money = useMoneyTruth();
   const stats = useLearningStats();
   const achievements = useAchievements();
   const { assets, view } = usePortfolio(state.mode);
@@ -43,23 +39,16 @@ export default function HomePage() {
   const goal = GOALS.find((g) => g.id === state.profile.goalId) ?? GOALS[0];
   const latestRequest = state.requests[0];
 
+  // Practice = Solana Devnet (+ sandbox); Money = Solana Mainnet (setup required today).
   const hero =
     state.mode === "practice" ? (
       assets.status === "error" ? (
         <ErrorState onRetry={assets.reload} />
       ) : (
-        <PracticeHeroCard view={view} />
+        <PracticeHeroCard view={view} mandate={state.profile.parentLinked ? state.mandate : undefined} />
       )
-    ) : !money.ready ? (
-      <MoneySyncState status={money.status} onRetry={money.refresh} />
-    ) : !state.profile.parentLinked ? (
-      <MoneyModeUnavailable reason="parent" />
-    ) : assets.status === "loading" ? (
-      <HeroSkeleton />
-    ) : assets.status === "error" ? (
-      <ErrorState onRetry={assets.reload} />
     ) : (
-      <MoneyHeroCard view={view} mandate={state.mandate} balance={state.money.balance} />
+      <MoneyHeroCard parentName={state.profile.parentName} />
     );
 
   return (
@@ -85,7 +74,7 @@ export default function HomePage() {
           <ModeSwitch />
           <div className="mt-4">{hero}</div>
 
-          {state.mode === "money" && latestRequest ? (
+          {state.mode === "practice" && latestRequest ? (
             <div className="mt-3">
               <RequestStatusCard
                 request={latestRequest}
@@ -121,7 +110,7 @@ export default function HomePage() {
 
         {/* Desktop companion column */}
         <aside className="mt-6 hidden space-y-4 lg:mt-0 lg:block">
-          {state.mode === "money" ? (
+          {state.mode === "practice" && state.profile.parentLinked ? (
             <Card className="p-5">
               <p className="flex items-center gap-2 text-[15px] font-extrabold text-navy-strong">
                 <ShieldCheck aria-hidden className="size-5 text-green" /> My Key

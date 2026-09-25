@@ -4,19 +4,19 @@ import { CheckCircle2, Clock, Info, Send, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CompanyLogo } from "@/components/finance";
 import { PlantPot } from "@/components/illustrations/objects";
-import { BoundaryMessage, BoundaryRequestSheet, MoneyModeUnavailable, MoneySyncState } from "@/components/mode";
-import { DataStatusTag, DemoMoneyTag, EmptyState, ErrorState, Skeleton, useToast } from "@/components/ui/feedback";
+import { BoundaryMessage, BoundaryRequestSheet, KeyUnavailable, MoneySetupRequired, PracticeSyncState } from "@/components/mode";
+import { DataStatusTag, EmptyState, ErrorState, NetworkTag, Provenance, Skeleton, useToast } from "@/components/ui/feedback";
 import { BottomSheet } from "@/components/ui/overlay";
 import { ActionButton, BackButton, Card, Chip, cn } from "@/components/ui/primitives";
 import { formatAmount, formatShares, formatUsd } from "@/domain/format";
 import { assetRuleFor, evaluateBoundedAction, explainEvaluation, maxAllowedNow, remainingThisPeriod } from "@/domain/policy";
 import type { ActionEvaluation, ExecutionResult, MarketAsset, Mode } from "@/domain/types";
 import { useAsset } from "@/hooks/data";
-import { boundaryRequests, moneyExecution, practiceExecution } from "@/services";
+import { boundaryRequests, practiceDevnetExecution, practiceSandboxExecution } from "@/services";
 import { keysBackendConfigured, newIdempotencyKey } from "@/services/keys-backend";
 import { ExecutionProofNote, ProofDetails } from "@/components/proof";
 import { useSingleFlight } from "@/hooks/single-flight";
-import { useMoneyTruth, useStore } from "@/state/store";
+import { usePracticeChain, useStore } from "@/state/store";
 
 type Phase =
   | { kind: "edit" }
@@ -26,18 +26,32 @@ type Phase =
   | { kind: "requested" }
   | { kind: "unconfirmed"; result: ExecutionResult; idempotencyKey: string; checking: boolean };
 
+/**
+ * Where an action runs. Decided from mode + asset support, never from copy:
+ * - devnet:  Practice through the KEYS Devnet runtime (Key-enforced, real Devnet receipts)
+ * - sandbox: Practice for assets without a Devnet lane (local, not on-chain)
+ * - mainnet: Money. Setup-required today; never falls back to Devnet.
+ */
+type Lane = "devnet" | "sandbox" | "mainnet";
+
+function laneFor(mode: Mode, asset: MarketAsset): Lane {
+  if (mode === "money") return "mainnet";
+  return practiceDevnetExecution.supports(asset) ? "devnet" : "sandbox";
+}
+
 export function InvestFlow({ ticker, initialMode, initialAmount }: { ticker: string; initialMode?: Mode; initialAmount?: number }) {
   const { state } = useStore();
-  const moneyTruth = useMoneyTruth();
+  const chain = usePracticeChain();
   const asset = useAsset(ticker);
   const mode = initialMode ?? state.mode;
+  const lane = asset.status === "success" && asset.data ? laneFor(mode, asset.data) : null;
 
   return (
     <main id="main" className="mx-auto flex min-h-dvh w-full max-w-[560px] flex-col px-5 pt-4 md:pt-8">
       <div className="flex items-center gap-2">
         <BackButton label="Back" />
         <p className="flex-1 text-center text-[15px] font-extrabold text-navy-strong">
-          {mode === "practice" ? "Practice investment" : "Money investment"}
+          {mode === "practice" ? "Practice" : "Money"}
         </p>
         <span className="w-9" />
       </div>
@@ -50,16 +64,23 @@ export function InvestFlow({ ticker, initialMode, initialAmount }: { ticker: str
         <ErrorState className="mt-6" onRetry={asset.reload} />
       ) : !asset.data ? (
         <EmptyState className="mt-6" title="We couldn't find that company" action={<ActionButton href="/explore">Explore</ActionButton>} />
-      ) : mode === "money" && !moneyTruth.ready ? (
+      ) : lane === "mainnet" ? (
         <div className="mt-6">
-          <MoneySyncState status={moneyTruth.status} onRetry={moneyTruth.refresh} />
+          <MoneySetupRequired />
+          <ActionButton className="mt-4" href={`/invest/${asset.data.ticker}?mode=practice`} arrow>
+            Practice {asset.data.companyName} on Solana Devnet
+          </ActionButton>
         </div>
-      ) : mode === "money" && !state.profile.parentLinked ? (
+      ) : lane === "devnet" && !chain.ready ? (
         <div className="mt-6">
-          <MoneyModeUnavailable reason="parent" />
+          <PracticeSyncState status={chain.status} onRetry={chain.refresh} />
+        </div>
+      ) : lane === "devnet" && !state.profile.parentLinked ? (
+        <div className="mt-6">
+          <KeyUnavailable reason="parent" />
         </div>
       ) : (
-        <Flow asset={asset.data} mode={mode} initialAmount={initialAmount} />
+        <Flow asset={asset.data} lane={lane === "devnet" ? "devnet" : "sandbox"} initialAmount={initialAmount} />
       )}
     </main>
   );
@@ -67,7 +88,8 @@ export function InvestFlow({ ticker, initialMode, initialAmount }: { ticker: str
 
 const STUCK_AFTER_MS = 2 * 60_000;
 
-function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; initialAmount?: number }) {
+function Flow({ asset, lane, initialAmount }: { asset: MarketAsset; lane: "devnet" | "sandbox"; initialAmount?: number }) {
+  const keyed = lane === "devnet";
   const { state, dispatch, refresh } = useStore();
   const backend = keysBackendConfigured();
   const guard = useSingleFlight();
@@ -77,18 +99,18 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
   const allowOnce = state.requests.find(
     (r) => r.status === "ALLOWED_ONCE" && r.asset === asset.ticker && r.mandateNonce === mandate.nonce,
   );
-  const presets = mode === "practice" ? [25, 50, 100, 250] : [2, 5, 10, 20];
+  const presets = keyed ? [2, 5, 10, 20] : [25, 50, 100, 250];
   const [amountText, setAmountText] = useState(
     String(
-      (mode === "money" ? state.pendingExecutions.find((p) => p.ticker === asset.ticker)?.amount : undefined) ??
+      (keyed ? state.pendingExecutions.find((p) => p.ticker === asset.ticker)?.amount : undefined) ??
         initialAmount ??
         allowOnce?.requestedNotional ??
-        (mode === "practice" ? 50 : 5),
+        (keyed ? 5 : 50),
     ),
   );
   const [reason, setReason] = useState("");
   // A previously unconfirmed intent for this company resumes with the same key.
-  const resumable = mode === "money" ? state.pendingExecutions.find((p) => p.ticker === asset.ticker) : undefined;
+  const resumable = keyed ? state.pendingExecutions.find((p) => p.ticker === asset.ticker) : undefined;
   const [phase, setPhase] = useState<Phase>(() =>
     resumable
       ? {
@@ -112,25 +134,25 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
 
   const amount = Number(amountText);
   const validAmount = Number.isFinite(amount) && amount > 0;
-  const cash = mode === "practice" ? state.practice.cash : state.money.balance;
+  const cash = keyed ? state.practiceChain.balance : state.sandbox.cash;
 
   // Instant, local explanation while typing. The real decision happens on submit.
   const preview = useMemo<ActionEvaluation | null>(() => {
-    if (mode !== "money" || !validAmount) return null;
+    if (!keyed || !validAmount) return null;
     return evaluateBoundedAction({
       mandate,
       assetRule: assetRuleFor(mandate, asset.ticker),
       action: { asset: asset.ticker, type: "BUY", notional: amount },
     });
-  }, [mode, validAmount, mandate, asset.ticker, amount]);
+  }, [keyed, validAmount, mandate, asset.ticker, amount]);
 
   const coveredByAllowOnce = !!allowOnce && validAmount && amount <= allowOnce.requestedNotional;
 
   const submit = guard(async () => {
     if (!validAmount) return;
     setPhase({ kind: "submitting" });
-    if (mode === "practice") {
-      const result = await practiceExecution.buy({ asset, amount, cash });
+    if (!keyed) {
+      const result = await practiceSandboxExecution.buy({ asset, amount, cash });
       if (result.ok && result.shares != null && result.proof) {
         dispatch({ type: "practiceBuy", ticker: asset.ticker, amount, shares: result.shares, reason: reason.trim() || undefined, proof: result.proof });
         setPhase({ kind: "done", result, allowedOnce: false });
@@ -139,7 +161,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
       }
       return;
     }
-    await runMoney(intentKeyFor(amount));
+    await runKeyed(intentKeyFor(amount));
   });
 
   // One idempotency key per user intent (asset + amount). Re-checks reuse it.
@@ -151,38 +173,25 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
     return next.key;
   };
 
-  const runMoney = async (idempotencyKey: string, recheck = false) => {
-    const result = await moneyExecution.execute({
+  const runKeyed = async (idempotencyKey: string, recheck = false) => {
+    const result = await practiceDevnetExecution.execute({
       mandate,
       assetRule: assetRuleFor(mandate, asset.ticker),
       asset,
       type: "BUY",
       amount,
-      balance: state.money.balance,
+      balance: state.practiceChain.balance,
       allowOnce: allowOnce ?? null,
       idempotencyKey,
       recheck,
     });
-    // The allowance is only "used" when the standing Mandate alone would have refused.
+    // The allowance is only "used" when the standing Key alone would have refused.
     const usedAllowOnce = coveredByAllowOnce && preview?.decision !== "ALLOW";
     if (result.outcome === "EXECUTED" && result.shares != null && result.proof) {
-      if (backend) {
-        // The Family Durable Object is the source of truth for balance, holdings and
-        // allowance state: re-fetch instead of applying a local optimistic update.
-        dispatch({ type: "clearPending", idempotencyKey });
-        await refresh({ chain: true });
-      } else {
-        dispatch({
-          type: "moneyBuy",
-          ticker: asset.ticker,
-          amount,
-          shares: result.shares,
-          reason: reason.trim() || undefined,
-          proof: result.proof,
-          usedRequestId: usedAllowOnce ? allowOnce?.id : undefined,
-          idempotencyKey,
-        });
-      }
+      // The Family Durable Object + Devnet program are the source of truth for
+      // practice capital, positions and allowance state: re-fetch, never apply locally.
+      dispatch({ type: "clearPending", idempotencyKey });
+      await refresh({ chain: true });
       setIntent(null);
       setPhase({ kind: "done", result, allowedOnce: usedAllowOnce });
     } else if (result.outcome === "PENDING" || result.outcome === "UNKNOWN") {
@@ -207,7 +216,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
   }, [phase.kind]);
 
   // Drop the local tracker only. Any backend result for the old key still
-  // arrives through sync and shows in Money activity.
+  // arrives through sync and shows in Practice activity.
   const stopWaiting = () => {
     if (phase.kind !== "unconfirmed") return;
     dispatch({ type: "clearPending", idempotencyKey: phase.idempotencyKey });
@@ -219,7 +228,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
   const recheck = guard(async () => {
     if (phase.kind !== "unconfirmed") return;
     setPhase({ ...phase, checking: true });
-    await runMoney(phase.idempotencyKey, true);
+    await runKeyed(phase.idempotencyKey, true);
   });
 
   const sendRequest = guard(async (why: string) => {
@@ -253,31 +262,32 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
   /* ---------------- Results ---------------- */
 
   if (phase.kind === "done") {
-    const shares = phase.result.shares ?? 0;
     return (
       <div className="animate-rise mt-8 flex flex-1 flex-col items-center text-center">
         <PlantPot className="animate-bloom size-28" />
         <h1 className="mt-4 text-[26px] font-black text-navy-strong">
-          {mode === "practice"
-            ? "Added to your Practice Portfolio"
+          {!keyed
+            ? "Added to your Practice sandbox"
             : phase.result.proof?.status === "RUNTIME_CONFIRMED" && !phase.result.proof.simulated
-              ? "Action confirmed on Solana Devnet"
+              ? "Practice action confirmed on Solana Devnet"
               : phase.allowedOnce
                 ? "Done once. Your Key didn't change."
                 : "Done. No parent approval needed."}
         </h1>
         <p className="mt-2 max-w-[36ch] text-[15px] font-semibold text-ink-2">
-          {phase.result.proof?.network
-            ? `${formatAmount(amount)} of ${asset.companyName} exposure${
-                typeof phase.result.proof.pyth?.unitPrice === "number"
+          {keyed
+            ? `${formatAmount(amount)} of ${asset.companyName} practice exposure${
+                typeof phase.result.proof?.pyth?.unitPrice === "number"
                   ? ` at a live Pyth price of ${formatUsd(phase.result.proof.pyth.unitPrice)}`
                   : ""
-              } · Devnet demo tokens, not real shares.`
-            : mode === "practice"
-              ? `${formatAmount(amount)} in ${asset.companyName} · about ${formatShares(shares)} ${asset.representation ? "units" : "shares"} of virtual practice money at a ${asset.dataStatus === "live" ? "live" : "sample"} price of ${formatUsd(asset.price)}.`
-              : `${formatAmount(amount)} in ${asset.companyName} · demo only, nothing was bought.`}
+              }.`
+            : `${formatAmount(amount)} of ${asset.companyName} practice exposure at a ${asset.dataStatus === "live" ? "live" : "sample"} price of ${formatUsd(asset.price)}. Sandbox only: this wasn't sent to Solana.`}
         </p>
-        {mode === "money" && phase.allowedOnce ? (
+        <p className="mt-2 flex flex-wrap justify-center gap-1.5">
+          {keyed ? <NetworkTag mode="practice" /> : <Provenance kind="sandbox" />}
+          <Provenance kind="no-real-value" label="Practice capital · no real financial value" />
+        </p>
+        {keyed && phase.allowedOnce ? (
           <div className="mt-4 w-full rounded-[16px] border-2 border-green/25 bg-green-soft px-4 py-3 text-left">
             <p className="text-[12px] font-black uppercase tracking-[0.08em] text-green-strong">One-time permission → USED</p>
             <p className="mt-1 text-[13.5px] font-semibold text-navy">
@@ -285,7 +295,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
             </p>
           </div>
         ) : null}
-        {mode === "money" ? (
+        {keyed ? (
           <ExecutionProofNote
             className="mt-4"
             proof={phase.result.proof}
@@ -311,9 +321,9 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
             amount={formatAmount(amount)}
             decisionSource={`${phase.result.evaluation.decision} · ${SOURCE_LABEL[phase.result.evaluation.source] ?? phase.result.evaluation.source}`}
           />
-          {phase.result.proof?.status === "DEMO_NOT_EXECUTED" ? (
+          {phase.result.proof?.status === "PRACTICE_LOCAL" ? (
             <p className="mt-3 text-[12.5px] font-semibold text-ink-3">
-              Demo mode: no transaction was sent. Connected to the KEYS runtime, this shows the Devnet signature and an explorer link.
+              Sandbox practice: no transaction was sent. {asset.companyName} doesn&apos;t have a KEYS Devnet lane yet.
             </p>
           ) : null}
         </BottomSheet>
@@ -335,9 +345,9 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
         </h1>
         <p className="mt-2 max-w-[34ch] text-[15px] font-semibold text-ink-2">
           {pending
-            ? `${formatAmount(amount)} in ${asset.companyName} was accepted and isn't confirmed on Solana Devnet yet.`
-            : `We couldn't confirm whether ${formatAmount(amount)} in ${asset.companyName} went through.`}{" "}
-          Your balance won&apos;t change until it&apos;s confirmed, and checking again can never make it happen twice.
+            ? `${formatAmount(amount)} of ${asset.companyName} practice was accepted and isn't confirmed on Solana Devnet yet.`
+            : `Solana is taking longer than expected. We couldn't confirm whether ${formatAmount(amount)} of ${asset.companyName} practice went through.`}{" "}
+          Your practice capital won&apos;t change until it&apos;s confirmed, and checking again can never make it happen twice.
         </p>
         <div className="mt-auto w-full space-y-3 pb-[calc(16px+env(safe-area-inset-bottom))] pt-8">
           <ActionButton onClick={recheck} disabled={phase.checking}>
@@ -354,7 +364,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
           )}
           {stuck ? (
             <p className="text-[12.5px] font-semibold text-ink-3">
-              This is taking longer than usual. If it went through, it will show up in your Money activity.
+              This is taking longer than usual. If it went through, it will show up in your Practice activity.
             </p>
           ) : null}
         </div>
@@ -373,8 +383,8 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
           {state.profile.parentName} can say not this time, allow this request once, or create a wider standing Key. You&apos;ll see the answer on Home.
         </p>
         <div className="mt-auto w-full space-y-3 pb-[calc(16px+env(safe-area-inset-bottom))] pt-8">
-          <ActionButton href={`/invest/${asset.ticker}?mode=practice&amount=${amount}`} arrow>
-            Practice it while you wait
+          <ActionButton href="/learn" arrow>
+            Learn something while you wait
           </ActionButton>
           <ActionButton variant="secondary" href="/home">
             Back to Home
@@ -388,8 +398,8 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
 
   const submitting = phase.kind === "submitting";
   const shares = validAmount ? amount / asset.price : 0;
-  const moneyBlockedPreview =
-    mode === "money" && preview && preview.decision !== "ALLOW" && !(coveredByAllowOnce && preview.boundaryRequestAvailable);
+  const keyBlockedPreview =
+    keyed && preview && preview.decision !== "ALLOW" && !(coveredByAllowOnce && preview.boundaryRequestAvailable);
 
   return (
     <div className="animate-rise mt-4 flex flex-1 flex-col">
@@ -403,10 +413,14 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
         </div>
         <DataStatusTag status={asset.dataStatus} />
       </Card>
+      <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[12px] font-semibold text-ink-3">
+        {keyed ? <NetworkTag mode="practice" /> : <Provenance kind="sandbox" />}
+        Practice capital · no real financial value
+      </p>
 
-      {mode === "money" && mandate.status !== "ACTIVE" ? (
+      {keyed && mandate.status !== "ACTIVE" ? (
         <div className="mt-4">
-          <MoneyModeUnavailable reason="paused" />
+          <KeyUnavailable reason="paused" />
         </div>
       ) : (
         <>
@@ -452,13 +466,10 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
 
           <div className="mt-4 rounded-[16px] border border-line-soft bg-surface p-3.5">
             <div className="flex items-center justify-between text-[13.5px] font-bold">
-              <span className="text-ink-2">{mode === "practice" ? "Practice balance" : "Available to invest"}</span>
-              <span className="flex items-center gap-2">
-                {mode === "money" ? <DemoMoneyTag /> : null}
-                <span className="font-extrabold text-navy-strong tabular">{formatUsd(cash)}</span>
-              </span>
+              <span className="text-ink-2">{keyed ? "Practice capital on Devnet" : "Sandbox balance"}</span>
+              <span className="font-extrabold text-navy-strong tabular">{formatUsd(cash)}</span>
             </div>
-            {mode === "money" ? (
+            {keyed ? (
               <p className="mt-2 flex items-start gap-2 text-[13px] font-semibold text-ink-2">
                 <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0 text-green" />
                 Key v{mandate.version} · up to {formatAmount(mandate.maxActionNotional)} per action · {formatAmount(remainingThisPeriod(mandate))} left{" "}
@@ -474,36 +485,35 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
               mandate={mandate}
               companyName={asset.companyName}
               onAdjust={() => {
-                const max = mode === "money" ? maxAllowedNow(mandate, state.money.balance) : Math.floor(cash);
+                const max = keyed ? maxAllowedNow(mandate, state.practiceChain.balance) : Math.floor(cash);
                 setAmountText(String(max > 0 ? max : ""));
                 setPhase({ kind: "edit" });
               }}
-              practiceHref={mode === "money" ? `/invest/${asset.ticker}?mode=practice&amount=${amount}` : undefined}
-              onAsk={mode === "money" ? () => setAskOpen(true) : undefined}
-              mode={mode}
+              onAsk={keyed ? () => setAskOpen(true) : undefined}
+              mode={keyed ? "money" : "practice"}
             />
           ) : (
             <>
-              {moneyBlockedPreview && preview ? (
+              {keyBlockedPreview && preview ? (
                 <p role="status" className="mt-3 flex items-start gap-2 rounded-[14px] bg-[#fff7ef] px-3.5 py-3 text-[13px] font-semibold text-navy">
                   <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-orange-text" />
-                  {explainEvaluation(preview, mandate, asset.companyName, mode).body}
+                  {explainEvaluation(preview, mandate, asset.companyName, "practice").body}
                 </p>
               ) : null}
 
               <div className="mt-4 rounded-[16px] bg-surface-soft p-3.5 text-[13.5px] font-semibold text-ink-2">
                 {validAmount ? (
                   <>
-                    {mode === "money" && backend ? (
+                    {keyed ? (
                       <>
                         That&apos;s about <span className="font-extrabold text-navy-strong tabular">{formatShares(shares)}</span> {asset.ticker} of
-                        exposure in Devnet demo tokens, not real shares. The price is checked with live Pyth data when you invest.
+                        practice exposure on Solana Devnet. Your Key and the live Pyth price are checked on-chain when you practice.
                       </>
                     ) : (
                       <>
-                        You&apos;d own about <span className="font-extrabold text-navy-strong tabular">{formatShares(shares)}</span>{" "}
-                        {asset.representation ? "units" : "shares"} of {asset.companyName} with practice money. Prices go up and down, so
-                        this could be worth more or less later.
+                        That&apos;s about <span className="font-extrabold text-navy-strong tabular">{formatShares(shares)}</span>{" "}
+                        {asset.representation ? "units" : "shares"} of {asset.companyName} practice exposure. Prices go up and down, so this
+                        could be worth more or less later.
                       </>
                     )}
                   </>
@@ -531,12 +541,10 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
             {phase.kind === "boundary" ? null : (
               <ActionButton onClick={submit} disabled={!validAmount || submitting} arrow={!submitting}>
                 {submitting
-                  ? mode === "money"
-                    ? "Checking your limits…"
+                  ? keyed
+                    ? "Checking your Key…"
                     : "Adding…"
-                  : mode === "practice"
-                    ? `Add ${validAmount ? formatAmount(amount) : ""} to Practice`
-                    : `Invest ${validAmount ? formatAmount(amount) : ""}`}
+                  : `Practice ${validAmount ? formatAmount(amount) : ""}`}
               </ActionButton>
             )}
           </div>

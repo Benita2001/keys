@@ -153,11 +153,14 @@ describe("market truth", () => {
     expect(assets.every((a) => a.price > 0)).toBe(true);
   });
 
-  it("keeps all 10 companies and only the proven asset gets a Money lane", async () => {
+  it("keeps all 10 companies; only the proven asset has a Devnet practice lane and none is Money-eligible", async () => {
     const assets = await marketData.listAssets();
     const companies = assets.filter((a) => a.category !== "Private");
     expect(companies).toHaveLength(10);
-    expect(companies.filter((a) => a.moneyModeStatus === "eligible").map((a) => a.ticker)).toEqual([MONEY_PROOF_TICKER]);
+    expect(companies.filter((a) => a.practiceLane === "devnet").map((a) => a.ticker)).toEqual([MONEY_PROOF_TICKER]);
+    expect(companies.some((a) => a.moneyModeStatus === "eligible")).toBe(false);
+    // A live Pyth price never grants Money: AAPL/TSLA/MSFT are live here.
+    expect(companies.find((a) => a.ticker === "TSLA")?.moneyModeStatus).toBe("unavailable");
   });
 
   it("maps PreStocks and Tessera to Practice-only representations, never Money", async () => {
@@ -214,7 +217,7 @@ describe("practice seed + learning stats", () => {
     const sampled = reducer(initialState, { type: "pricePracticeSeed", prices: at(50, false) });
     const live = reducer(sampled, { type: "pricePracticeSeed", prices: at(100, true) });
     for (const seed of PRACTICE_SEED) {
-      const h = live.practice.holdings.find((x) => x.ticker === seed.ticker)!;
+      const h = live.sandbox.holdings.find((x) => x.ticker === seed.ticker)!;
       expect(h.shares * 100).toBeCloseTo(seed.value);
     }
     // Live sizing is final.
@@ -223,9 +226,9 @@ describe("practice seed + learning stats", () => {
 
   it("never re-sizes a lot the user has bought into", () => {
     const bought = reducer(initialState, { type: "practiceBuy", ticker: "AAPL", amount: 50, shares: 0.15, proof: { status: "PRACTICE_LOCAL", executedAt: "2026-09-25T00:00:00Z" } });
-    const before = bought.practice.holdings.find((h) => h.ticker === "AAPL")!;
+    const before = bought.sandbox.holdings.find((h) => h.ticker === "AAPL")!;
     const after = reducer(bought, { type: "pricePracticeSeed", prices: { AAPL: { price: 336, live: true } } });
-    expect(after.practice.holdings.find((h) => h.ticker === "AAPL")).toEqual(before);
+    expect(after.sandbox.holdings.find((h) => h.ticker === "AAPL")).toEqual(before);
   });
 
   it("counts consecutive learning days ending today or yesterday", () => {

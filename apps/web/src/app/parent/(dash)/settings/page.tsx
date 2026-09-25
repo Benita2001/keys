@@ -45,7 +45,7 @@ export default function ParentSettingsPage() {
       <section id="allowance" className="mt-6 scroll-mt-24">
         <SectionHeader title="Allowance" />
         <Card className="p-4">
-          <p className="text-[14px] font-bold text-navy">Monthly allowance to Money Mode</p>
+          <p className="text-[14px] font-bold text-navy">Monthly allowance (Money on Solana Mainnet, once set up)</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {[0, 10, 20, 50].map((n) => (
               <Chip key={n} selected={s.allowanceAmount === n} onClick={() => set({ allowanceAmount: n })} className="h-11 px-4">

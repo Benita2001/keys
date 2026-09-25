@@ -3,18 +3,18 @@
 import { CheckCircle2, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { formatAmount } from "@/domain/format";
-import type { MoneyReceipt } from "@/state/store";
+import type { PracticeReceipt } from "@/state/store";
 import { ProofDetails, isVerifiableOnChain } from "./proof";
 import { BottomSheet } from "./ui/overlay";
 import { SectionHeader } from "./ui/primitives";
 
 /** Confirmed Money actions from the Family backend, each with its Devnet proof drawer. */
-export function DevnetReceipts({ receipts, nameOf }: { receipts: MoneyReceipt[]; nameOf: (ticker: string) => string }) {
-  const [open, setOpen] = useState<MoneyReceipt | null>(null);
+export function DevnetReceipts({ receipts, nameOf }: { receipts: PracticeReceipt[]; nameOf: (ticker: string) => string }) {
+  const [open, setOpen] = useState<PracticeReceipt | null>(null);
   if (!receipts.length) return null;
   return (
     <section className="mt-6" aria-labelledby="receipts-title">
-      <SectionHeader title={<span id="receipts-title">Money activity</span>} />
+      <SectionHeader title={<span id="receipts-title">Practice activity on Solana Devnet</span>} />
       <ul className="overflow-hidden rounded-[20px] border border-line-soft bg-surface">
         {receipts.slice(0, 8).map((r, i) => (
           <li key={r.id} className={i ? "border-t border-line-soft" : undefined}>
@@ -25,7 +25,7 @@ export function DevnetReceipts({ receipts, nameOf }: { receipts: MoneyReceipt[];
                   {formatAmount(r.amount)} · {nameOf(r.ticker)}
                 </span>
                 <span className="block text-[12px] font-semibold text-ink-2">
-                  {isVerifiableOnChain(r.proof) ? "Confirmed on Solana Devnet" : "Recorded"} ·{" "}
+                  {isVerifiableOnChain(r.proof) ? "Practice action confirmed on Solana Devnet" : "Recorded"} ·{" "}
                   {new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </span>
               </span>

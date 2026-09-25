@@ -161,7 +161,7 @@ export function AllocationChart({ holdings, className }: { holdings: HoldingView
           const len = Math.max(0, h.weight * c - (count > 1 ? 2 : 0));
           const el = (
             <circle
-              key={h.ticker}
+              key={`${h.lane ?? "x"}-${h.ticker}`}
               cx="60"
               cy="60"
               r={r}
@@ -218,7 +218,7 @@ export function CompanyCard({ asset, series, href }: { asset: MarketAsset; serie
         <div className="min-w-0 flex-1 leading-tight">
           <div className="flex items-center gap-1.5">
             <span className="truncate text-[15.5px] font-extrabold text-navy-strong">{asset.companyName}</span>
-            {asset.moneyModeStatus === "eligible" ? <Provenance kind="money-proof" className="text-[10px]" /> : null}
+            {asset.practiceLane === "devnet" ? <Provenance kind="money-proof" className="text-[10px]" /> : null}
           </div>
           <div className="text-[12px] font-bold text-ink-3">{asset.representation ? asset.shortDescription : asset.ticker}</div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
@@ -258,7 +258,14 @@ export function HoldingRow({ holding, href }: { holding: HoldingView; href: stri
       <Link href={href} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 py-2.5">
         <span className="flex min-w-0 items-center gap-2.5">
           <CompanyLogo asset={holding.asset} size={30} className="rounded-[10px]" />
-          <span className="truncate text-[14px] font-bold text-navy-strong">{holding.asset.companyName}</span>
+          <span className="min-w-0">
+            <span className="block truncate text-[14px] font-bold text-navy-strong">{holding.asset.companyName}</span>
+            {holding.lane ? (
+              <span className="block text-[11px] font-bold text-ink-3">
+                {holding.lane === "devnet" ? "Solana Devnet · KEYS" : "Sandbox · not on-chain"}
+              </span>
+            ) : null}
+          </span>
         </span>
         <span className="w-[76px] text-right text-[14px] font-bold text-navy tabular">{formatUsd(holding.value)}</span>
         <span className="flex w-[64px] items-center justify-end gap-0.5">

@@ -1,8 +1,8 @@
 "use client";
 
 import { CompanyLogo } from "@/components/finance";
-import { MandateSummaryCard, MoneyModeUnavailable, RequestStatusCard } from "@/components/mode";
-import { DemoMoneyTag } from "@/components/ui/feedback";
+import { KeyUnavailable, MandateSummaryCard, RequestStatusCard } from "@/components/mode";
+import { NetworkTag, Provenance } from "@/components/ui/feedback";
 import { Card, PageHeader, SectionHeader } from "@/components/ui/primitives";
 import { allAssetSnapshots } from "@/services";
 import { useStore } from "@/state/store";
@@ -16,13 +16,13 @@ export default function MyLimitsPage() {
 
   return (
     <div className="animate-rise mx-auto max-w-[720px]">
-      <PageHeader title="My Key" subtitle={`Key v${mandate.version} · set with ${state.profile.parentName}. Inside it, you decide.`} back="/profile" />
+      <PageHeader title="My Key" subtitle={`Practice Key v${mandate.version} on Solana Devnet · set with ${state.profile.parentName}. Inside it, you decide.`} back="/profile" />
       <div className="mt-4">
         {!state.profile.parentLinked ? (
-          <MoneyModeUnavailable reason="parent" />
+          <KeyUnavailable reason="parent" />
         ) : (
           <>
-            <MandateSummaryCard mandate={mandate} who="Standing Key" />
+            <MandateSummaryCard mandate={mandate} who="Practice Key" />
             <Card className="mt-4 p-4">
               <p className="text-[15px] font-extrabold text-navy-strong">How your freedom works</p>
               <ul className="mt-2 space-y-2 text-[14px] font-semibold text-ink-2">
@@ -30,7 +30,12 @@ export default function MyLimitsPage() {
                 <li><strong>At the boundary:</strong> adjust, practice, or ask for more room.</li>
                 <li><strong>Learning never mints permission:</strong> lessons, scores and results can inform a conversation, but only {state.profile.parentName} can create a wider standing Key.</li>
               </ul>
-              <DemoMoneyTag className="mt-3" />
+              <p className="mt-3 flex flex-wrap items-center gap-1.5 text-[12.5px] font-semibold text-ink-3">
+                <NetworkTag mode="practice" /> <Provenance kind="no-real-value" /> Enforced on-chain by the KEYS program.
+              </p>
+              <p className="mt-2 text-[12.5px] font-semibold text-ink-3">
+                Money on Solana Mainnet will get its own Key, set by {state.profile.parentName}, once Money Mode is verified.
+              </p>
             </Card>
             <Card className="mt-4 p-4">
               <p className="text-[15px] font-extrabold text-navy-strong">How independence grows</p>
@@ -47,7 +52,7 @@ export default function MyLimitsPage() {
             </Card>
 
             <section className="mt-5">
-              <SectionHeader title="Companies in Money Mode" />
+              <SectionHeader title="Companies in your Practice Key" />
               <ul className="grid grid-cols-2 gap-2 md:grid-cols-4">
                 {allowed.map((a) => (
                   <li key={a.ticker} className="flex items-center gap-2 rounded-[14px] border border-line-soft bg-surface p-2.5">

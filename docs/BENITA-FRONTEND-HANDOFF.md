@@ -1,5 +1,7 @@
 # KEYS — Benita Frontend Handoff
 
+> **Network architecture correction (2026-09-25):** Practice = Solana Devnet (the proven KEYS lane, practice capital, no real value). Money = Solana Mainnet (real value, parent-supervised), **setup required**. The Devnet AAPL lane below is the **Practice** lane. See `docs/CRESCO-NETWORK-ARCHITECTURE.md`.
+
 Date: 2026-09-24  
 Status: **V0.2 FROZEN / ALL CURRENT HACKATHON TECHNICAL GATES PASS**
 
@@ -211,3 +213,10 @@ These are product rules for the submission UI, not optional decoration:
 8. **Practice and Key money must be visually unmistakable.** Practice = virtual money. Money = Devnet demo capital under the Key.
 9. **Proof is secondary.** Solana/Pyth/nonce/signature details live in the proof drawer after the human interaction is understood.
 10. **Motion must have a job.** Use motion to explain continuity: boundary stays fixed, one-time permission appears, crosses once, becomes used, disappears.
+
+## Practice/Money network rule (2026-09-25)
+
+- Use `executionAdapterFor(mode)`; never call the Devnet runtime from Money.
+- Show `NetworkTag` ("Solana Devnet" / "Solana Mainnet") wherever capital or receipts appear.
+- Practice positions carry `lane: "devnet" | "sandbox"`; Money positions come only from Mainnet records.
+- No Money CTA unless `moneyModeStatus === "eligible"` (requires a verified asset route, a verified guardian account and a live Mainnet adapter; none today).

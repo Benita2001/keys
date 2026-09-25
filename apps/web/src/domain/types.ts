@@ -39,7 +39,14 @@ export type MarketAsset = {
   priceSource: "pyth" | "mock" | "prestocks" | "tessera";
   dataStatus: DataStatus;
   practiceEnabled: boolean;
-  moneyModeStatus: "demo" | "eligible" | "unavailable" | "unknown";
+  /**
+   * Money is Solana Mainnet only. "eligible" requires a verified asset route AND
+   * a verified guardian account AND a live Mainnet adapter (none today).
+   * "verification-required": the Mainnet product is verified but the account isn't.
+   */
+  moneyModeStatus: "eligible" | "verification-required" | "unavailable";
+  /** Where Practice happens for this asset: KEYS on Solana Devnet, or the local sandbox. */
+  practiceLane?: "devnet" | "sandbox";
   /** ISO time of the price observation when live. */
   asOf?: string;
   /** Private-market representation (PreStocks / Tessera). Never direct equity. */
@@ -86,6 +93,8 @@ export type Holding = {
   shares: number;
   /** Total cost basis in USD. */
   costBasis: number;
+  /** Practice positions only: KEYS on Solana Devnet, or the local sandbox. */
+  lane?: "devnet" | "sandbox";
 };
 
 export type HoldingView = Holding & {
@@ -98,12 +107,17 @@ export type HoldingView = Holding & {
 
 export type PortfolioView = {
   mode: Mode;
+  /** practice → solana-devnet (+ local sandbox rows); money → solana-mainnet. */
+  network: "solana-devnet" | "solana-mainnet";
+  realValue: boolean;
   holdings: HoldingView[];
   totalValue: number;
   totalCost: number;
   totalChange: number;
   totalChangePercent: number;
   cash: number;
+  /** Practice cash split by where it lives. */
+  cashBreakdown?: { devnet: number; sandbox: number };
   dataStatus: DataStatus;
 };
 
@@ -175,7 +189,11 @@ export type ReasonCode =
   /** Backend unreachable: fail closed, never ALLOW. */
   | "DECISION_UNAVAILABLE"
   /** Execute call outcome is not known yet (timeout / dropped connection). */
-  | "EXECUTION_UNCONFIRMED";
+  | "EXECUTION_UNCONFIRMED"
+  /** Money on Solana Mainnet isn't set up (program, identity, asset route, funding). */
+  | "MAINNET_SETUP_REQUIRED"
+  /** A proof/record from the wrong network reached this mode. Never shown as success. */
+  | "NETWORK_MISMATCH";
 
 export type MarketEvidence = {
   source: "PYTH_PRO" | "MOCK";
@@ -248,7 +266,7 @@ export type ProofStatus =
 /** executionProof — what actually happened. */
 export type ExecutionProof = {
   status: ProofStatus;
-  network?: "solana-devnet";
+  network?: "solana-devnet" | "solana-mainnet";
   signature?: string;
   programId?: string;
   mandateVersion?: number;
@@ -274,8 +292,10 @@ export type ExecutionProof = {
  * UNKNOWN  — the request may or may not have executed (timeout, dropped
  *            connection, malformed response). Never shown as success or
  *            failure; the user re-checks with the same idempotency key.
+ * SETUP_REQUIRED — the network's execution path doesn't exist yet (Money on
+ *            Mainnet today). Nothing was attempted.
  */
-export type ExecutionOutcome = "EXECUTED" | "REFUSED" | "PENDING" | "UNKNOWN";
+export type ExecutionOutcome = "EXECUTED" | "REFUSED" | "PENDING" | "UNKNOWN" | "SETUP_REQUIRED";
 
 export type ExecutionResult = {
   ok: boolean;

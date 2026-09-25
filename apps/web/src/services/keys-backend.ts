@@ -479,13 +479,44 @@ export function fetchFamilyState() {
     familyCode?: string;
     /** In-flight executions the family ledger is holding against balance and period. */
     reservations?: Record<string, { notional: number; asset: string; createdAt: string }>;
+    /** Newer backends: explicit Practice (Devnet) namespace with chain-authoritative period. */
+    practice?: PracticeNamespace;
+    /** Newer backends: Money (Mainnet) namespace. SETUP_REQUIRED today. */
+    money?: { network: "solana-mainnet"; realValue: true; status: string; balance: number | null; requirements?: string[] };
   }>("/api/v0.2/family/state");
+}
+
+export type PracticePeriod = {
+  source: "SOLANA_DEVNET_ASSET_RULE" | "FAMILY_LEDGER_ONLY";
+  startedAt: string | null;
+  seconds: number | null;
+  resetsAt?: string | null;
+  onChainSpent: number | null;
+  ledgerSpent: number;
+  held: number;
+  maxPeriod: number;
+  remaining: number;
+};
+
+export type PracticeNamespace = {
+  mode: "practice";
+  network: "solana-devnet";
+  realValue: false;
+  programId: string;
+  capital: "DEMO_TOKEN";
+  balance: number;
+  availableBalance: number;
+  holdings: { ticker: string; shares: number; costBasis: number }[];
+  period: PracticePeriod;
 }
 
 /** A confirmed Money execution as recorded by the Family Durable Object. */
 export type BackendActivity = {
   id: string;
   kind: string;
+  mode?: "practice";
+  network?: "solana-devnet";
+  realValue?: false;
   ticker: string;
   amount: number;
   shares: number;

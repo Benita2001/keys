@@ -23,6 +23,35 @@ const INITIAL = {
   executionResults: {}
 };
 
+/**
+ * Network truth for everything this Durable Object records today.
+ * The `balances.money` / `moneyHoldings` / MONEY_EXECUTION storage names are
+ * historical: they hold PRACTICE capital on Solana Devnet (demo SPL token).
+ * Real-value Money (Solana Mainnet) is not stored here.
+ */
+export const PRACTICE_DEVNET = Object.freeze({
+  mode: "practice",
+  network: "solana-devnet",
+  realValue: false
+});
+
+/** An unsent reservation older than this was abandoned by a crashed/failed request. */
+export const RESERVATION_TTL_MS = 3 * 60 * 1000;
+
+/** Drop unsent reservations past their TTL. Sent ones wait for chain reconciliation. */
+export function sweepStaleReservations(state, nowMs = Date.now()) {
+  let released = 0;
+  for (const [key, reservation] of Object.entries(state.reservations || {})) {
+    if (reservation.pendingProof?.signature) continue;
+    const age = nowMs - Date.parse(reservation.createdAt || 0);
+    if (Number.isFinite(age) && age > RESERVATION_TTL_MS) {
+      delete state.reservations[key];
+      released += 1;
+    }
+  }
+  return released;
+}
+
 const copy = (x) => JSON.parse(JSON.stringify(x));
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -60,7 +89,35 @@ export class FamilyState {
       : {};
     const state = await this.load();
 
-    if (method === "GET" && path === "/state") return json(state);
+    if (method === "GET" && path === "/state") {
+      if (sweepStaleReservations(state) > 0) await this.save(state);
+      return json(state);
+    }
+
+    // Record the signature of a signed transaction right BEFORE it is sent.
+    if (method === "POST" && path === "/reservation/sending") {
+      const key = String(body.idempotencyKey || "");
+      const reservation = state.reservations[key];
+      if (!reservation) return json({ error: "RESERVATION_NOT_FOUND" }, 404);
+      reservation.pendingProof = body.pendingProof || null;
+      reservation.sendingAt = now();
+      await this.save(state);
+      return json({ reservation });
+    }
+
+    // Release a reservation that provably did not execute. Idempotent.
+    // A reservation with a signature is only released with `force` after the
+    // caller has checked the chain (EXPIRED / FAILED).
+    if (method === "POST" && path === "/release") {
+      const key = String(body.idempotencyKey || "");
+      const reservation = state.reservations[key];
+      if (!reservation) return json({ released: false, reason: "NOT_HELD" });
+      if (reservation.pendingProof?.signature && body.force !== true)
+        return json({ error: "RESERVATION_SENT_NEEDS_RECONCILE", reservation }, 409);
+      delete state.reservations[key];
+      await this.save(state);
+      return json({ released: true, reason: String(body.reason || "RELEASED") });
+    }
 
     if (method === "POST" && path === "/session") {
       const role = body.role === "guardian" ? "guardian" : "child";
@@ -180,6 +237,8 @@ export class FamilyState {
               : "REFUSED",
         decidedAt: now(),
         guardianNote: String(body.note || "").slice(0, 140),
+        // Kept so a widen that lands on-chain can be reconciled later.
+        newLimits: d === "WIDEN_MANDATE" ? body.newLimits || null : null,
         usedAt: null
       };
       await this.save(state);
@@ -268,6 +327,7 @@ export class FamilyState {
 
       if (state.executionResults[key])
         return json({ replay: true, result: state.executionResults[key] });
+      sweepStaleReservations(state);
       if (state.reservations[key])
         return json({ replay: true, reservation: state.reservations[key] });
 
@@ -359,7 +419,8 @@ export class FamilyState {
             state.moneyHoldings.push({
               ticker: reservation.asset,
               shares,
-              costBasis: amount
+              costBasis: amount,
+              ...PRACTICE_DEVNET
             });
           }
         }
@@ -367,6 +428,7 @@ export class FamilyState {
         state.activity.unshift({
           id: "act_" + crypto.randomUUID(),
           kind: "MONEY_EXECUTION",
+          ...PRACTICE_DEVNET,
           ticker: reservation.asset,
           amount,
           shares,

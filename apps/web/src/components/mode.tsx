@@ -19,7 +19,8 @@ import { formatAmount, formatPercent, formatUsd } from "@/domain/format";
 import type { ActionEvaluation, BoundaryRequest, CurrentMandate, Mode, PortfolioView } from "@/domain/types";
 import { useStore } from "@/state/store";
 import { PlantPot } from "./illustrations/objects";
-import { DataStatusTag, DemoMoneyTag, Provenance, Skeleton } from "./ui/feedback";
+import { DataStatusTag, NetworkTag, Provenance, Skeleton } from "./ui/feedback";
+import { MONEY_REQUIREMENTS } from "@/domain/network";
 import { BottomSheet } from "./ui/overlay";
 import { ActionButton, Card, cn, IconCircle } from "./ui/primitives";
 
@@ -89,45 +90,30 @@ export function ModeSwitch({ className }: { className?: string }) {
   );
 }
 
-/** First-time Money Mode activation explainer. */
+/** First-time Money Mode explainer: real money on Solana Mainnet, parent supervised. */
 export function MoneyIntroSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { state } = useStore();
-  const { mandate, profile } = state;
+  const { profile } = state;
   return (
-    <BottomSheet open={open} onClose={onClose} title="Your Key" description="Standing room to act on your own, with a clear family boundary.">
-      {profile.parentLinked ? (
-        <>
-          <ul className="space-y-3">
-            <IntroRow icon={<CheckCircle2 className="size-5" />} tone="green" title="Inside your Key, just go">
-              Act up to {formatAmount(mandate.maxActionNotional)} at a time. In-bounds actions need no parent approval.
-            </IntroRow>
-            <IntroRow icon={<SlidersHorizontal className="size-5" />} tone="blue" title="At the boundary, ask">
-              {profile.parentName} can say not this time, allow this request once, or create a wider standing Key.
-            </IntroRow>
-            <IntroRow icon={<Dumbbell className="size-5" />} tone="lavender" title="Practice is always open">
-              Try anything first with practice money.
-            </IntroRow>
-          </ul>
-          <div className="mt-4 rounded-[14px] bg-yellow-soft p-3 text-[13px] font-semibold text-[#7a5207]">
-            <DemoMoneyTag className="mb-1.5" />
-            <p>
-              Money Mode uses Devnet test capital and a demo SPL token. It is not connected to a bank, broker or custodian, and it does not buy real securities.
-            </p>
-          </div>
-          <ActionButton className="mt-5" onClick={onClose} data-autofocus>
-            Got it
-          </ActionButton>
-        </>
-      ) : (
-        <>
-          <p className="text-[14px] font-semibold text-ink-2">
-            Money Mode needs a parent or guardian to set your limits first. Until then, you can keep practicing.
-          </p>
-          <ActionButton className="mt-5" href="/profile/parent" arrow>
-            Connect a parent or guardian
-          </ActionButton>
-        </>
-      )}
+    <BottomSheet open={open} onClose={onClose} title="Money · Solana Mainnet" description="Real money. Parent-supervised.">
+      <ul className="space-y-3">
+        <IntroRow icon={<ShieldCheck className="size-5" />} tone="green" title="Real money, real assets">
+          Money Mode is for real funded investing on Solana Mainnet, supervised by {profile.parentName || "your parent or guardian"}.
+        </IntroRow>
+        <IntroRow icon={<SlidersHorizontal className="size-5" />} tone="blue" title="The same Key rules">
+          It works like your Practice Key: act freely inside the limits, ask at the boundary.
+        </IntroRow>
+        <IntroRow icon={<Dumbbell className="size-5" />} tone="lavender" title="Practice first">
+          Practice uses real market prices on Solana Devnet with practice capital. It has no real financial value.
+        </IntroRow>
+      </ul>
+      <div className="mt-4 rounded-[14px] bg-yellow-soft p-3 text-[13px] font-semibold text-[#7a5207]">
+        <Provenance kind="verification-required" className="mb-1.5" />
+        <p>Money Mode requires parent verification and a supported Mainnet account. It isn&apos;t set up yet, so nothing can be invested here.</p>
+      </div>
+      <ActionButton className="mt-5" onClick={onClose} data-autofocus>
+        Got it
+      </ActionButton>
     </BottomSheet>
   );
 }
@@ -150,7 +136,7 @@ function IntroRow({ icon, tone, title, children }: { icon: React.ReactNode; tone
 /* Portfolio hero cards                                                 */
 /* ------------------------------------------------------------------ */
 
-export function PracticeHeroCard({ view, href = "/portfolio" }: { view: PortfolioView | null; href?: string }) {
+export function PracticeHeroCard({ view, mandate, href = "/portfolio" }: { view: PortfolioView | null; mandate?: CurrentMandate; href?: string }) {
   return (
     <Link
       href={href}
@@ -161,7 +147,10 @@ export function PracticeHeroCard({ view, href = "/portfolio" }: { view: Portfoli
         <path d="M0 80 L40 64 L80 70 L120 46 L160 54 L200 30 L240 36 L300 8 V90 H0 Z" fill="#fff" opacity=".12" />
       </svg>
       <PlantPot className="absolute -bottom-1 right-2 size-[92px]" />
-      <p className="relative text-[15px] font-bold text-white">Practice Portfolio</p>
+      <div className="relative flex items-center justify-between gap-2">
+        <p className="text-[15px] font-bold text-white">Practice Portfolio</p>
+        <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-extrabold">Solana Devnet</span>
+      </div>
       {view ? (
         <>
           <p className="relative mt-1 text-[34px] font-extrabold leading-none tracking-[-0.01em] tabular">{formatUsd(view.totalValue)}</p>
@@ -175,31 +164,34 @@ export function PracticeHeroCard({ view, href = "/portfolio" }: { view: Portfoli
           <div className="h-5 w-16 rounded-full bg-white/25" />
         </div>
       )}
-      <p className="relative mt-3 text-[11.5px] font-bold text-white">Virtual money · sample prices</p>
+      {mandate ? (
+        <p className="relative mt-3 max-w-[70%] text-[12px] font-bold text-white">
+          {mandate.status === "ACTIVE"
+            ? `Key: up to ${formatAmount(mandate.maxActionNotional)} per action · ${formatAmount(remainingThisPeriod(mandate))} left ${mandate.periodLabel}`
+            : "Your Key is paused by your parent"}
+        </p>
+      ) : null}
+      <p className="relative mt-1.5 text-[11.5px] font-bold text-white">Practice capital · no real financial value</p>
     </Link>
   );
 }
 
-export function MoneyHeroCard({ view, mandate, balance }: { view: PortfolioView | null; mandate: CurrentMandate; balance: number }) {
-  const invested = view?.totalValue ?? 0;
+/** Money on Solana Mainnet. No balance is shown until real Mainnet funding exists. */
+export function MoneyHeroCard({ parentName }: { parentName: string }) {
   return (
     <Link
       href="/portfolio"
       className="relative block overflow-hidden rounded-[24px] bg-gradient-to-br from-[#16357a] via-[#102b63] to-[#0b2152] p-5 text-white shadow-[0_10px_24px_rgba(16,43,99,0.28)]"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <p className="text-[15px] font-bold text-white">Money Portfolio</p>
-        <DemoMoneyTag />
+        <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-extrabold">Solana Mainnet</span>
       </div>
-      <p className="mt-1 text-[34px] font-extrabold leading-none tracking-[-0.01em] tabular">{formatUsd(invested + balance)}</p>
-      <p className="mt-1.5 text-[13px] font-semibold text-white">
-        {formatUsd(balance)} available to invest · {formatUsd(invested)} invested
-      </p>
-      <div className="mt-4 flex items-center gap-2 rounded-[14px] bg-white/10 px-3 py-2 text-[12.5px] font-bold">
-        <ShieldCheck aria-hidden className="size-4 text-[#7be49f]" />
-        {mandate.status === "ACTIVE"
-          ? `Up to ${formatAmount(mandate.maxActionNotional)} per action · ${formatAmount(remainingThisPeriod(mandate))} left ${mandate.periodLabel}`
-          : "Money Mode is paused by your parent"}
+      <p className="mt-2 text-[22px] font-extrabold leading-tight">Setup required</p>
+      <p className="mt-1.5 text-[13px] font-semibold text-white">Real money · parent supervised</p>
+      <div className="mt-4 flex items-start gap-2 rounded-[14px] bg-white/10 px-3 py-2 text-[12.5px] font-bold">
+        <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0 text-[#7be49f]" />
+        Money Mode requires parent verification and a supported Mainnet account. {parentName} sets it up.
       </div>
     </Link>
   );
@@ -213,7 +205,8 @@ export function HeroSkeleton() {
 /* Money + Mandate                                                      */
 /* ------------------------------------------------------------------ */
 
-export function MoneyBalanceCard({ balance, action, caption = "Available to invest" }: { balance: number; action?: React.ReactNode; caption?: string }) {
+/** Practice capital on Solana Devnet (no real value). */
+export function PracticeBalanceCard({ balance, action, caption = "Available to invest" }: { balance: number; action?: React.ReactNode; caption?: string }) {
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">
@@ -221,13 +214,13 @@ export function MoneyBalanceCard({ balance, action, caption = "Available to inve
           <CircleDollarSign aria-hidden className="size-6" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="whitespace-nowrap text-[12.5px] font-bold text-ink-2">Money Mode balance</p>
+          <p className="whitespace-nowrap text-[12.5px] font-bold text-ink-2">Practice capital</p>
           <p className="text-[26px] font-extrabold leading-tight text-navy-strong tabular">{formatUsd(balance)}</p>
         </div>
         {action}
       </div>
       <p className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px] font-semibold text-ink-2">
-        {caption} <DemoMoneyTag />
+        {caption} <NetworkTag mode="practice" /> <Provenance kind="no-real-value" />
       </p>
     </Card>
   );
@@ -483,19 +476,20 @@ export function RequestStatusCard({ request, companyName }: { request: BoundaryR
   return <Card className="flex items-center gap-3 p-3.5">{body}</Card>;
 }
 
-export function MoneyModeUnavailable({ reason }: { reason: "parent" | "paused" }) {
+/** Devnet practice lane unavailable: no parent link, or the Key is paused. */
+export function KeyUnavailable({ reason }: { reason: "parent" | "paused" }) {
   return (
     <Card className="p-5 text-center">
       <IconCircle tone={reason === "paused" ? "yellow" : "blue"} size={52} className="mx-auto">
         {reason === "paused" ? <PauseCircle className="size-6" /> : <UserPlus className="size-6" />}
       </IconCircle>
       <p className="mt-3 text-[17px] font-extrabold text-navy-strong">
-        {reason === "paused" ? "Money Mode is paused" : "Connect a parent or guardian"}
+        {reason === "paused" ? "Your Key is paused" : "Connect a parent or guardian"}
       </p>
       <p className="mx-auto mt-1 max-w-[32ch] text-[14px] font-semibold text-ink-2">
         {reason === "paused"
-          ? "Your parent or guardian paused Money Mode for now. Your Practice portfolio still works."
-          : "Money Mode uses family money, so a parent or guardian sets your limits first."}
+          ? "Your parent or guardian paused your Key for now. Sandbox practice still works."
+          : "Practice on Solana Devnet uses your family Key, so a parent or guardian sets your limits first."}
       </p>
       {reason === "parent" ? (
         <ActionButton className="mx-auto mt-4 max-w-[280px]" href="/profile/parent" arrow>
@@ -537,14 +531,14 @@ export function ArrowLink({ href, children }: { href: string; children: React.Re
 }
 
 /**
- * Money surfaces wait for backend truth. Nothing Money-related renders from
- * local defaults while connecting, and a failed sync fails closed.
+ * Devnet practice surfaces wait for backend truth. Nothing chain-related renders
+ * from local defaults while connecting, and a failed sync fails closed.
  */
-export function MoneySyncState({ status, onRetry }: { status: string; onRetry: () => void }) {
+export function PracticeSyncState({ status, onRetry }: { status: string; onRetry: () => void }) {
   if (status === "connecting") {
     return (
       <div role="status" aria-busy="true" className="rounded-[20px] border border-line-soft bg-surface p-4">
-        <p className="text-[14px] font-extrabold text-navy-strong">Connecting to your family&apos;s Money account…</p>
+        <p className="text-[14px] font-extrabold text-navy-strong">Connecting to your Practice account on Solana Devnet…</p>
         <div className="skeleton mt-3 h-4 w-2/3 rounded-[8px]" />
         <div className="skeleton mt-2 h-4 w-1/2 rounded-[8px]" />
       </div>
@@ -552,13 +546,40 @@ export function MoneySyncState({ status, onRetry }: { status: string; onRetry: (
   }
   return (
     <div role="alert" className="rounded-[20px] border border-line-soft bg-surface p-4">
-      <p className="text-[15px] font-extrabold text-navy-strong">We can&apos;t reach your family&apos;s Money account.</p>
+      <p className="text-[15px] font-extrabold text-navy-strong">Solana is taking longer than expected.</p>
       <p className="mt-1 text-[13.5px] font-semibold text-ink-2">
-        Nothing will be invested until it&apos;s back. Practice still works.
+        Nothing will happen on Devnet until it&apos;s back. Sandbox practice still works.
       </p>
       <ActionButton variant="ghost" size="sm" className="mt-3" onClick={onRetry}>
-        Try again
+        Check again
       </ActionButton>
     </div>
+  );
+}
+
+/** Money on Solana Mainnet isn't set up: say exactly what is missing. Never a Devnet fallback. */
+export function MoneySetupRequired({ className }: { className?: string }) {
+  return (
+    <Card className={cn("p-5", className)}>
+      <div className="flex flex-wrap items-center gap-2">
+        <Provenance kind="mainnet" />
+        <Provenance kind="verification-required" />
+      </div>
+      <p className="mt-3 text-[17px] font-extrabold text-navy-strong">Money Mode isn&apos;t set up yet</p>
+      <p className="mt-1 text-[14px] font-semibold text-ink-2">
+        Money Mode requires parent verification and a supported Mainnet account.
+      </p>
+      <ul className="mt-3 space-y-1.5">
+        {MONEY_REQUIREMENTS.map((r) => (
+          <li key={r.key} className="flex items-start gap-2 text-[13px] font-semibold text-ink-2">
+            <span aria-hidden className="mt-1 size-2 shrink-0 rounded-full border-2 border-ink-3" />
+            <span>
+              {r.label} <span className="sr-only">: not done yet</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-[12.5px] font-semibold text-ink-3">Practice on Solana Devnet stays open the whole time.</p>
+    </Card>
   );
 }

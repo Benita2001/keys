@@ -1,93 +1,83 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { assetRuleFor } from "@/domain/policy";
-import type { BoundaryRequest } from "@/domain/types";
+import type { ActionEvaluation } from "@/domain/types";
 import { DEMO_MANDATE } from "@/mocks/family";
 import { MOCK_ASSETS } from "@/mocks/market";
-import { boundaryRequests, getCapabilities, moneyExecution, practiceExecution } from ".";
+import { boundaryRequests, funding, getCapabilities, marketData, moneyMainnetExecution, practiceDevnetExecution, practiceSandboxExecution } from ".";
 
 const asset = (t: string) => MOCK_ASSETS.find((a) => a.ticker === t)!;
-const input = (ticker: string, amount: number, extra: Partial<Parameters<typeof moneyExecution.execute>[0]> = {}) => ({
+const input = (ticker: string, amount: number) => ({
   mandate: DEMO_MANDATE,
   assetRule: assetRuleFor(DEMO_MANDATE, ticker),
   asset: asset(ticker),
   type: "BUY" as const,
   amount,
   balance: 50,
-  ...extra,
 });
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true, advanceTimeDelta: 50 });
 });
 
-describe("capabilities", () => {
-  it("reports demo-only money, funding and execution", () => {
+describe("capabilities (no backend configured)", () => {
+  it("practice is sandbox-only and Money is Mainnet setup-required", () => {
     const caps = getCapabilities();
-    expect(caps.moneyMode).toBe("demo");
-    expect(caps.funding).toBe("demo");
-    expect(caps.execution).toBe("demo-not-executed");
+    expect(caps.practice).toBe("sandbox-only");
+    expect(caps.practiceFunding).toBe("none");
+    expect(caps.money).toBe("mainnet-setup-required");
   });
 });
 
-describe("money execution", () => {
-  it("executes in-bounds actions immediately and labels the proof as not executed", async () => {
-    const res = await moneyExecution.execute(input("AAPL", 5));
-    expect(res.ok).toBe(true);
-    expect(res.evaluation.guardianApprovalRequired).toBe(false);
-    expect(res.proof?.status).toBe("DEMO_NOT_EXECUTED");
-    expect(res.proof?.signature).toBeUndefined();
-  });
-
-  it("refuses over-limit actions with a boundary request", async () => {
-    const res = await moneyExecution.execute(input("AAPL", 20));
+describe("Practice on Devnet without a backend", () => {
+  it("has no Devnet lane: nothing executes and no proof is invented", async () => {
+    expect(practiceDevnetExecution.supports(asset("AAPL"))).toBe(false);
+    const res = await practiceDevnetExecution.execute(input("AAPL", 5));
     expect(res.ok).toBe(false);
-    expect(res.evaluation.reasonCode).toBe("MANDATE_LIMIT_EXCEEDED");
-    expect(res.evaluation.boundaryRequestAvailable).toBe(true);
-  });
-
-  it("refuses assets that are unavailable in Money Mode", async () => {
-    const res = await moneyExecution.execute(input("META", 5, { assetRule: null }));
-    expect(res.evaluation.reasonCode).toBe("ASSET_UNAVAILABLE");
-  });
-
-  it("refuses when the balance is too low even inside the Mandate", async () => {
-    const res = await moneyExecution.execute(input("AAPL", 8, { balance: 5 }));
-    expect(res.evaluation.reasonCode).toBe("INSUFFICIENT_BALANCE");
-  });
-
-  it("refuses when Money Mode is paused", async () => {
-    const paused = { ...DEMO_MANDATE, status: "PAUSED" as const };
-    const res = await moneyExecution.execute(input("AAPL", 5, { mandate: paused, assetRule: assetRuleFor(paused, "AAPL") }));
-    expect(res.evaluation.reasonCode).toBe("MANDATE_NOT_ACTIVE");
-  });
-
-  it("an ALLOW_ONCE decision covers exactly the requested action and nothing larger", async () => {
-    const allowOnce: BoundaryRequest = {
-      id: "br_1",
-      status: "ALLOWED_ONCE",
-      mandateVersion: DEMO_MANDATE.version,
-      mandateNonce: DEMO_MANDATE.nonce,
-      asset: "AAPL",
-      actionType: "BUY",
-      requestedNotional: 20,
-      standingLimit: 10,
-      reasonCode: "MANDATE_LIMIT_EXCEEDED",
-      reason: "test",
-      createdAt: new Date().toISOString(),
-    };
-    expect((await moneyExecution.execute(input("AAPL", 20, { allowOnce }))).ok).toBe(true);
-    expect((await moneyExecution.execute(input("AAPL", 25, { allowOnce }))).ok).toBe(false);
-    expect((await moneyExecution.execute(input("NVDA", 20, { allowOnce }))).ok).toBe(false);
-    const stale = { ...allowOnce, mandateNonce: DEMO_MANDATE.nonce - 1 };
-    expect((await moneyExecution.execute(input("AAPL", 20, { allowOnce: stale }))).ok).toBe(false);
+    expect(res.proof).toBeUndefined();
   });
 });
 
-describe("guardian decisions", () => {
-  const base = async () => {
-    const evaluation = (await moneyExecution.evaluate(input("AAPL", 20)));
-    return boundaryRequests.create({ mandate: DEMO_MANDATE, evaluation, asset: "AAPL", type: "BUY", amount: 20, reason: "x".repeat(300) });
+describe("Money on Mainnet", () => {
+  it("is hard-gated: SETUP_REQUIRED without contacting any network", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    try {
+      expect(moneyMainnetExecution.supports(asset("AAPL"))).toBe(false);
+      const evaluation = await moneyMainnetExecution.evaluate(input("AAPL", 5));
+      expect(evaluation.reasonCode).toBe("MAINNET_SETUP_REQUIRED");
+      const res = await moneyMainnetExecution.execute(input("AAPL", 5));
+      expect(res.outcome).toBe("SETUP_REQUIRED");
+      expect(res.ok).toBe(false);
+      expect(res.proof).toBeUndefined();
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("never fakes real funding", async () => {
+    await expect(funding.depositUsdc({ amount: 10 })).rejects.toThrow(/Mainnet account/);
+  });
+
+  it("no asset is Money-eligible today; AAPL is verification-required, others unavailable", async () => {
+    const assets = await marketData.listAssets();
+    expect(assets.some((a) => a.moneyModeStatus === "eligible")).toBe(false);
+    expect(assets.find((a) => a.ticker === "AAPL")?.moneyModeStatus).toBe("verification-required");
+    expect(assets.filter((a) => a.ticker !== "AAPL").every((a) => a.moneyModeStatus === "unavailable")).toBe(true);
+  });
+});
+
+describe("guardian decisions (offline Key preview)", () => {
+  const refusal: ActionEvaluation = {
+    decision: "REFUSE",
+    reasonCode: "MANDATE_LIMIT_EXCEEDED",
+    requestedNotional: 20,
+    standingLimit: 10,
+    boundaryRequestAvailable: true,
+    source: "local-preview",
   };
+  const base = () =>
+    boundaryRequests.create({ mandate: DEMO_MANDATE, evaluation: refusal, asset: "AAPL", type: "BUY", amount: 20, reason: "x".repeat(300) });
 
   it("keeps the child's reason short", async () => {
     const req = await base();
@@ -117,10 +107,12 @@ describe("guardian decisions", () => {
   });
 });
 
-describe("practice execution", () => {
-  it("uses virtual cash and never touches Money state", async () => {
-    const res = await practiceExecution.buy({ asset: asset("TSLA"), amount: 50, cash: 100 });
+describe("Practice sandbox", () => {
+  it("uses sandbox cash and is labeled local, never on-chain", async () => {
+    const res = await practiceSandboxExecution.buy({ asset: asset("TSLA"), amount: 50, cash: 100 });
     expect(res.ok).toBe(true);
     expect(res.proof?.status).toBe("PRACTICE_LOCAL");
+    expect(res.proof?.network).toBeUndefined();
+    expect(res.proof?.signature).toBeUndefined();
   });
 });

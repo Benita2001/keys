@@ -10,8 +10,8 @@ export default function ReadyStep() {
   const { state } = useStore();
   const rows = [
     { icon: <Sparkles className="size-5" />, tone: "blue" as const, title: "Learn in small steps", body: "Short lessons with real companies." },
-    { icon: <Dumbbell className="size-5" />, tone: "green" as const, title: "Practice with virtual money", body: "Try ideas with no real money at risk." },
-    { icon: <ShieldCheck className="size-5" />, tone: "lavender" as const, title: "Money Mode, with family limits", body: "A parent sets the limits. Inside them, you decide." },
+    { icon: <Dumbbell className="size-5" />, tone: "green" as const, title: "Practice on Solana Devnet", body: "Real market conditions. Practice capital. No real financial value." },
+    { icon: <ShieldCheck className="size-5" />, tone: "lavender" as const, title: "Money on Solana Mainnet, later", body: "Real money, parent-supervised, once your parent sets it up." },
   ];
   return (
     <OnboardingFrame

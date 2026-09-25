@@ -1,5 +1,7 @@
 # Cresco — Backend Integration Handoff
 
+> **Network architecture correction (2026-09-25):** Practice = Solana Devnet (the proven KEYS lane, practice capital, no real value). Money = Solana Mainnet (real value, parent-supervised), **setup required**. The Devnet AAPL lane below is the **Practice** lane. See `docs/CRESCO-NETWORK-ARCHITECTURE.md`.
+
 Audience: Benita + KEYS backend owner.  
 Updated: 2026-09-24.  
 Contract: **v0.2 FROZEN** — `docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`.
@@ -192,3 +194,28 @@ Remaining SAMPLE data: prices for the 6 companies without a configured or discov
 3. **Stuck guardian decision.** Request `br_b1275d09-84ac-4bea-87e9-bedfb8b4b718` is in `WIDEN_PENDING_CHAIN` although the widen landed on-chain (Mandate v6 / nonce 5, max period $100). Needs a reconcile path (`complete-widen` retry or a sweep that reads the chain).
 4. **Ledger vs chain period spend.** DO ledger says $15 spent; the Devnet asset rule says $52.997 (30-day rolling window started 2026-09-24 17:35 UTC). The frontend shows `max(ledger + held, chain)` so it never offers room the chain will refuse. Please expose `periodStartedAt` / `periodSeconds` in `/demo/runtime` and reconcile the ledger from chain.
 5. **Shared demo state was changed during QA:** guardian widened the period limit from $50 to $100 through the UI (committed on Devnet).
+
+## Network correction status (2026-09-25)
+
+Items 1–4 in the list above are **fixed in code** on `feat/cresco-devnet-practice-mainnet-money` (see the reliability table in `docs/CRESCO-NETWORK-ARCHITECTURE.md`, 10 new backend tests). They go live when the Worker is redeployed; item 1 also needs a dedicated Devnet RPC secret:
+
+```bash
+npx wrangler secret put SOLANA_DEVNET_RPC_URL            # e.g. an authenticated Helius/Triton/QuickNode Devnet URL
+npx wrangler secret put SOLANA_DEVNET_RPC_FALLBACK_URLS  # optional, comma-separated
+```
+
+`/family/state` now also returns explicit namespaces:
+
+- `practice`: `{ mode: "practice", network: "solana-devnet", realValue: false, programId, capital: "DEMO_TOKEN", balance, availableBalance, holdings, activity, period }`
+- `money`: `{ network: "solana-mainnet", realValue: true, status: "SETUP_REQUIRED", balance: null, requirements }`
+
+The historical `balances.money` / `moneyHoldings` / `MONEY_EXECUTION` storage names hold **Devnet practice capital**; new records are tagged `mode: "practice", network: "solana-devnet", realValue: false`. Nothing Mainnet is stored in the Durable Object.
+
+Observed 2026-09-25: CI smoke runs execute on the shared Devnet Mandate without going through the Family ledger (e.g. 13:27–14:55 UTC), and the Key was later narrowed to a $50 period (v7). The chain-authoritative period rule keeps the UI truthful through both.
+
+Live proof from the Cresco UI (2026-09-25, Practice on Devnet):
+
+- boundary refusal: `$5 AAPL` → `PERIOD_LIMIT_EXCEEDED` (Key v7, period used on-chain);
+- request `br_ea50b50f-4160-4aea-8edc-6b10c4b46f68` → guardian **ALLOW_ONCE**; grant `4TFtKrEKmBQeFTnmmaRnYd4ykimsbQjq2CBBMFhEYFFspobCUhQkstbgV1cvrj4eBgWpyX5F4C5uQcEBR5UtTRsp`, receipt `HLBPr57qA3rbNgsMDv54aijNgcYcxPd6Z1E8HNYZPg6n`;
+- one execution `H4cXXyFtE9Ug5LL9eZjsdLP6V1bbm8b2qm8ozLrKbYh1LTqAo4THkC5AwKxnEsqAefw5epatDvBkyXZ1HhPFvgi` (`ExecuteOnceWithPyth`, slot 504044487, Pyth feed 922 at $337.45), standing Key unchanged (v7);
+- reuse with the same allowance → **REFUSE / AllowanceAlreadyUsed**; receipt account `used = true` on-chain.

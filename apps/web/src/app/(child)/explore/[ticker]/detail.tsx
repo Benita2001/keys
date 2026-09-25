@@ -21,8 +21,8 @@ import { useEffect, useState } from "react";
 import { CompanyHero } from "@/components/illustrations/scenes";
 import { ThinkingKid } from "@/components/illustrations/people";
 import { CompanyLogo, PriceChange, PriceChart } from "@/components/finance";
-import { MoneyModeUnavailable, MoneySyncState, ModeSwitch } from "@/components/mode";
-import { DataStatusTag, DemoMoneyTag, EmptyState, ErrorState, Provenance, Skeleton } from "@/components/ui/feedback";
+import { KeyUnavailable, ModeSwitch, PracticeSyncState } from "@/components/mode";
+import { DataStatusTag, EmptyState, ErrorState, NetworkTag, Provenance, Skeleton } from "@/components/ui/feedback";
 import { BottomSheet } from "@/components/ui/overlay";
 import { ActionButton, Card, IconCircle, PeriodSelector } from "@/components/ui/primitives";
 import { formatAmount, formatUsd } from "@/domain/format";
@@ -30,7 +30,8 @@ import { assetRuleFor, evaluateBoundedAction, explainEvaluation, maxAllowedNow }
 import type { MarketAsset, Period, ThingToKnow } from "@/domain/types";
 import { useAsset, useSeries } from "@/hooks/data";
 import { MONEY_PROOF_TICKER } from "@/services";
-import { useMoneyTruth, useStore } from "@/state/store";
+import { MAINNET_ASSETS } from "@/domain/network";
+import { usePracticeChain, useStore } from "@/state/store";
 
 const THING_ICONS: Record<ThingToKnow["icon"], React.ComponentType<{ className?: string }>> = {
   devices: MonitorSmartphone,
@@ -112,7 +113,7 @@ function Loaded({ asset }: { asset: MarketAsset }) {
                   : `${asset.ticker} · ${asset.tokenizedTicker} on Solana`}
               </p>
             </div>
-            <Provenance kind={asset.moneyModeStatus === "eligible" ? "money-proof" : "learn-practice"} />
+            <Provenance kind={asset.practiceLane === "devnet" ? "money-proof" : "learn-practice"} />
           </div>
           <div className="mt-3 flex flex-wrap items-end gap-x-2 gap-y-1">
             <span className="text-[30px] font-black leading-none text-navy-strong tabular">{formatUsd(asset.price)}</span>
@@ -225,10 +226,15 @@ function Loaded({ asset }: { asset: MarketAsset }) {
   );
 }
 
-/** CTA area. Practice → add; Money → evaluated against the active Mandate. */
+/**
+ * CTA area.
+ * Practice: Devnet lane (Key-enforced KEYS execution) where it exists, sandbox otherwise.
+ * Money: Solana Mainnet only. No active Money button until the asset route, the
+ * guardian account and the Mainnet adapter are all verified.
+ */
 function ActionPanel({ asset, onLearn }: { asset: MarketAsset; onLearn: () => void }) {
   const { state } = useStore();
-  const money = useMoneyTruth();
+  const chain = usePracticeChain();
   const { mandate } = state;
   const learn = (
     <ActionButton variant="secondary" onClick={onLearn} className="mt-2.5">
@@ -236,39 +242,50 @@ function ActionPanel({ asset, onLearn }: { asset: MarketAsset; onLearn: () => vo
     </ActionButton>
   );
 
-  if (state.mode === "practice" || asset.representation) {
+  if (state.mode === "money" && !asset.representation) {
+    const product = (MAINNET_ASSETS as Record<string, (typeof MAINNET_ASSETS)["AAPL"]>)[asset.ticker]?.money;
     return (
       <>
-        <ActionButton href={`/invest/${asset.ticker}?mode=practice`}>Add to Practice Portfolio</ActionButton>
+        <div className="mb-3 rounded-[16px] border border-line-soft bg-surface p-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <NetworkTag mode="money" />
+            <Provenance kind={asset.moneyModeStatus === "verification-required" ? "verification-required" : "unavailable"} />
+          </div>
+          <p className="mt-2 text-[13px] font-semibold text-ink-2">
+            {product
+              ? `${product.name} (${product.symbol}) is a verified tokenized stock on Solana Mainnet. Money Mode requires parent verification and a supported Mainnet account before anything can be invested.`
+              : `${asset.companyName} isn't available in Money Mode. You can practice it on Solana Devnet or in the sandbox.`}
+          </p>
+        </div>
+        <ActionButton href={`/invest/${asset.ticker}?mode=practice`}>Practice {asset.companyName}</ActionButton>
+        {learn}
+      </>
+    );
+  }
+
+  if (asset.practiceLane !== "devnet") {
+    return (
+      <>
+        <p className="mb-2.5 flex flex-wrap items-center gap-1.5 text-[12.5px] font-semibold text-ink-3">
+          <Provenance kind="sandbox" /> Practice capital · no real financial value
+        </p>
+        <ActionButton href={`/invest/${asset.ticker}?mode=practice`}>Add to Practice sandbox</ActionButton>
         {asset.representation ? (
           <ActionButton variant="secondary" href="/lesson/what-is-a-pre-ipo-company" className="mt-2.5">
             Learn about private companies
           </ActionButton>
         ) : (
-          learn
+          <ActionButton variant="secondary" href={`/explore/${MONEY_PROOF_TICKER}`} className="mt-2.5">
+            See Apple on Solana Devnet
+          </ActionButton>
         )}
       </>
     );
   }
 
-  if (!money.ready) return <MoneySyncState status={money.status} onRetry={money.refresh} />;
-  if (!state.profile.parentLinked) return <MoneyModeUnavailable reason="parent" />;
-  if (mandate.status !== "ACTIVE") return <MoneyModeUnavailable reason="paused" />;
-
-  if (asset.moneyModeStatus === "unavailable") {
-    return (
-      <>
-        <MoneyLine
-          asset={asset}
-          note={`${asset.companyName} is Practice-only for now. Apple is the only company connected to Money Mode today.`}
-        />
-        <ActionButton href={`/invest/${asset.ticker}?mode=practice`}>Practice with {asset.companyName}</ActionButton>
-        <ActionButton variant="secondary" href={`/explore/${MONEY_PROOF_TICKER}`} className="mt-2.5">
-          See Apple in Money Mode
-        </ActionButton>
-      </>
-    );
-  }
+  if (!chain.ready) return <PracticeSyncState status={chain.status} onRetry={chain.refresh} />;
+  if (!state.profile.parentLinked) return <KeyUnavailable reason="parent" />;
+  if (mandate.status !== "ACTIVE") return <KeyUnavailable reason="paused" />;
 
   const quick = Math.min(5, mandate.maxActionNotional);
   const preview = evaluateBoundedAction({
@@ -281,42 +298,41 @@ function ActionPanel({ asset, onLearn }: { asset: MarketAsset; onLearn: () => vo
     const { body } = explainEvaluation(preview, mandate, asset.companyName);
     return (
       <>
-        <MoneyLine asset={asset} note={body} />
-        <ActionButton href={`/invest/${asset.ticker}?mode=practice`}>Practice this instead</ActionButton>
+        <PracticeLine note={body} />
         {learn}
       </>
     );
   }
 
-  const canNow = maxAllowedNow(mandate, state.money.balance);
+  const canNow = maxAllowedNow(mandate, state.practiceChain.balance);
   return (
     <>
-      <MoneyLine
-        asset={asset}
-        note={`You can invest up to ${formatAmount(mandate.maxActionNotional)} per action. ${formatAmount(canNow)} available right now.`}
+      <PracticeLine
+        note={`Your Key: up to ${formatAmount(mandate.maxActionNotional)} per action. ${formatAmount(canNow)} available right now.`}
       />
       {canNow >= quick ? (
-        <ActionButton href={`/invest/${asset.ticker}?mode=money&amount=${quick}`}>Invest {formatAmount(quick)}</ActionButton>
+        <ActionButton href={`/invest/${asset.ticker}?mode=practice&amount=${quick}`}>Practice {formatAmount(quick)}</ActionButton>
       ) : (
-        <ActionButton href={`/invest/${asset.ticker}?mode=money`}>Choose an amount</ActionButton>
+        <ActionButton href={`/invest/${asset.ticker}?mode=practice`}>Choose an amount</ActionButton>
       )}
       {learn}
     </>
   );
 }
 
-function MoneyLine({ note }: { asset: MarketAsset; note: string }) {
+function PracticeLine({ note }: { note: string }) {
   const { state } = useStore();
   return (
     <div className="mb-3 rounded-[16px] border border-line-soft bg-surface p-3">
-      <div className="flex items-center justify-between">
-        <span className="text-[13px] font-bold text-ink-2">Available to invest</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[13px] font-bold text-ink-2">Practice capital</span>
         <span className="flex items-center gap-2">
-          <DemoMoneyTag />
-          <span className="text-[16px] font-extrabold text-navy-strong tabular">{formatUsd(state.money.balance)}</span>
+          <NetworkTag mode="practice" />
+          <span className="text-[16px] font-extrabold text-navy-strong tabular">{formatUsd(state.practiceChain.balance)}</span>
         </span>
       </div>
       <p className="mt-1.5 text-[13px] font-semibold text-ink-2">{note}</p>
+      <p className="mt-1 text-[11.5px] font-bold text-ink-3">Practice capital · no real financial value</p>
     </div>
   );
 }

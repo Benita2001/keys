@@ -145,6 +145,7 @@ const usd = (n: number) =>
  */
 const REASON_ALIASES: Record<string, ReasonCode | "ALLOWANCE_USED" | "ALLOWANCE_INVALID" | "EXECUTION_REFUSED" | "PRACTICE_ONLY" | "DEMO_CAPACITY"> = {
   ActionAmountExceeded: "MANDATE_LIMIT_EXCEEDED",
+  SOLANA_RPC_UNAVAILABLE: "DECISION_UNAVAILABLE",
   PythNotionalExceeded: "MANDATE_LIMIT_EXCEEDED",
   PYTH_NOTIONAL_EXCEEDED: "MANDATE_LIMIT_EXCEEDED",
   PeriodAmountExceeded: "PERIOD_LIMIT_EXCEEDED",
@@ -220,8 +221,18 @@ export function explainEvaluation(
       return { title: `${name} is Practice-only for now.`, body: "You can learn about it and practice with virtual money." };
     case "DEMO_CAPACITY":
       return {
-        title: "The Devnet demo is busy right now.",
+        title: "The Devnet practice network is busy right now.",
         body: "Nothing was moved. Try again in a moment.",
+      };
+    case "MAINNET_SETUP_REQUIRED":
+      return {
+        title: "Money Mode isn't set up yet.",
+        body: "Money Mode requires parent verification and a supported Mainnet account. Practice on Solana Devnet stays open.",
+      };
+    case "NETWORK_MISMATCH":
+      return {
+        title: "Something didn't match.",
+        body: "That result came from the wrong network, so Cresco ignored it. Nothing changed.",
       };
     case "WITHIN_MANDATE":
       return { title: "Inside your limits", body: "You can do this right now. No need to ask." };
@@ -240,8 +251,8 @@ export function explainEvaluation(
       };
     case "ASSET_OUTSIDE_MANDATE":
       return {
-        title: `${name} isn't in your Money Mode list yet.`,
-        body: "Your parent or guardian chooses which companies you can use real money for. You can still practice with it.",
+        title: `${name} isn't in your Key yet.`,
+        body: "Your parent or guardian chooses which companies your Key covers. You can still practice it in the sandbox.",
       };
     case "ACTION_OUTSIDE_MANDATE":
       return {
@@ -250,17 +261,17 @@ export function explainEvaluation(
       };
     case "MANDATE_NOT_ACTIVE":
       return {
-        title: "Money Mode is paused right now.",
-        body: "Your parent or guardian has paused Money Mode. Practice still works as usual.",
+        title: "Your Key is paused right now.",
+        body: "Your parent or guardian paused it. Sandbox practice still works as usual.",
       };
     case "MANDATE_REVOKED":
-      return { title: "Money Mode is turned off.", body: "Talk to your parent or guardian to set up new limits." };
+      return { title: "Your Key is turned off.", body: "Talk to your parent or guardian to set up new limits." };
     case "MANDATE_EXPIRED":
       return { title: "Your limits have expired.", body: "Ask your parent or guardian to renew them." };
     case "STALE_NONCE":
       return {
         title: "Your limits changed.",
-        body: "Refreshing your current Money settings… Check the new limits and try again.",
+        body: "Refreshing your current Key… Check the new limits and try again.",
       };
     case "MARKET_EVIDENCE_UNAVAILABLE":
     case "MARKET_EVIDENCE_STALE":
@@ -277,18 +288,18 @@ export function explainEvaluation(
     case "INSUFFICIENT_BALANCE":
       if (mode === "practice") {
         return {
-          title: "Not enough practice money for that.",
-          body: "Choose a smaller amount. Practice money is virtual and resets only if you reset the demo.",
+          title: "Not enough practice capital for that.",
+          body: "Choose a smaller amount. Practice capital has no real financial value.",
         };
       }
       return {
         title: "Not enough in your Money balance.",
-        body: "Ask your parent or guardian to add money, or choose a smaller amount.",
+        body: "Choose a smaller amount.",
       };
     case "ASSET_UNAVAILABLE":
       return {
-        title: `${name} isn't available in Money Mode.`,
-        body: "You can still learn about it and practice with it.",
+        title: `${name} isn't on the Devnet practice lane.`,
+        body: "You can still learn about it and practice it in the sandbox.",
       };
     case "EXECUTION_UNCONFIRMED":
       return {
@@ -297,8 +308,8 @@ export function explainEvaluation(
       };
     case "DECISION_UNAVAILABLE":
       return {
-        title: "We couldn't check your limits.",
-        body: "Nothing happened. Cresco never acts without checking first. Try again in a moment.",
+        title: "Solana is taking longer than expected.",
+        body: "Nothing happened. Cresco never acts without checking your Key first. Check again in a moment.",
       };
     case "INVALID_AMOUNT":
     default:
