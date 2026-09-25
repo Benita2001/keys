@@ -1,5 +1,5 @@
 project: KEYS
-handover_version: 22
+handover_version: 23
 updated_at: "2026-09-24"
 status: V0_2_CRESCO_STATEFUL_DEVNET_FAMILY_INTEGRATION_PASS
 
@@ -62,8 +62,10 @@ canonical_truth:
     frontend_contract: FROZEN
     bounty_integration_gate: PASS_WITH_SELECTIVE_INTEGRATION
     pyth_bounty: ACTIVE_PROVEN
-    prestocks_bounty: ACTIVE_LIVE_API_INTEGRATED
+    prestocks_bounty: INTEGRATED_NOT_ENTERED_WITH_TESSERA
     prestocks_live_proof: PASS
+    prestocks_bounty_exclusivity_rule: NON_PRESTOCKS_PREIPO_TOKEN_INTEGRATION_MAKES_BOUNTY_INELIGIBLE
+    selected_sponsor_tracks: [PYTH, TESSERA]
     cresco_frontend_pr_1: MERGED
     cresco_web_ci: PASS
     cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36115749327"
@@ -165,7 +167,7 @@ sponsor_tracks:
     status: ACTIVE_PROVEN
     canonical_proof: "https://github.com/Faadil1/keys/actions/runs/35959137364"
   prestocks:
-    status: ACTIVE_LIVE_API_INTEGRATED
+    status: INTEGRATED_NOT_ENTERED_WITH_TESSERA
     live_proof: PASS
     live_proof_run: "https://github.com/Faadil1/keys/actions/runs/35969672666"
     frontend_routes:
@@ -254,7 +256,7 @@ next_work:
   support_owner: Benita
   sequence:
     - "Preserve the passing Devnet ALLOW_ONCE proof, hosted Pyth-history proof and multi-asset Durable Object concurrency proof as judge evidence."
-    - "Record the canonical Family demo with the confirmed Devnet receipt and ALLOW_ONCE proof."
+    - "Record the canonical Family demo around ALLOW_ONCE: in-bound ALLOW -> boundary REFUSE -> guardian one-time approval -> exact ALLOW -> replay REFUSE AllowanceAlreadyUsed."
     - "Prepare submission copy and Q&A using only verified claims."
     - "Do not reopen production auth/KYC, embedded wallets, fiat rails, custody/mainnet or all-symbol history before submission unless required by judging."
 
