@@ -228,6 +228,22 @@ Returns the frozen bounded-autonomy fixture.
 Live public API integration, fail-closed for execution eligibility:
 `eligibility=UNKNOWN`, `executionEligible=false`, `practiceAvailable=true`, `authorityEffect=NONE`.
 
+## Tessera
+
+- `GET /api/v0.2/integrations/tessera`
+- `GET /api/v0.2/integrations/tessera/:asset`
+
+Live public API integration using Tessera's public token-details surface.
+
+The normalized response explicitly models T-Tokens as **loan participation rights**, not direct equity. Default KEYS policy is fail-closed:
+
+`eligibility=UNKNOWN`, `executionEligible=false`, `practiceAvailable=true`, `authorityEffect=NONE`.
+
+Live proof: `36112072978`  
+Hosted proof: `36112229684`
+
+No Tessera route grants Money execution or changes the Mandate.
+
 ## Canonical proof
 
 Solana program:
