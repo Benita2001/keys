@@ -18,6 +18,19 @@ const classesWithAccess = discovery.classes.filter(
   (group) => group.accessibleFeedCount > 0
 );
 
+console.log('PYTH_DISCOVERY_DIAGNOSTIC=' + JSON.stringify(
+  discovery.classes.map((group) => ({
+    id: group.id,
+    catalogFeedCount: group.catalogFeedCount,
+    feeds: group.feeds.map((feed) => ({
+      symbol: feed.symbol,
+      feedId: feed.feedId,
+      entitlementStatus: feed.entitlementStatus,
+      reasonCode: feed.reasonCode
+    }))
+  }))
+));
+
 const aapl = accessible.find(
   (feed) => feed.symbol === 'Equity.US.AAPL/USD'
 );
