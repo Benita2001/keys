@@ -552,6 +552,7 @@ function catalogRows(body) {
 
 function pythCatalogFeedId(row) {
   const candidate =
+    row?.pyth_lazer_id ??
     row?.price_feed_id ??
     row?.priceFeedId ??
     row?.feed_id ??
@@ -577,6 +578,7 @@ export function normalizePythProCatalogRow(row, fallbackAssetType = null) {
     feedId,
     assetType,
     description: row?.description ?? row?.name ?? null,
+    state: row?.state ?? null,
     minChannel:
       row?.min_channel ??
       row?.minChannel ??
@@ -669,10 +671,16 @@ export async function discoverPythProMarkets({
       feeds: []
     };
     const preferences = PYTH_MARKET_DISCOVERY_PREFERENCES[assetType] ?? [];
-    const ranked = [...(catalogEntry.feeds ?? [])].sort((a, b) => {
-      const score = symbolScore(a.symbol, preferences) - symbolScore(b.symbol, preferences);
-      return score || a.symbol.localeCompare(b.symbol);
-    });
+    const ranked = [...(catalogEntry.feeds ?? [])]
+      .filter((feed) =>
+        !['coming_soon', 'inactive', 'deprecated'].includes(
+          String(feed.state ?? '').toLowerCase()
+        )
+      )
+      .sort((a, b) => {
+        const score = symbolScore(a.symbol, preferences) - symbolScore(b.symbol, preferences);
+        return score || a.symbol.localeCompare(b.symbol);
+      });
 
     const selected = ranked.slice(0, Math.max(1, Number(perClass) || 1));
     const feeds = await Promise.all(
