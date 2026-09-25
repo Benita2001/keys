@@ -14,7 +14,7 @@ Cresco is no longer a browser-only prototype. The hackathon Family experience is
 - **Pyth** → fresh market truth in the execution path; only fresh entitled quotes are labeled live.
 - **Mandate** → server/on-chain source of authority; client Mandate is no longer trusted as authority input.
 - **Boundary requests** → persisted/shared; guardian decisions persist.
-- **ALLOW_ONCE** → exact request id + asset + amount ceiling + nonce + one successful use.
+- **ALLOW_ONCE** → exact request id + asset + amount ceiling + nonce + one successful use; deployed Devnet proof PASS, then reuse REFUSE with `AllowanceAlreadyUsed`.
 - **Guardian changes** → role-gated demo session + on-chain transition for limits/status.
 - **Family state** → Cloudflare Durable Object/SQLite; shared across tabs/devices.
 - **Concurrency** → durable reservation + idempotency before Devnet execution.
@@ -25,6 +25,12 @@ Cresco is no longer a browser-only prototype. The hackathon Family experience is
 - **Accessibility** → Practice/Money arrows + focus behavior.
 - **Mobile QA** → iPhone/WebKit automated route/overflow coverage.
 - **Proof UI** → confirmed non-simulated Devnet signatures can link to Solana Explorer.
+
+Final Devnet proof references:
+- program upgrade: run `36079506597`, slot `503748084`;
+- current bridge: run `36082140600`;
+- ALLOW_ONCE grant: `574BuAQxEtMCgZ6PWhv9F681qqZBfioopNPqUzHKFSYjetR8gtTpTgEFBXwC8YxgMDYrr8WYznGSqVUr2CZFTEm5`;
+- ALLOW_ONCE execution: `5463is82CjnnTxAA6ZLFzyoAhQ9v1yLQvfYGqWfNoFKX6KodrnZLoREHaV6oA3Px7H3BX5Ms4uBKWcFEu5RukA8t`.
 
 ## User journey implemented
 
