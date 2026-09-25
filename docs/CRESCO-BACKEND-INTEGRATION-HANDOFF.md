@@ -33,6 +33,19 @@ Cloudflare Worker
 
 **Money Mode truth:** the proven AAPL lane executes bounded capital actions on **Solana Devnet using a demo SPL token**, with live Pyth market truth. This is not brokerage, custody, xStocks settlement, real share ownership, fiat funding, mainnet, or live minor securities execution.
 
+## Final ALLOW_ONCE Devnet proof
+
+The final single-use authority lane is no longer pending. It is deployed and proven on the canonical KEYS Devnet program.
+
+- upgrade run: `36079506597` — **PASS**;
+- deployment signature: `54d7EgdAgk7TQz6a4ReH5FxdETLxHAzQeo6T3W9gbXrSMPNECMAyShfZuvdCxKVKL1oaAWNQodFTf5LVrNm7z8C8`;
+- final bridge run: `36082140600` — **PASS**;
+- grant signature: `574BuAQxEtMCgZ6PWhv9F681qqZBfioopNPqUzHKFSYjetR8gtTpTgEFBXwC8YxgMDYrr8WYznGSqVUr2CZFTEm5`;
+- consumed execution: `5463is82CjnnTxAA6ZLFzyoAhQ9v1yLQvfYGqWfNoFKX6KodrnZLoREHaV6oA3Px7H3BX5Ms4uBKWcFEu5RukA8t`;
+- second use: **REFUSE — `AllowanceAlreadyUsed`**.
+
+This proof shows that ALLOW_ONCE is an exact, nonce-bound, single-use on-chain authorization rather than a UI exception.
+
 ## Implemented routes
 
 | Route | Current role |
