@@ -32,6 +32,8 @@ Status: **CANONICAL DOCS SYNCHRONIZED — ALL CURRENT HACKATHON TECHNICAL GATES 
 - test funding: **IMPLEMENTED — NO REAL PAYMENT**
 - learning + Money portfolio sync: **IMPLEMENTED**
 - market quote API: **IMPLEMENTED / FAIL-CLOSED**
+- Pyth multi-market discovery: **PASS — live entitlement verified across equities, crypto, FX, metals and commodities; AAPL remains primary Money proof**
+- hosted multi-market discovery: **PASS — run 36115973480**
 - market history provider: **PASS — AUTHENTICATED PYTH PRO AAPL HISTORY HOSTED; fail-closed otherwise**
 - iPhone WebKit QA: **PASS — run 36057960806**
 - current Node/API CI: **PASS — run 36112502744**
@@ -78,12 +80,13 @@ Canonical live Pyth proof feed:
 | `docs/BOUNTY-INTEGRATION-GATE-2026-09-24.md` | sponsor-track activation / anti-bounty-chasing gate | CURRENT |
 | `evidence/solana/CRESCO-AAPL-HTTP-DEVNET-EXECUTION-PROOF-2026-09-24.md` | current AAPL entitlement + HTTP→Solana devnet proof | CURRENT CANONICAL EVIDENCE |
 | `evidence/pyth/DEVNET-ONCHAIN-PYTH-BOUNDARY-PROOF-2026-09-24.md` | historical TSLA devnet live Pyth capital proof | HISTORICAL VALID EVIDENCE |
+| `evidence/pyth/PYTH-MULTI-MARKET-DISCOVERY-PROOF-2026-09-25.md` | entitlement-checked multi-market Learn/Practice proof | CURRENT CANONICAL EVIDENCE |
 | `evidence/solana/LOCAL-BOUNDED-AUTONOMY-RUNTIME-PROOF-2026-09-23.md` | v0.2 local capital proof | CURRENT EVIDENCE |
 | `evidence/solana/DEVNET-BOUNDED-AUTONOMY-RUNTIME-PROOF-2026-09-23.md` | v0.2 canonical devnet capital proof | CURRENT EVIDENCE |
 | `docs/FRONTEND-START-HERE.md` | Benita transition guide | CURRENT |
 | `docs/BENITA-FRONTEND-HANDOFF.md` | ownership/handoff | CURRENT |
 | `state/CURRENT.yaml` | machine-readable current truth | CURRENT |
-| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v19 |
+| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v20 |
 
 ## v0.1 evidence remains evidence
 
