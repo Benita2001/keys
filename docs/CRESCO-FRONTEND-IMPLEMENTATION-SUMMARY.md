@@ -25,6 +25,7 @@ Cresco is no longer a browser-only prototype. The hackathon Family experience is
 - **Accessibility** → Practice/Money arrows + focus behavior.
 - **Mobile QA** → iPhone/WebKit automated route/overflow coverage.
 - **Proof UI** → confirmed non-simulated Devnet signatures can link to Solana Explorer.
+- **Tessera** → live T-OpenAI / T-Kalshi / T-SpaceX representation feed surfaced in Explore as Learn/Practice only; loan participation rights, not direct equity; `authorityEffect: NONE`.
 
 Final Devnet proof references:
 - program upgrade: run `36079506597`, slot `503748084`;
@@ -76,6 +77,7 @@ Not claimed:
 - mainnet;
 - real minor securities execution;
 - live feeds/history for every symbol.
+- Tessera Money execution or inferred user/jurisdiction eligibility.
 
 ## Key implementation files
 
