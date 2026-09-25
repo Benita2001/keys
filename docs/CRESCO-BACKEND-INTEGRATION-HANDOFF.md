@@ -70,6 +70,8 @@ This proof shows that ALLOW_ONCE is an exact, nonce-bound, single-use on-chain a
 | `POST /api/v0.2/proofs/concurrency` | Guardian-only no-trade hosted proof of shared Durable Object reservation serialization |
 | `GET /api/v0.2/integrations/prestocks` | Live PreStocks catalog, fail-closed for execution eligibility |
 | `GET /api/v0.2/integrations/prestocks/:symbol` | One PreStocks representation |
+| `GET /api/v0.2/integrations/tessera` | Live Tessera T-Token catalog; Learn/Practice; execution fail-closed |
+| `GET /api/v0.2/integrations/tessera/:asset` | One Tessera representation by id/code/company |
 
 Production backend:
 `https://keys-api-stocklana.faadil-casecraft.workers.dev`
@@ -100,6 +102,14 @@ The 10-symbol UI universe has an API surface. This does **not** mean 10 live fee
 - AAPL historical chart data is now served from Pyth Pro History when entitled; unavailable/unconfigured history still falls back to clearly labeled sample data.
 
 AAPL is the current proven Money/Pyth execution asset. TSLA remains valid historical proof.
+
+## Tessera representation truth
+
+The hosted backend now exposes live Tessera T-Token data for T-OpenAI, T-Kalshi and T-SpaceX. These are modeled as loan participation rights, not direct equity. The KEYS adapter defaults to `executionEligible=false`, `practiceAvailable=true`, and `authorityEffect=NONE`.
+
+Hosted proof: `36112229684` — PASS.
+
+This is a representation/learning integration. It does not extend the current AAPL Money execution lane.
 
 ## Frontend wiring
 
