@@ -67,6 +67,16 @@ jobs:
             echo "PROOF helius_provider_faucet_rc=$provider_rc"
             if printf '%s' "$provider_json" | python3 -c 'import json,sys; x=json.load(sys.stdin); raise SystemExit(0 if isinstance(x.get("result"), str) else 1)' ; then
               provider_accepted=1
+            else
+              set +e
+              provider_json=$(rpc_call "https://rpc.ankr.com/solana_devnet" "$airdrop_payload")
+              provider_rc=$?
+              set -e
+              echo "$provider_json"
+              echo "PROOF ankr_provider_faucet_rc=$provider_rc"
+              if printf '%s' "$provider_json" | python3 -c 'import json,sys; x=json.load(sys.stdin); raise SystemExit(0 if isinstance(x.get("result"), str) else 1)' ; then
+                provider_accepted=1
+              fi
             fi
           fi
 
