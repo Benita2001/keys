@@ -36,8 +36,10 @@ current_truth:
   contextual_learning_layer_spec: LOCKED
   stocklana_bounty_integration_gate: PASS_WITH_SELECTIVE_INTEGRATION
   pyth_bounty: ACTIVE_PROVEN
-  prestocks_bounty: ACTIVE_LIVE_API_INTEGRATED
+  prestocks_bounty: INTEGRATED_NOT_ENTERED_WITH_TESSERA
   prestocks_live_proof: PASS
+  prestocks_bounty_exclusivity_rule: NON_PRESTOCKS_PREIPO_TOKEN_INTEGRATION_MAKES_BOUNTY_INELIGIBLE
+  selected_sponsor_tracks: [PYTH, TESSERA]
   cresco_frontend_pr_1: MERGED
   cresco_web_ci: PASS
   cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36115749327"
@@ -201,7 +203,7 @@ v0_2_target:
 sponsor_tracks:
   stocklana_main: ACTIVE
   pyth: ACTIVE_PROVEN
-  prestocks: ACTIVE_LIVE_API_INTEGRATED
+  prestocks: INTEGRATED_NOT_ENTERED_WITH_TESSERA
   prestocks_live_proof: PASS
   prestocks_live_proof_run: "https://github.com/Faadil1/keys/actions/runs/35969672666"
   tessera: ACTIVE_LIVE_API_INTEGRATED
@@ -259,7 +261,7 @@ active_step:
   next:
     - "Keep the passing Devnet ALLOW_ONCE single-use proof, hosted Pyth-history proof and Durable Object concurrency proof as submission evidence."
     - "Record the judge demo with the confirmed Devnet program/receipt/signatures visible in the proof lane."
-    - "Record the judge demo: My Key -> in-bounds Devnet action -> boundary -> guardian decision -> widen -> same action -> stale refusal."
+    - "Record the judge demo: My Key -> in-bounds Devnet action -> boundary REFUSE -> guardian ALLOW_ONCE -> exact action ALLOW -> replay REFUSE AllowanceAlreadyUsed."
     - "Surface the confirmed Devnet receipt/program/version/nonce/Pyth evidence without turning the UI into a protocol dashboard."
     - "Use Tessera only as a secondary Learn/Practice representation surface: loan participation right, not direct equity; never present it as current Money execution."
     - "Use Pyth multi-market discovery to broaden Learn/Practice across verified live equities, crypto, FX, metals and commodities while keeping AAPL as the primary Money proof."

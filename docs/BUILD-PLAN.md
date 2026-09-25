@@ -118,6 +118,3 @@ Close:
 
 **Financial independence shouldn't happen all at once.**
 
-## Gate 9 — winner-to-winner collision
-
-Compare functioning KEYS Family v0.2 against COVENANT on Stocklana fit, user clarity, technical proof, Pyth usefulness, native Solana value, regulatory truthfulness and post-hackathon durability.
