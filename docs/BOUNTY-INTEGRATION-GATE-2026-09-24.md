@@ -1,7 +1,7 @@
 # KEYS — Stocklana Bounty Integration Gate
 
 Date: 2026-09-24  
-Status: **PYTH + PRESTOCKS ACTIVE; OTHER SPONSOR TRACKS HELD OUTSIDE CORE**
+Status: **PYTH + PRESTOCKS + TESSERA ACTIVE; CLAWPUMP / METEORA HELD OUTSIDE CORE**
 
 ## Governing rule
 
@@ -13,7 +13,7 @@ Sponsor tracks may extend KEYS only when they strengthen the locked Family bound
 | --- | --- | --- |
 | Pyth | Signed live market evidence is already load-bearing in the canonical Solana capital path | **ACTIVE / ENTER** |
 | PreStocks | Official public token API is now integrated with fail-closed eligibility | **ACTIVE / ENTER** |
-| Tessera | Strong representation semantics, but no sufficiently clear current public integration surface verified during this gate | **HOLD / WATCH** |
+| Tessera | Official public keyless token-details API integrated; live T-OpenAI / T-Kalshi / T-SpaceX representations are normalized fail-closed | **ACTIVE / ENTER** |
 | Clawpump | Requires a real Stocknized Agent deployment and RWA/Meteora pairing | **HOLD OUTSIDE CORE** |
 | Meteora | Requires a genuine DBC/stock-launch use case | **HOLD OUTSIDE CORE** |
 
@@ -75,11 +75,44 @@ PreStocks' own materials state that its tokens provide economic exposure rather 
 
 KEYS therefore never infers eligibility from wallet possession and does not claim live minor PreStocks execution.
 
-## Tessera — hold / watch
+## Tessera — live integration
 
-Tessera documents T-Tokens as Solana SPL tokens representing loan participation rights rather than direct equity, with jurisdiction restrictions. This is semantically compatible with KEYS representation-aware learning, but this gate did not verify a sufficiently clear current public token/API integration surface to justify calling it integrated today.
+The earlier HOLD condition is now cleared. Tessera exposes an official public keyless token-details API:
 
-Activation condition: official token registry/mint source, public API/SDK, or sponsor-confirmed integration path.
+`https://rest-api.tessera.pe/v1/public/token-details`
+
+KEYS integrates and normalizes the live Tessera representation layer without creating Money eligibility or KEYS authority.
+
+### Implemented in KEYS
+
+- `src/tessera-adapter.mjs`
+- `scripts/tessera-live-proof.mjs`
+- `.github/workflows/tessera-live-proof.yml`
+- `GET /api/v0.2/integrations/tessera`
+- `GET /api/v0.2/integrations/tessera/:asset`
+- live proof: https://github.com/Faadil1/keys/actions/runs/36112072978
+- hosted Cloudflare proof: https://github.com/Faadil1/keys/actions/runs/36112229684
+- Cresco Explore Learn/Practice surface: web run `36112502712`, WebKit/iPhone run `36112502709`
+
+The live proof verifies the official Tessera mints for T-OpenAI, T-Kalshi and T-SpaceX and preserves the representation truth boundary.
+
+Default KEYS state:
+
+- `eligibility.status = UNKNOWN`
+- `executionEligible = false`
+- `practiceAvailable = true`
+- `representationLearningAvailable = true`
+- `authorityEffect = NONE`
+
+Tessera T-Tokens are modeled as **loan participation rights**, not direct equity ownership. KEYS does not infer user/jurisdiction eligibility from wallet possession, does not expose them as current Money assets, and does not claim real minor securities execution.
+
+### Product value
+
+Tessera makes another important representation distinction concrete:
+
+Company ≠ T-Token ≠ direct equity ownership ≠ holder eligibility ≠ KEYS authority.
+
+That fits KEYS Family directly: a young person can learn what a private-market representation actually is before confusing a token ticker with owning company shares.
 
 ## Clawpump — hold outside core
 
@@ -96,11 +129,12 @@ Activate only if a later Clawpump sidecar genuinely needs a stock-paired DBC lau
 1. Stocklana main track.
 2. Pyth sponsor track.
 3. PreStocks sponsor track.
+4. Tessera sponsor track.
 
-Tessera and Clawpump/Meteora remain optional future extensions only if independently proven without delaying the Family frontend.
+Clawpump and Meteora remain outside the core unless a later product-native activation case independently justifies them.
 
 ## Benita integration rule
 
-Pyth stays in the core proof. PreStocks can appear as a secondary representation / Practice surface using the live integration route. Until eligibility is explicitly verified, it must remain understanding/Practice only.
+Pyth stays in the core proof. PreStocks and Tessera are secondary representation / Learn / Practice surfaces using their live integration routes. Both remain fail-closed for execution eligibility unless explicitly verified, and neither creates KEYS authority.
 
 Do not turn the homepage into a sponsor dashboard.
