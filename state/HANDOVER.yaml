@@ -1,5 +1,5 @@
 project: KEYS
-handover_version: 19
+handover_version: 20
 updated_at: "2026-09-24"
 status: V0_2_CRESCO_STATEFUL_DEVNET_FAMILY_INTEGRATION_PASS
 
@@ -66,7 +66,7 @@ canonical_truth:
     prestocks_live_proof: PASS
     cresco_frontend_pr_1: MERGED
     cresco_web_ci: PASS
-    cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36112502712"
+    cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36115749327"
     current_node_ci: PASS
     current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36112502744"
     cresco_aapl_migration: PASS_FULL_STACK
@@ -117,13 +117,20 @@ canonical_truth:
     family_learning_sync: IMPLEMENTED_AUTHORITY_EFFECT_NONE
     family_money_portfolio_sync: IMPLEMENTED
     family_market_quotes: IMPLEMENTED_FAIL_CLOSED
+    pyth_multi_market_discovery: PASS_LIVE_ENTITLEMENT_5_CLASSES
+    pyth_multi_market_discovery_run: "https://github.com/Faadil1/keys/actions/runs/36115570744"
+    pyth_multi_market_hosted_run: "https://github.com/Faadil1/keys/actions/runs/36115973480"
+    pyth_multi_market_classes_live: [equity, crypto, fx, metal, commodity]
+    pyth_primary_money_asset: AAPL
+    pyth_non_aapl_market_mode: LEARN_PRACTICE_ONLY
+    pyth_multi_market_evidence: evidence/pyth/PYTH-MULTI-MARKET-DISCOVERY-PROOF-2026-09-25.md
     family_market_history: PASS_PYTH_PRO_AAPL_HOSTED
     family_market_history_run: "https://github.com/Faadil1/keys/actions/runs/36066208304"
     family_global_period_multi_asset_reservations: PASS_HOSTED_SERIALIZATION_PROOF
     family_global_period_multi_asset_reservations_run: "https://github.com/Faadil1/keys/actions/runs/36066208304"
     family_second_money_asset: NOT_CLAIMED_TSLA_RESERVATION_LABEL_ONLY
     webkit_iphone_qa: PASS
-    webkit_iphone_qa_run: "https://github.com/Faadil1/keys/actions/runs/36112502709"
+    webkit_iphone_qa_run: "https://github.com/Faadil1/keys/actions/runs/36115749387"
     backend_default_cors_origin: "https://cresco-lac.vercel.app"
     backend_deployment_guide: docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md
     tessera_bounty: ACTIVE_LIVE_API_INTEGRATED
