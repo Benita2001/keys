@@ -414,7 +414,7 @@ Solana already makes assets programmable and provides delegation primitives. KEY
 
 ### “How is this different from a native Solana allowance?”
 
-A native allowance delegates spend capacity. A KEYS Key is a standing authority object with asset/action scope, limits and market conditions plus a boundary workflow. ALLOW_ONCE handles one approved boundary request without mutating that standing Key. The current deployed permission is request/mint/nonce/ceiling bound and single-use; we do not overclaim a full canonical action-parameter hash.
+A native allowance delegates spend capacity. A KEYS Key is a standing authority object with asset/action scope, limits and market conditions plus a boundary workflow. ALLOW_ONCE handles one approved boundary request without mutating that standing Key. The strengthened execution path binds the exception to the request, mint, Mandate nonce and guardian-approved USD notional; a materially different amount refuses on-chain, and successful use consumes the exception. We do not overclaim a generic canonical hash over every possible future action field.
 
 ### “Why does this need Pyth?”
 
@@ -438,7 +438,7 @@ A Cloudflare Durable Object serializes the family reservation, period spend and 
 
 ### “How does Allow once work?”
 
-It is not a generic bypass and it does not widen standing authority. The execution must cite the approved request id, match its asset/current Mandate nonce, stay at or below the approved ceiling, and the permission is consumed after successful use. This is proven on Devnet: grant → one execution → second use REFUSE with `AllowanceAlreadyUsed`. Standing Key version remains unchanged by the one-time exception.
+It is not a generic bypass and it does not widen standing authority. The execution must cite the approved request id, match its asset/current Mandate nonce and match the guardian-approved USD notional within unavoidable one-base-unit token rounding. A materially different amount refuses before transfer; after one successful use, the permission is consumed and a replay refuses with `AllowanceAlreadyUsed`. Standing Key version remains unchanged by the one-time exception.
 
 ### “Why AAPL?”
 

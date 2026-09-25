@@ -126,6 +126,9 @@ A one-time allowance is valid only when all are true:
 
 - exact `allowOnceRequestId`;
 - request status is `ALLOWED_ONCE`;
+- requested asset and current Mandate nonce match the approved request;
+- Pyth-derived executed USD notional matches the guardian-approved request notional within one base-unit rounding;
+- a materially changed amount refuses on-chain before the permission is consumed;
 - same asset;
 - amount ≤ approved request;
 - same current Mandate nonce;

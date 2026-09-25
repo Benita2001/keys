@@ -133,6 +133,10 @@ export type ReasonCode =
   | "INVALID_AMOUNT"
   | "MANDATE_LIMIT_EXCEEDED"
   | "PERIOD_LIMIT_EXCEEDED"
+  /** On-chain one-time permission exists but the attempted action differs from the approved notional. */
+  | "AllowanceActionMismatch"
+  /** The exact one-time permission was already consumed on-chain. */
+  | "AllowanceAlreadyUsed"
   /** Frontend-side balance check; not part of the backend policy facade. */
   | "INSUFFICIENT_BALANCE"
   | "ASSET_UNAVAILABLE"

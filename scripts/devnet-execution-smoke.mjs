@@ -87,12 +87,33 @@ if (!allowanceGrant) {
   );
 }
 
+const tamperedResult = await provider.execute({
+  asset: 'AAPL',
+  type: 'BUY',
+  // The guardian approved $12. Reusing the same allowance for a different
+  // notional must fail in the Solana program before the allowance is consumed.
+  notional: 11,
+  expectedNonce: state.mandate.nonce,
+  idempotencyKey:
+    `ci-allow-once-tamper-${process.env.GITHUB_RUN_ID ?? Date.now()}`,
+  allowOnceRequestId: allowanceRequestId,
+});
+
+if (
+  tamperedResult.evaluation?.decision !== 'REFUSE' ||
+  tamperedResult.evaluation?.reasonCode !== 'AllowanceActionMismatch'
+) {
+  throw new Error(
+    `DEVNET_ALLOW_ONCE_TAMPER_NOT_REFUSED:${JSON.stringify(tamperedResult)}`,
+  );
+}
+
 const onceResult = await provider.execute({
   asset: 'AAPL',
   type: 'BUY',
   // Bootstrap fixes the standing action boundary at $10.
   // $12 therefore proves that the explicit one-time receipt, not the standing
-  // Mandate, is authorizing this one action.
+  // Mandate, is authorizing this exact approved action.
   notional: 12,
   expectedNonce: state.mandate.nonce,
   idempotencyKey:
@@ -140,6 +161,8 @@ console.log(
       requestHash: allowanceGrant.requestHash,
       executionSignature: onceResult.executionProof.signature,
       consumed: onceResult.executionProof.oneTimeAllowance.consumed,
+      tamperDecision: tamperedResult.evaluation.decision,
+      tamperReasonCode: tamperedResult.evaluation.reasonCode,
       reuseDecision: reuseResult.evaluation.decision,
       reuseReasonCode: reuseResult.evaluation.reasonCode,
       mandateNonce: state.mandate.nonce,
@@ -151,4 +174,5 @@ console.log(
     2,
   ),
 );
+console.log('DEVNET_ALLOW_ONCE_EXACT_ACTION_PROOF=PASS');
 console.log('DEVNET_ALLOW_ONCE_PROOF=PASS');

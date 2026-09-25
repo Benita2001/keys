@@ -23,7 +23,7 @@ A conventional backend could reproduce much of the interface. The reason KEYS be
 
 This also complements Solana's native delegation/allowance primitives rather than pretending they do not exist. A native allowance delegates spend capacity. KEYS adds a human authority grammar around standing rules, boundary events and non-precedent exceptions.
 
-Current ALLOW_ONCE truth: the deployed permission is bound to the approved request, Mandate, mint/asset, beneficiary, current nonce, expiry and notional ceiling, is consumed after one successful use, and replay refuses on-chain. The current program does **not** claim a canonical hash commitment over every possible action parameter.
+Current ALLOW_ONCE truth: the permission is bound to the approved request, Mandate, mint/asset, beneficiary, current nonce, expiry and guardian-approved USD notional. The Solana execution path recomputes the Pyth-derived notional and refuses a materially different amount; only unavoidable one-base-unit rounding is tolerated. After one successful use the permission is consumed and replay refuses on-chain. We still do **not** claim a generic canonical hash over every possible future action field.
 
 
 ## Product primitive
