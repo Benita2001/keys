@@ -9,8 +9,9 @@ Main submission: **KEYS Family**
 
 Sponsor tracks:
 - **Pyth**
-- **PreStocks**
 - **Tessera**
+
+PreStocks remains technically integrated as a representation/Practice surface but is **not selected as a bounty** while Tessera is present, because the official PreStocks bounty excludes projects integrating any non-PreStocks pre-IPO token.
 
 Do not add Clawpump or Meteora unless their activation gates change before submission.
 
@@ -215,33 +216,40 @@ Send the request. Switch to guardian.
 
 Show:
 - exact request;
-- current vs requested limit;
+- current vs requested amount;
 - Allow once / Widen / Refuse.
 
-Choose **Widen**.
+Choose **Allow once**.
 
 Voice:
 
-> “Only the guardian can expand standing authority. The transition changes the on-chain Mandate and advances its version and nonce.”
+> “Sam can approve exactly this one boundary crossing without permanently widening Alex’s standing authority.”
 
-### 1:30–1:50 — same action succeeds
+### 1:30–1:50 — exact one-time action succeeds
 
-Switch back into the child session and retry the same action.
+Switch back into the child session and retry the same $20 action.
 
 Expected:
-- confirmed execution after the widen.
+- confirmed Devnet execution;
+- exact request/amount/nonce binding;
+- allowance becomes consumed.
 
 Voice:
 
-> “The exact action that was outside the Key is now inside it, so it can execute without another approval.”
+> “The exact action is now allowed once. The permission is specific, nonce-bound and consumed by the successful execution.”
 
-### 1:50–2:05 — stale proof
+### 1:50–2:05 — negative path: replay refuses
 
-Show stale nonce/refusal evidence from the proof drawer or prepared deterministic beat.
+Attempt to reuse the same one-time permission.
+
+Expected:
+- **REFUSE**;
+- `AllowanceAlreadyUsed`;
+- no second execution.
 
 Voice:
 
-> “Old authorization cannot be replayed after the boundary changes.”
+> “Real failure is part of the proof. Reusing the same permission is refused on-chain: one-time means one-time.”
 
 ### 2:05–2:25 — Pyth
 
@@ -259,13 +267,13 @@ Voice:
 
 > “Because the user is young, learning is part of the product. They can explore how stocks, crypto, currencies, metals and commodities behave using live Pyth data — but learning or market access never silently unlocks Money authority.”
 
-### 2:40–2:52 — PreStocks
+### 2:40–2:52 — Tessera / representation truth
 
-Brief representation detail / Practice surface.
+Brief Tessera representation detail / Practice surface.
 
 Voice:
 
-> “PreStocks lets us teach the difference between a company, its token representation, eligibility and authority without pretending those are the same thing.”
+> “Tessera lets us teach the difference between a company, a tokenized private-market representation, eligibility and family authority without pretending those are the same thing.”
 
 ### 2:52–3:00 — close
 
@@ -384,7 +392,7 @@ Pyth supplies live market evidence to the execution path. It can make an action 
 
 The demo uses Solana Devnet, a demo SPL token, a server-held Devnet demo signer and the current AAPL Pyth proof lane. Cloudflare Durable Objects hold synchronized Family demo state and serialize reservations/idempotency across devices. Contextual learning remains first-class, but learning/XP/P&L never automatically changes limits.
 
-PreStocks is integrated as a secondary representation/Practice layer with eligibility fail-closed by default.
+Tessera is the selected pre-IPO sponsor surface. PreStocks remains integrated as a secondary representation/Practice layer with eligibility fail-closed by default, but is not entered as a bounty while Tessera remains in the submitted build.
 
 ## Judge Q&A
 
@@ -483,3 +491,12 @@ Not allowed:
 - “Learning automatically earns more authority.”
 - “PreStocks eligibility is inferred from the wallet.”
 - “This is mainnet.”
+
+
+### “Why did you not enter the PreStocks bounty?”
+
+The canonical submitted build integrates Tessera T-Tokens. The official PreStocks bounty explicitly makes projects integrating any non-PreStocks pre-IPO token ineligible, so we do not select that bounty. We keep the PreStocks integration only as an honest secondary representation/Practice surface rather than hiding the incompatibility or gaming eligibility.
+
+### “Why ALLOW_ONCE instead of only widening the Key?”
+
+It demonstrates a stronger authority primitive. A guardian can approve exactly one boundary crossing without permanently expanding standing authority. KEYS binds the permission to the exact request/amount/nonce, consumes it after successful use, and refuses replay with `AllowanceAlreadyUsed`. Standing widening remains supported and is shown in the technical walkthrough.
