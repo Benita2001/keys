@@ -115,6 +115,22 @@ The Family execution bridge uses a server-held Devnet demo signer, live signed P
 
 The old v0.1 contract remains historical proof only.
 
+## Multi-market discovery
+
+AAPL remains the canonical Money execution proof, but it is no longer the Explore market boundary.
+
+KEYS now exposes an entitlement-checked Pyth discovery route:
+
+`GET /api/v0.2/market/discovery`
+
+Current live/proven discovery spans US equities, crypto, FX, metals and commodities. Non-AAPL feeds remain Learn/Practice only; Pyth entitlement never grants KEYS authority or Money eligibility.
+
+Proof:
+- authenticated discovery: https://github.com/Faadil1/keys/actions/runs/36115570744
+- hosted non-mutating route: https://github.com/Faadil1/keys/actions/runs/36115973480
+
+See [multi-market evidence](evidence/pyth/PYTH-MULTI-MARKET-DISCOVERY-PROOF-2026-09-25.md).
+
 ## Sponsor integrations
 
 KEYS currently targets the Stocklana main track plus three sponsor tracks that strengthen the locked product.
