@@ -5,9 +5,7 @@ use anchor_lang::solana_program::{
     pubkey,
     sysvar,
 };
-use anchor_spl::token_interface::{
-    self, Mint, TokenAccount, TokenInterface, TransferChecked,
-};
+use anchor_spl::token::{self, Mint, Token, TokenAccount, TransferChecked};
 declare_id!("ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk");
 
 pub const STAGE_LEARN: u8 = 0;
@@ -691,10 +689,10 @@ fn reset_period_if_needed(rule: &mut AssetRule, now: i64) {
 
 fn transfer_from_vault<'info>(
     mandate: &Account<'info, Mandate>,
-    mint: &InterfaceAccount<'info, Mint>,
-    vault_token_account: &InterfaceAccount<'info, TokenAccount>,
-    delegate_token_account: &InterfaceAccount<'info, TokenAccount>,
-    token_program: &Interface<'info, TokenInterface>,
+    mint: &Account<'info, Mint>,
+    vault_token_account: &Account<'info, TokenAccount>,
+    delegate_token_account: &Account<'info, TokenAccount>,
+    token_program: &Program<'info, Token>,
     vault_bump: u8,
     amount: u64,
 ) -> Result<()> {
@@ -719,7 +717,7 @@ fn transfer_from_vault<'info>(
         CpiContext::new(token_program.to_account_info(), cpi_accounts)
             .with_signer(signer_seeds);
 
-    token_interface::transfer_checked(cpi_ctx, amount, mint.decimals)
+    token::transfer_checked(cpi_ctx, amount, mint.decimals)
 }
 
 fn verify_pyth_message_via_lazer<'info>(
@@ -1220,14 +1218,13 @@ pub struct InitializeAssetRule<'info> {
         seeds = [b"vault", mandate.key().as_ref(), mint.key().as_ref()],
         bump,
         token::mint = mint,
-        token::authority = vault_token_account,
-        token::token_program = token_program
+        token::authority = vault_token_account
     )]
-    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
-    pub mint: InterfaceAccount<'info, Mint>,
+    pub vault_token_account: Account<'info, TokenAccount>,
+    pub mint: Account<'info, Mint>,
     #[account(mut)]
     pub guardian: Signer<'info>,
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
@@ -1271,7 +1268,7 @@ pub struct GrantAllowanceOnce<'info> {
         has_one = charter
     )]
     pub mandate: Account<'info, Mandate>,
-    pub mint: InterfaceAccount<'info, Mint>,
+    pub mint: Account<'info, Mint>,
     #[account(
         init,
         payer = guardian,
@@ -1338,20 +1335,18 @@ pub struct ExecuteOnceWithPyth<'info> {
         seeds = [b"vault", mandate.key().as_ref(), mint.key().as_ref()],
         bump,
         token::mint = mint,
-        token::authority = vault_token_account,
-        token::token_program = token_program
+        token::authority = vault_token_account
     )]
-    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
-    pub mint: InterfaceAccount<'info, Mint>,
+    pub vault_token_account: Account<'info, TokenAccount>,
+    pub mint: Account<'info, Mint>,
     #[account(mut)]
     pub beneficiary: Signer<'info>,
     #[account(
         mut,
         token::mint = mint,
-        token::authority = beneficiary,
-        token::token_program = token_program
+        token::authority = beneficiary
     )]
-    pub delegate_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub delegate_token_account: Account<'info, TokenAccount>,
 
     /// CHECK: address is validated in the instruction.
     pub pyth_program: AccountInfo<'info>,
@@ -1363,7 +1358,7 @@ pub struct ExecuteOnceWithPyth<'info> {
     /// CHECK: address is validated against the instructions sysvar id.
     pub instructions_sysvar: AccountInfo<'info>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
@@ -1395,21 +1390,19 @@ pub struct ExecuteWithinMandate<'info> {
         seeds = [b"vault", mandate.key().as_ref(), mint.key().as_ref()],
         bump,
         token::mint = mint,
-        token::authority = vault_token_account,
-        token::token_program = token_program
+        token::authority = vault_token_account
     )]
-    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
-    pub mint: InterfaceAccount<'info, Mint>,
+    pub vault_token_account: Account<'info, TokenAccount>,
+    pub mint: Account<'info, Mint>,
     #[account(mut)]
     pub beneficiary: Signer<'info>,
     #[account(
         mut,
         token::mint = mint,
-        token::authority = beneficiary,
-        token::token_program = token_program
+        token::authority = beneficiary
     )]
-    pub delegate_token_account: InterfaceAccount<'info, TokenAccount>,
-    pub token_program: Interface<'info, TokenInterface>,
+    pub delegate_token_account: Account<'info, TokenAccount>,
+    pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
@@ -1440,20 +1433,18 @@ pub struct ExecuteWithinMandateWithPyth<'info> {
         seeds = [b"vault", mandate.key().as_ref(), mint.key().as_ref()],
         bump,
         token::mint = mint,
-        token::authority = vault_token_account,
-        token::token_program = token_program
+        token::authority = vault_token_account
     )]
-    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
-    pub mint: InterfaceAccount<'info, Mint>,
+    pub vault_token_account: Account<'info, TokenAccount>,
+    pub mint: Account<'info, Mint>,
     #[account(mut)]
     pub beneficiary: Signer<'info>,
     #[account(
         mut,
         token::mint = mint,
-        token::authority = beneficiary,
-        token::token_program = token_program
+        token::authority = beneficiary
     )]
-    pub delegate_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub delegate_token_account: Account<'info, TokenAccount>,
 
     /// CHECK: address is validated in the instruction.
     pub pyth_program: AccountInfo<'info>,
@@ -1465,7 +1456,7 @@ pub struct ExecuteWithinMandateWithPyth<'info> {
     /// CHECK: address is validated against the instructions sysvar id.
     pub instructions_sysvar: AccountInfo<'info>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
