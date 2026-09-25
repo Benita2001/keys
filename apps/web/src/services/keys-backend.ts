@@ -424,6 +424,57 @@ export function fetchMarketSeries(symbol: string, period: string) {
   );
 }
 
+export type TesseraRepresentation = {
+  source: "TESSERA";
+  id: string;
+  code: string;
+  symbol: string;
+  name: string;
+  sector?: string | null;
+  underlyingCompany: string;
+  contractAddress: string;
+  tokenStandard: "TOKEN_2022";
+  representation: {
+    kind: "LOAN_PARTICIPATION_RIGHT";
+    directEquityOwnership: false;
+    votingRights: false;
+    dividendRights: false;
+    jurisdictionRestrictionsApply: true;
+  };
+  market: {
+    status: "AVAILABLE" | "UNAVAILABLE";
+    markPrice?: number | null;
+    markValuation?: number | null;
+    holders?: number | null;
+    receivedAt: string;
+  };
+  eligibility: {
+    status: "UNKNOWN" | "ELIGIBLE" | "INELIGIBLE";
+    executionEligible: boolean;
+    reasonCode?: string | null;
+  };
+  keysPolicy: {
+    practiceAvailable: boolean;
+    representationLearningAvailable: boolean;
+    executionEligible: boolean;
+    moneyModeDefault: "INELIGIBLE";
+    authorityEffect: "NONE";
+  };
+};
+
+export function fetchTesseraRepresentations() {
+  return request<{
+    contractVersion: "0.2";
+    type: "TESSERA_INTEGRATION_CATALOG";
+    integration: {
+      sponsor: "TESSERA";
+      status: "LIVE_PUBLIC_API_INTEGRATED";
+      authorityEffect: "NONE";
+    };
+    assets: TesseraRepresentation[];
+  }>("/api/v0.2/integrations/tessera");
+}
+
 type LiveProof = {
   scenario?: { asset?: string };
   evaluation?: {

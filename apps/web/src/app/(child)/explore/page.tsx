@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CompanyCard, CompanyCardSkeleton } from "@/components/finance";
 import { EmptyState, ErrorState } from "@/components/ui/feedback";
 import { Chip, PageHeader, SearchInput } from "@/components/ui/primitives";
 import type { AssetCategory, PricePoint } from "@/domain/types";
 import { useAssets } from "@/hooks/data";
 import { sparklineFor } from "@/services";
+import { fetchTesseraRepresentations, type TesseraRepresentation } from "@/services/keys-backend";
 
 const FILTERS = ["All", "Technology", "Consumer", "Retail", "More"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -21,6 +22,21 @@ export default function ExplorePage() {
   const assets = useAssets();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("All");
+  const [tessera, setTessera] = useState<TesseraRepresentation[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    fetchTesseraRepresentations()
+      .then((result) => {
+        if (active) setTessera(result.assets);
+      })
+      .catch(() => {
+        if (active) setTessera([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const list = useMemo(() => {
     if (assets.status !== "success") return [];
@@ -76,6 +92,52 @@ export default function ExplorePage() {
           </ul>
         )}
       </div>
+      {tessera.length > 0 ? (
+        <section className="mt-8" aria-labelledby="private-market-representations">
+          <div className="mb-3">
+            <p id="private-market-representations" className="text-[15px] font-extrabold text-navy-strong">
+              How private-market tokens differ
+            </p>
+            <p className="mt-1 text-[12.5px] font-semibold text-ink-3">
+              Live Tessera representations for learning and Practice. These are loan participation rights, not direct company shares, and they are not enabled for Money Mode.
+            </p>
+          </div>
+          <ul className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {tessera.slice(0, 3).map((asset) => (
+              <li key={asset.id} className="rounded-[18px] border border-line-soft bg-surface p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[14px] font-extrabold text-navy-strong">{asset.underlyingCompany}</p>
+                    <p className="mt-0.5 text-[12px] font-bold text-ink-3">{asset.id} · Tessera</p>
+                  </div>
+                  <span className="rounded-full bg-green-soft px-2 py-1 text-[10px] font-extrabold text-green-strong">
+                    Learn / Practice
+                  </span>
+                </div>
+                <p className="mt-3 text-[12.5px] font-semibold text-ink-2">
+                  Loan participation right · not direct equity
+                </p>
+                <div className="mt-3 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-3">Tessera mark</p>
+                    <p className="mt-0.5 text-[14px] font-extrabold text-navy-strong">
+                      {typeof asset.market.markPrice === "number"
+                        ? `${asset.market.markPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                        : "Unavailable"}
+                    </p>
+                  </div>
+                  <p className="text-right text-[10.5px] font-bold text-ink-3">
+                    Eligibility not inferred
+                    <br />
+                    Authority effect: none
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <p className="mt-4 text-center text-[12px] font-semibold text-ink-3">
         Fresh entitled Pyth quotes are labeled Live · Pyth. Configured entitled feeds also use Pyth history; unavailable prices or history stay clearly sample for learning.
       </p>
