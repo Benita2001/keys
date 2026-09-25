@@ -32,6 +32,42 @@ jobs:
           '
           echo "CLOUDFLARE_HOSTED_HEALTH=PASS"
 
+      - name: Verify hosted Tessera representation integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 24); do
+            status=$(curl --silent --show-error --output /tmp/tessera.json --write-out '%{http_code}'               "$KEYS_API_URL/api/v0.2/integrations/tessera" || true)
+            if [ "$status" = "200" ] && node -e '
+              const fs = require("fs");
+              const x = JSON.parse(fs.readFileSync("/tmp/tessera.json","utf8"));
+              const ids = new Set((x.assets || []).map(a => a.id));
+              const ok =
+                x.type === "TESSERA_INTEGRATION_CATALOG" &&
+                x.integration?.status === "LIVE_PUBLIC_API_INTEGRATED" &&
+                x.integration?.authorityEffect === "NONE" &&
+                ids.has("T-OpenAI") &&
+                ids.has("T-Kalshi") &&
+                ids.has("T-SpaceX") &&
+                x.assets.every(a =>
+                  a.representation?.kind === "LOAN_PARTICIPATION_RIGHT" &&
+                  a.representation?.directEquityOwnership === false &&
+                  a.eligibility?.executionEligible === false &&
+                  a.keysPolicy?.authorityEffect === "NONE"
+                );
+              process.exit(ok ? 0 : 1);
+            '; then
+              cat /tmp/tessera.json
+              echo "CLOUDFLARE_HOSTED_TESSERA=PASS"
+              exit 0
+            fi
+            echo "Waiting for hosted Tessera route (attempt $attempt/24, status=$status)..."
+            cat /tmp/tessera.json 2>/dev/null || true
+            sleep 10
+          done
+          echo "CLOUDFLARE_HOSTED_TESSERA=NOT_DEPLOYED"
+          exit 1
+
       - name: Create child demo session
         shell: bash
         run: |
