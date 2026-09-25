@@ -424,6 +424,51 @@ export function fetchMarketSeries(symbol: string, period: string) {
   );
 }
 
+export type PythDiscoveryFeed = {
+  marketClass: string;
+  symbol: string;
+  displaySymbol: string;
+  description?: string | null;
+  feedId: number;
+  entitlementStatus: "ACCESSIBLE" | "UNAVAILABLE";
+  priceStatus: "FRESH" | "STALE" | "UNAVAILABLE";
+  price?: number | null;
+  publishTime?: string | null;
+  marketSession?: string | null;
+  reasonCode?: string | null;
+  productMode: "PRIMARY_MONEY_PROOF" | "LEARN_PRACTICE_ONLY";
+  moneyExecutionProven: boolean;
+  authorityEffect: "NONE";
+};
+
+export type PythMarketClass = {
+  id: string;
+  label: string;
+  learningAngle: string;
+  catalogStatus: "AVAILABLE" | "UNAVAILABLE";
+  catalogFeedCount: number;
+  accessibleFeedCount: number;
+  feeds: PythDiscoveryFeed[];
+};
+
+export function fetchPythMarketDiscovery() {
+  return request<{
+    contractVersion: "0.2";
+    type: "V0_2_MARKET_DISCOVERY";
+    source: "PYTH_PRO";
+    status: "AVAILABLE";
+    primaryMoneyAsset: "AAPL";
+    primaryMoneySymbol: "Equity.US.AAPL/USD";
+    classes: PythMarketClass[];
+    truthBoundary: {
+      catalogPresenceDoesNotImplyEntitlement: true;
+      entitlementDoesNotImplyMoneyExecution: true;
+      onlyAaplMoneyExecutionProven: true;
+      marketEvidenceAuthorityEffect: "NONE";
+    };
+  }>("/api/v0.2/market/discovery");
+}
+
 export type TesseraRepresentation = {
   source: "TESSERA";
   id: string;

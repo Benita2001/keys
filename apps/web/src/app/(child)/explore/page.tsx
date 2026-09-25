@@ -7,7 +7,12 @@ import { Chip, PageHeader, SearchInput } from "@/components/ui/primitives";
 import type { AssetCategory, PricePoint } from "@/domain/types";
 import { useAssets } from "@/hooks/data";
 import { sparklineFor } from "@/services";
-import { fetchTesseraRepresentations, type TesseraRepresentation } from "@/services/keys-backend";
+import {
+  fetchPythMarketDiscovery,
+  fetchTesseraRepresentations,
+  type PythMarketClass,
+  type TesseraRepresentation,
+} from "@/services/keys-backend";
 
 const FILTERS = ["All", "Technology", "Consumer", "Retail", "More"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -22,7 +27,26 @@ export default function ExplorePage() {
   const assets = useAssets();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("All");
+  const [markets, setMarkets] = useState<PythMarketClass[]>([]);
   const [tessera, setTessera] = useState<TesseraRepresentation[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    fetchPythMarketDiscovery()
+      .then((result) => {
+        if (active) {
+          setMarkets(
+            result.classes.filter((group) => group.accessibleFeedCount > 0),
+          );
+        }
+      })
+      .catch(() => {
+        if (active) setMarkets([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -72,6 +96,65 @@ export default function ExplorePage() {
           </Chip>
         ))}
       </div>
+
+      {markets.length > 0 ? (
+        <section className="mt-5" aria-labelledby="explore-markets">
+          <div className="mb-3">
+            <p id="explore-markets" className="text-[15px] font-extrabold text-navy-strong">
+              Explore how different markets move
+            </p>
+            <p className="mt-1 max-w-[720px] text-[12.5px] font-semibold text-ink-3">
+              Live Pyth market truth for learning and Practice. AAPL stays the primary Money proof; access to a market feed never grants Money authority.
+            </p>
+          </div>
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {markets.map((group) => {
+              const liveFeeds = group.feeds.filter(
+                (feed) => feed.entitlementStatus === "ACCESSIBLE",
+              );
+              return (
+                <li key={group.id} className="rounded-[18px] border border-line-soft bg-surface p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[14px] font-extrabold text-navy-strong">{group.label}</p>
+                      <p className="mt-1 text-[11.5px] font-semibold leading-snug text-ink-3">
+                        {group.learningAngle}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-green-soft px-2 py-1 text-[10px] font-extrabold text-green-strong">
+                      Live · Pyth
+                    </span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {liveFeeds.slice(0, 3).map((feed) => (
+                      <div key={feed.symbol} className="flex items-center justify-between gap-3 rounded-[12px] bg-bg px-3 py-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-[12.5px] font-extrabold text-navy-strong">
+                            {feed.displaySymbol}
+                          </p>
+                          <p className="text-[10.5px] font-bold text-ink-3">
+                            {feed.productMode === "PRIMARY_MONEY_PROOF"
+                              ? "Primary Money proof"
+                              : "Learn · Practice"}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-right text-[12px] font-extrabold text-navy-strong">
+                          {typeof feed.price === "number"
+                            ? `${feed.price.toLocaleString(undefined, { maximumFractionDigits: 4 })}`
+                            : feed.priceStatus}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-[10.5px] font-bold text-ink-3">
+                    Feed access ≠ Money eligibility · Authority effect: none
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
 
       <div className="mt-4">
         {assets.status === "loading" ? (

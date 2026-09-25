@@ -648,9 +648,10 @@ function symbolScore(symbol, preferences = []) {
   return 10_000;
 }
 
-function shortMarketSymbol(symbol) {
+function shortMarketSymbol(symbol, assetType) {
   const raw = String(symbol ?? '');
   const tail = raw.includes('.') ? raw.split('.').slice(-1)[0] : raw;
+  if (assetType === 'fx') return tail;
   return tail.replace(/\/USD$/i, '').replace(/\/EUR$/i, '');
 }
 
@@ -701,7 +702,8 @@ export async function discoverPythProMarkets({
         return {
           marketClass: assetType,
           symbol: feed.symbol,
-          displaySymbol: shortMarketSymbol(feed.symbol),
+          displaySymbol: shortMarketSymbol(feed.symbol, assetType),
+          description: feed.description ?? null,
           feedId: feed.feedId,
           minChannel: feed.minChannel,
           catalogStatus: 'AVAILABLE',
