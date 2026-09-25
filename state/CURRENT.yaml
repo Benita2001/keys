@@ -40,7 +40,7 @@ current_truth:
   prestocks_live_proof: PASS
   cresco_frontend_pr_1: MERGED
   cresco_web_ci: PASS
-  cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36112502712"
+  cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36115749327"
   current_node_ci: PASS
   current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36112502744"
   cresco_aapl_migration: PASS_FULL_STACK
@@ -91,13 +91,22 @@ current_truth:
   family_learning_sync: IMPLEMENTED_AUTHORITY_EFFECT_NONE
   family_money_portfolio_sync: IMPLEMENTED
   family_market_quotes: IMPLEMENTED_FAIL_CLOSED
+  pyth_multi_market_discovery: PASS_LIVE_ENTITLEMENT_5_CLASSES
+  pyth_multi_market_discovery_run: "https://github.com/Faadil1/keys/actions/runs/36115570744"
+  pyth_multi_market_hosted_route: PASS
+  pyth_multi_market_hosted_run: "https://github.com/Faadil1/keys/actions/runs/36115973480"
+  pyth_multi_market_classes_live: [equity, crypto, fx, metal, commodity]
+  pyth_multi_market_rates: NOT_PROVEN_CURRENTLY
+  pyth_primary_money_asset: AAPL
+  pyth_non_aapl_market_mode: LEARN_PRACTICE_ONLY
+  pyth_multi_market_evidence: evidence/pyth/PYTH-MULTI-MARKET-DISCOVERY-PROOF-2026-09-25.md
   family_market_history: PASS_PYTH_PRO_AAPL_HOSTED
   family_market_history_run: "https://github.com/Faadil1/keys/actions/runs/36066208304"
   family_global_period_multi_asset_reservations: PASS_HOSTED_SERIALIZATION_PROOF
   family_global_period_multi_asset_reservations_run: "https://github.com/Faadil1/keys/actions/runs/36066208304"
   family_second_money_asset: NOT_CLAIMED_TSLA_RESERVATION_LABEL_ONLY
   cresco_webkit_iphone_qa: PASS
-  cresco_webkit_iphone_qa_run: "https://github.com/Faadil1/keys/actions/runs/36112502709"
+  cresco_webkit_iphone_qa_run: "https://github.com/Faadil1/keys/actions/runs/36115749387"
   backend_default_cors_origin: "https://cresco-lac.vercel.app"
   backend_deployment_guide: docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md
   tessera_bounty: ACTIVE_LIVE_API_INTEGRATED
@@ -224,6 +233,9 @@ truth_boundary:
   - historical TSLA local/devnet Pyth proofs remain valid evidence
   - Pyth-derived USD notional and a precommitted max-price condition are proven on canonical devnet
   - market evidence has no authority-widening effect
+  - Pyth catalog presence does not imply KEYS entitlement
+  - Pyth entitlement does not imply KEYS Money execution eligibility
+  - AAPL remains the primary proven Money execution lane while other proven Pyth markets remain Learn/Practice only
   - Tessera T-Tokens are loan participation rights, not direct equity ownership
   - Tessera eligibility is never inferred from wallet possession and defaults fail-closed
   - Tessera is Learn/Practice representation context by default; authorityEffect is NONE and no Money execution is claimed
@@ -238,4 +250,5 @@ active_step:
     - "Record the judge demo: My Key -> in-bounds Devnet action -> boundary -> guardian decision -> widen -> same action -> stale refusal."
     - "Surface the confirmed Devnet receipt/program/version/nonce/Pyth evidence without turning the UI into a protocol dashboard."
     - "Use Tessera only as a secondary Learn/Practice representation surface: loan participation right, not direct equity; never present it as current Money execution."
+    - "Use Pyth multi-market discovery to broaden Learn/Practice across verified live equities, crypto, FX, metals and commodities while keeping AAPL as the primary Money proof."
     - "Keep production auth/KYC, wallets, fiat rails, custody/mainnet and all-symbol history explicitly outside the hackathon truth boundary."
