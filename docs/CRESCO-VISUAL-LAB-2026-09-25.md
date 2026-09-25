@@ -52,9 +52,13 @@ Makes the guardian relationship feel like a shared agreement rather than remote 
 
 The guardian appears only when the young person reaches the boundary.
 
-## Data boundary
+## Data / interaction boundary
 
-The lab proxies only read-only endpoints. It cannot mutate Family state.
+Live external data remains read-only through Pages Functions, while product interactions are writable **inside an isolated browser sandbox**.
+
+The sandbox persists locally and supports Practice positions, AAPL bounded-action simulation, refusal, boundary request, guardian Allow Once / Widen / Not Now, and exact single-use allowance consumption.
+
+It deliberately does **not** call canonical mutable Family endpoints and cannot mutate Benita's demo, consume its AAPL budget or send a Solana transaction.
 
 ## Promotion rule
 

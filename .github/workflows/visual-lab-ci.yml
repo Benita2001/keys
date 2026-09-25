@@ -33,15 +33,19 @@ jobs:
           node --check apps/visual-lab/functions/api/tessera.js
           node --check apps/visual-lab/functions/api/prestocks.js
 
-      - name: Enforce read-only lab boundary
+      - name: Enforce canonical-backend isolation
         run: |
           if grep -R -n -E '/actions/execute|/mandates/transition|/funding/deposits|/boundary-requests' apps/visual-lab/functions; then
-            echo "Visual Lab must not call mutable Family routes."
+            echo "Visual Lab must not call mutable canonical Family routes."
             exit 1
           fi
           grep -R -n '/api/v0.2/market/discovery' apps/visual-lab/functions/api/markets.js
           grep -R -n '/api/v0.2/integrations/tessera' apps/visual-lab/functions/api/tessera.js
           grep -R -n '/api/v0.2/integrations/prestocks' apps/visual-lab/functions/api/prestocks.js
+          grep -q 'cresco.visualLab.sandbox.v2' apps/visual-lab/public/app.js
+          grep -q 'data-money-amount="20"' apps/visual-lab/public/index.html
+          grep -q 'data-guardian-action="allow-once"' apps/visual-lab/public/index.html
+          grep -q 'Practice $25' apps/visual-lab/public/app.js
 
       - name: Verify Cloudflare Pages surface
         run: |

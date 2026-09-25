@@ -17,16 +17,27 @@ Three directions ship in one lab:
 - **Market Playground** — broad market discovery with Pyth;
 - **Family Room** — shared family trust / boundary story.
 
-## Safety / state boundary
+## Interactive sandbox + safety boundary
 
-The lab does **not** call mutable Family endpoints.
+The lab is now interactive, but its writable state is **isolated browser sandbox state** stored under `localStorage` key `cresco.visualLab.sandbox.v2`.
 
-Cloudflare Pages Functions proxy only read-only KEYS routes:
+It supports:
+- virtual Practice buys across live Pyth markets;
+- AAPL sandbox Money moves inside/outside a family Key;
+- refusal when a move exceeds the current Key;
+- boundary requests;
+- guardian `Allow once`, `Widen Key`, and `Not now`;
+- single-use allowance consumption;
+- persistent sandbox state and reset.
+
+Cloudflare Pages Functions still proxy **only read-only** KEYS routes:
 - `/api/markets` → `GET /api/v0.2/market/discovery`
 - `/api/tessera` → `GET /api/v0.2/integrations/tessera`
 - `/api/prestocks` → `GET /api/v0.2/integrations/prestocks`
 
-That means the lab cannot consume AAPL period budget, widen a Mandate, create a boundary request or mutate the submitted demo Family state.
+No sandbox interaction calls the canonical `actions/execute`, mandate transition, funding or boundary-request endpoints. Therefore it cannot consume the submission Family budget, mutate Benita's Mandate or send a Solana transaction.
+
+The tradeoff is intentional: sandbox state persists per browser, not cross-device.
 
 ## Cloudflare deployment — recommended
 

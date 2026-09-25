@@ -42,7 +42,7 @@
 
       <div class="live-pill" id="live-pill">
         <span class="live-dot"></span>
-        Read-only lab
+        Live markets · Sandbox actions
       </div>
     </header>
 
@@ -70,7 +70,7 @@
                 Explore the money world
                 <span aria-hidden="true">→</span>
               </button>
-              <button class="soft-action" type="button">Practice first</button>
+              <button class="soft-action" type="button" data-route-target="playground">Practice first</button>
             </div>
           </div>
 
@@ -81,7 +81,7 @@
                 <span class="key-status"><i></i> Open</span>
               </div>
               <div class="key-shape" aria-hidden="true">
-                <div class="key-ring"><span>$10</span><small>each move</small></div>
+                <div class="key-ring"><span id="key-action-limit">$10</span><small>each move</small></div>
                 <div class="key-stem"></div>
                 <div class="key-tooth one"></div>
                 <div class="key-tooth two"></div>
@@ -89,7 +89,7 @@
               <div class="key-rules">
                 <div>
                   <span>Weekly space</span>
-                  <strong>$50</strong>
+                  <strong id="key-weekly-limit">$50</strong>
                 </div>
                 <div>
                   <span>Money lane</span>
@@ -106,6 +106,36 @@
             <span class="doodle-label">freedom with edges</span>
           </div>
         </div>
+
+        <section class="sandbox-action-panel" aria-labelledby="sandbox-money-title">
+          <div class="sandbox-panel-copy">
+            <span class="sandbox-kicker">INTERACTIVE LAB SANDBOX</span>
+            <h2 id="sandbox-money-title">Try Alex's Key with AAPL</h2>
+            <p>
+              These actions are simulated inside this browser only. Live Pyth prices inform the experience,
+              but nothing here touches Benita's Family state or sends a Solana transaction.
+            </p>
+            <div class="sandbox-stats">
+              <span><small>This week</small><strong id="sandbox-spent">$0 / $50</strong></span>
+              <span><small>Key version</small><strong id="sandbox-version">v1 · nonce 1</strong></span>
+              <span><small>Allowance</small><strong id="sandbox-allowance">None</strong></span>
+            </div>
+          </div>
+          <div class="sandbox-money-controls">
+            <p class="mini-label">TRY AN AAPL MONEY MOVE</p>
+            <div class="sandbox-amount-buttons" aria-label="AAPL sandbox amount">
+              <button type="button" data-money-amount="5">$5</button>
+              <button type="button" data-money-amount="10">$10</button>
+              <button type="button" data-money-amount="20">$20</button>
+            </div>
+            <div id="sandbox-decision" class="sandbox-decision neutral" aria-live="polite">
+              Choose an amount. Inside the Key is instant; outside the Key is refused.
+            </div>
+            <button id="sandbox-request-button" class="sandbox-request-button" type="button" hidden>
+              Ask Sam for $20 once →
+            </button>
+          </div>
+        </section>
 
         <div class="garden-grid">
           <article class="paper-card mission-card">
@@ -193,7 +223,29 @@
           <span>Authority effect: none</span>
         </div>
 
+        <div class="practice-wallet">
+          <div>
+            <span class="mini-label">PRACTICE WALLET</span>
+            <strong id="practice-cash">$1,000 virtual cash</strong>
+          </div>
+          <p>Tap Practice on any live market. This changes sandbox state only.</p>
+          <button id="practice-reset" type="button">Reset Practice</button>
+        </div>
+
         <div class="market-grid" id="market-grid" aria-live="polite"></div>
+
+        <section class="practice-positions" aria-labelledby="practice-positions-title">
+          <div class="practice-positions-head">
+            <div>
+              <span class="mini-label">MY PRACTICE</span>
+              <h2 id="practice-positions-title">Things I'm trying</h2>
+            </div>
+            <span id="practice-position-count" class="practice-count">0 markets</span>
+          </div>
+          <div id="practice-position-list" class="practice-position-list">
+            <p class="empty-practice">Choose a market above and try $25 in Practice.</p>
+          </div>
+        </section>
 
         <div class="representation-shelf">
           <div class="shelf-copy">
@@ -276,17 +328,24 @@
               </div>
               <span class="avatar sam">S</span>
             </div>
-            <div class="request-compare">
-              <div><small>Current</small><strong>$10</strong><span>each move</span></div>
-              <span class="compare-arrow">→</span>
-              <div><small>Requested</small><strong>$20</strong><span>one time</span></div>
+            <div id="guardian-request-empty" class="guardian-empty">
+              <strong>No request waiting.</strong>
+              <p>Try a $20 AAPL move in Key Garden, then ask Sam for more room.</p>
             </div>
-            <p class="request-reason">“I compared Apple with Microsoft and want to try the bigger amount once.”</p>
-            <div class="guardian-choices">
-              <button type="button">Allow once</button>
-              <button type="button">Widen Key</button>
-              <button type="button" class="quiet-choice">Not now</button>
+            <div id="guardian-request-live" hidden>
+              <div class="request-compare">
+                <div><small>Current</small><strong id="guardian-current-limit">$10</strong><span>each move</span></div>
+                <span class="compare-arrow">→</span>
+                <div><small>Requested</small><strong id="guardian-request-amount">$20</strong><span>one time</span></div>
+              </div>
+              <p class="request-reason">“I compared Apple with Microsoft and want to try the bigger amount once.”</p>
+              <div class="guardian-choices">
+                <button type="button" data-guardian-action="allow-once">Allow once</button>
+                <button type="button" data-guardian-action="widen">Widen Key</button>
+                <button type="button" class="quiet-choice" data-guardian-action="deny">Not now</button>
+              </div>
             </div>
+            <div id="guardian-decision" class="guardian-decision" aria-live="polite"></div>
           </article>
         </div>
 
@@ -311,8 +370,9 @@
     </main>
 
     <aside class="lab-note" aria-label="Visual lab note">
-      <span class="lab-note-title">Visual Lab</span>
-      <span>Explore freely. Nothing here mutates the Family demo.</span>
+      <span class="lab-note-title">Sandbox isolated</span>
+      <span>Live market data · actions persist only in this browser.</span>
+      <button id="sandbox-reset-all" type="button">Reset</button>
     </aside>
 
     <script src="/app.js" defer></script>
