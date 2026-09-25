@@ -21,7 +21,7 @@ This file maps Benita’s observations to the current KEYS/Cresco implementation
 - Family-wide period/balance serialization: Durable Object reservations protect one shared budget across tabs/devices; hosted proof now exercises concurrent AAPL/TSLA-labeled reservations without claiming TSLA execution.
 - Execute endpoint: implemented with Devnet proof.
 - Boundary requests: persisted, listed and decided server-side.
-- Allow once: exact request id + asset + ceiling + nonce + single successful use is implemented and locally proven. The final deployed-binary proof is blocked only by Devnet upgrade funding: run 36070676319 calculated 2,371,812,520 lamports required versus 1,948,895,627 available, leaving a 422,916,893-lamport shortfall. Automated RPC/provider funding was unavailable and the current PoW faucet was empty.
+- Allow once: exact request id + asset + ceiling + nonce + single successful use is implemented and locally proven. The final deployed-binary proof is blocked only by Devnet upgrade funding: run 36079506597 reconfirmed 2,371,812,520 lamports required versus 1,948,895,627 available, leaving a 422,916,893-lamport shortfall. Automated RPC/provider funding was unavailable and the current PoW faucet was empty.
 - Double-spend protection: durable idempotency/reservations, with hosted concurrency smoke PASS.
 - Market quotes: fail-closed API for the UI universe; only entitled Pyth evidence is labeled live.
 - History: AAPL now uses authenticated Pyth Pro History through Cloudflare for supported periods; missing/unentitled history still fails closed with no fabricated points.
