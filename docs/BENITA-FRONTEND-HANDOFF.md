@@ -1,7 +1,7 @@
 # KEYS — Benita Frontend Handoff
 
 Date: 2026-09-24  
-Status: **V0.2 FROZEN / FAMILY DEVNET INTEGRATION IMPLEMENTED**
+Status: **V0.2 FROZEN / ALL CURRENT HACKATHON TECHNICAL GATES PASS**
 
 ## Ownership
 
@@ -24,7 +24,7 @@ The current hackathon implementation now has:
 - shared Family state via Durable Object/SQLite;
 - server/on-chain Mandate as the authority source;
 - persistent boundary requests and guardian decisions;
-- exact single-use `ALLOW_ONCE`;
+- exact single-use `ALLOW_ONCE`, deployed and proven on Solana Devnet;
 - durable family-wide reservation/idempotency protection;
 - guardian test funding;
 - persisted learning and Money portfolio;
@@ -53,6 +53,14 @@ Current proof lane:
 - Pyth feed: `Equity.US.AAPL/USD`, id `922`;
 - Pyth verification: on-chain Pyth Lazer;
 - signer model: server-held **Devnet demo signer**.
+
+Final ALLOW_ONCE proof: **PASS**
+- program upgrade run: `36079506597`;
+- deployed slot: `503748084`;
+- final bridge run: `36082140600`;
+- grant signature: `574BuAQxEtMCgZ6PWhv9F681qqZBfioopNPqUzHKFSYjetR8gtTpTgEFBXwC8YxgMDYrr8WYznGSqVUr2CZFTEm5`;
+- execution signature: `5463is82CjnnTxAA6ZLFzyoAhQ9v1yLQvfYGqWfNoFKX6KodrnZLoREHaV6oA3Px7H3BX5Ms4uBKWcFEu5RukA8t`;
+- reuse: **REFUSE — AllowanceAlreadyUsed**.
 
 This is test capital. It is **not** brokerage, custody, fiat funding, xStocks settlement, conventional-share ownership, mainnet, KYC, or real minor securities execution.
 
