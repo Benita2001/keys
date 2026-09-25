@@ -1,61 +1,65 @@
 # Reality Gate
 
-Date: 2026-09-24  
-Status: **FAMILY WEDGE RETAINED; OLD HAPPY PATH REJECTED**
+Date: 2026-09-25  
+Status: **FAMILY WEDGE RETAINED; BOUNDED-AUTONOMY MODEL CURRENT**
 
-## Strategy result
+## Product result
 
-The unconstrained hostile-review pass correctly exposed weaknesses in the old Family implementation, but after re-scoring against Stocklana's actual judging function, independent second passes converged on **KEYS Family — improved** as the strongest wedge.
+KEYS Family uses the Family/guardian context to make a broader principal/delegate authority problem immediately understandable.
 
-The durable company primitive is broader than Family; the Stocklana product should remain Family because the user/problem is instantly legible and the on-chain boundary can be shown rather than explained.
+The current product model rejects per-action approval as the default happy path. A young person acts inside a standing Mandate; boundary crossings refuse or become explicit requests; only an authorized guardian can change standing authority.
 
-## Passed enough to build v0.2
+## Passed enough for the current demo
 
-- Family remains the judge-facing wedge.
-- The old proposal-per-action workflow is rejected.
-- In-bounds action is the new happy path.
+- Family remains the user-facing wedge.
+- In-bounds action is the happy path.
 - Boundary requests are exceptional.
-- The Mandate becomes a permission matrix rather than a single universal maturity stage.
-- Solana must enforce a capital/action boundary, not only record authority state.
-- Pyth must be load-bearing: notional/freshness/condition validity, never authority.
-- LEARN/PRACTICE remain as contextual Family UX, not as automatic authority gates.
-- Existing v0.1 Anchor/devnet proof remains valid for guardian-signed transitions, version/nonce lineage and stale replay refusal.
-- Existing authenticated Pyth Pro proof remains valid off-chain; signed on-chain verification is a new v0.2 target.
+- The Mandate is a permission matrix rather than one universal maturity stage.
+- Solana enforces the capital/action boundary rather than only recording state.
+- Pyth is load-bearing market evidence: notional/freshness/condition validity, never authority.
+- LEARN/PRACTICE remain contextual product layers, not automatic authority gates.
+- Exact ALLOW_ONCE is implemented and proven on Devnet; one successful use consumes the permission and replay refuses.
+- Learning can now pair primary-source reality checks with immediate Explore/Practice application.
 
-## Still unvalidated
+## Open product validation
 
-- Parent preference for "freedom inside bounds" versus approve-every-action oversight.
-- Teen acceptance of the Mandate as autonomy rather than surveillance.
-- Legal/issuer/venue eligibility for any future real tokenized-stock execution by minors.
-- Which production account substrate should hold capital at scale (KEYS vault directly, Squads-backed, or another verified smart-account integration).
-- Whether a portable Mandate becomes valuable outside KEYS after the Family wedge.
+Still requires first-party human evidence:
+- whether guardians prefer freedom-inside-bounds to approve-every-action for suitable situations;
+- whether teens understand the Mandate as usable autonomy rather than surveillance;
+- whether a new viewer can explain the model without being taught the phrase "bounded autonomy."
+
+Still production-dependent:
+- legal/issuer/venue eligibility for real tokenized-stock execution by minors;
+- production account/custody substrate;
+- jurisdiction-specific rollout;
+- whether the Mandate primitive is valuable outside the Family wedge.
 
 ## Falsification tests
 
-Family thesis weakens materially if:
+The Family thesis weakens materially if:
+- young users do not use the inside-bounds autonomy and only experience the system as a block;
+- guardians consistently prefer approving every trade even after seeing the bounded alternative;
+- a first-time viewer cannot explain who can act without asking and when the guardian steps in;
+- the Solana layer cannot enforce the action boundary;
+- Pyth becomes display-only;
+- the product collapses into lessons + paper portfolio + parent dashboard.
 
-- teens do not use the inside-bounds autonomy and only see the system as a block;
-- guardians prefer approve-every-trade even when shown the bounded-autonomy alternative;
-- the Solana layer cannot actually enforce the action boundary;
-- Pyth remains display-only;
-- the product collapses back into lessons + paper portfolio + parent dashboard.
+## Product kill conditions
 
-## Kill conditions
-
-Pause/rethink Candidate B if:
-
+Pause or rethink the Family wedge if:
 - the on-chain component is only a badge/history log;
-- the frontend remains the only enforcement surface;
+- the frontend becomes the only enforcement surface;
 - market evidence auto-promotes human authority;
 - learning completion or P&L becomes a competence score;
 - real-money claims require false statements about custody, brokerage, jurisdiction or tokenized-stock eligibility.
 
 ## Current next gate
 
-`BACKEND_V0_2_BOUNDED_AUTONOMY_BUILD`
+`STOCKLANA_JUDGE_DEMO_AND_SUBMISSION_PACKAGING`
+
+Human comprehension evidence must be gathered from real people. It must not be simulated with LLM personas.
 
 See:
-
-- `docs/TECHNICAL-REALITY-GATE-BOUNDED-AUTONOMY.md`
-- `docs/ARCHITECTURE-DELTA-BOUNDED-AUTONOMY.md`
+- `docs/DEMO-FIRST-ARCHITECTURE.md`
 - `docs/FAMILY-LEARNING-LAYER.md`
+- `docs/TRUTH-BOUNDARY.md`

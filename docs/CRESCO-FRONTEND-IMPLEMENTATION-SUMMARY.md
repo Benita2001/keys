@@ -42,10 +42,10 @@ Final Devnet proof references:
 4. Out-of-bounds action refuses.
 5. Child asks for more room.
 6. Guardian signs in to the demo guardian session.
-7. Guardian chooses allow once / widen / refuse.
-8. Widen updates the on-chain Mandate/version/nonce.
-9. Same action can succeed after the widen.
-10. Old nonce is stale/fails closed.
+7. Canonical demo choice: **ALLOW_ONCE**.
+8. Exact retry succeeds under the request/asset/amount/nonce-bound one-time permission.
+9. Reusing the same allowance refuses with `AllowanceAlreadyUsed`.
+10. Standing WIDEN remains available as a separate explicit version/nonce-changing authority transition.
 
 Learning, XP, badges and P&L never change authority.
 

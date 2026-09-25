@@ -35,6 +35,14 @@ export default function LearnPage() {
         <ProgressBar value={complete / MODULES.length} tone="green" className="mt-2" label="Modules completed" />
       </div>
 
+      <div className="mt-4 rounded-[18px] border border-blue/15 bg-blue-soft p-4">
+        <p className="text-[13px] font-black text-blue-strong">Source-backed · applied</p>
+        <p className="mt-1 text-[13.5px] font-semibold leading-relaxed text-navy">
+          Core investing lessons show the official source behind important claims, when it was checked, and a Practice or Explore action so you can apply the idea immediately.
+        </p>
+        <p className="mt-2 text-[12px] font-bold text-ink-3">Education, not personalized investment advice · learning never changes your Key.</p>
+      </div>
+
       <ol className="mt-4 space-y-3" aria-label="Modules">
         {MODULES.map((m) => {
           const s = modules.find((x) => x.id === m.id)!;

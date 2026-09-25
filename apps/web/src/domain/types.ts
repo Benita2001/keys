@@ -248,6 +248,20 @@ export type ExecutionResult = {
 /* Learning                                                            */
 /* ------------------------------------------------------------------ */
 
+export type LearningSource = {
+  organization: string;
+  title: string;
+  url: string;
+  /** ISO date when the learning claim was last checked against the source. */
+  verifiedAt: string;
+};
+
+export type LearningApplication = {
+  label: string;
+  href: string;
+  body: string;
+};
+
 export type IllustrationKey =
   | "piggy"
   | "storefront"
@@ -264,6 +278,9 @@ export type LessonStep =
       body: string;
       illustration: IllustrationKey;
       caption?: string;
+      realityCheck?: string;
+      source?: LearningSource;
+      apply?: LearningApplication;
     }
   | {
       kind: "quiz";

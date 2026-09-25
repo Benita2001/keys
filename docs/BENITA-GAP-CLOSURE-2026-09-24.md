@@ -59,4 +59,4 @@ The custom illustrations and company tiles remain valid hackathon assets. Replac
 
 > KEYS enforces bounded demo-token capital actions on Solana Devnet using live Pyth market truth. The young person acts freely inside a standing family Mandate; only an authorized guardian can expand authority.
 
-Core flow: MY KEY → LEARN/PRACTICE → ALLOW → REFUSE → ASK FOR MORE ROOM → GUARDIAN DECISION → ALLOW → STALE REFUSE
+Core flow: MY KEY → SOURCE-BACKED LEARN/PRACTICE → ALLOW → REFUSE → ASK FOR MORE ROOM → GUARDIAN ALLOW_ONCE → EXACT ALLOW → REPLAY REFUSE / AllowanceAlreadyUsed

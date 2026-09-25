@@ -124,17 +124,16 @@ AAPL is the current proven Money/Pyth lane. TSLA remains historical valid proof.
 ## Judge-facing order
 
 1. **My Key** — current freedom/bounds.
-2. **Learn / Practice** — contextual, short, age-respectful.
-3. **In-bounds action** — immediate, no guardian approval.
-4. **Boundary refusal**.
-5. **Pyth market condition / evidence**.
-6. **Ask for more room**.
-7. **Guardian decision** — allow once / widen / refuse.
-8. **Same action after widen** — success.
-9. **Stale authorization** — old nonce refuses.
-10. **Proof drawer / receipt** — Devnet signature, program, version/nonce, Pyth evidence.
+2. **Source-backed Learn / Practice** — short, applied, age-respectful.
+3. **In-bounds action** — immediate ALLOW, no guardian approval.
+4. **Boundary action** — REFUSE.
+5. **Ask for more room** — exact private request.
+6. **Guardian decision** — choose **Allow once** for the canonical demo.
+7. **Exact retry** — ALLOW using the nonce-bound one-time authorization.
+8. **Replay the same authorization** — REFUSE / `AllowanceAlreadyUsed`.
+9. **Proof drawer / receipt** — Devnet signature, program, version/nonce, Pyth evidence.
 
-The hero is the child’s understandable freedom. Solana and Pyth prove it; they should not dominate the first screen.
+Widen remains supported as a standing-authority capability and Q&A path, but ALLOW_ONCE + replay refusal is the canonical hero. The hero is the child’s understandable freedom; Solana and Pyth prove it without dominating the first screen.
 
 ## Production-only items — do not block the hackathon
 

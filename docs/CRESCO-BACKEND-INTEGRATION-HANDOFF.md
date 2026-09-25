@@ -152,6 +152,8 @@ They belong to a production architecture pass after the hackathon.
 
 Do not rebuild these backend mechanics in the frontend. Keep the judge-facing order:
 
-`MY KEY → LEARN/PRACTICE → ALLOW → REFUSE → MARKET CHANGE → ASK FOR MORE ROOM → HUMAN WIDEN → ALLOW → STALE REFUSE`
+`MY KEY → SOURCE-BACKED LEARN/PRACTICE → ALLOW → REFUSE → ASK FOR MORE ROOM → GUARDIAN ALLOW_ONCE → EXACT ALLOW → REPLAY REFUSE / AllowanceAlreadyUsed → RECEIPT`
+
+Standing WIDEN remains supported, but the canonical judge path uses ALLOW_ONCE because it proves a precise exception without silently expanding standing authority.
 
 The hero remains the young person’s understandable freedom. Solana/Pyth/Cloudflare are proof layers, not the homepage story.

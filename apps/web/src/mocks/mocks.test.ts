@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildPortfolio } from "@/hooks/data";
 import { DEMO_PRACTICE_CASH, DEMO_PRACTICE_HOLDINGS } from "./family";
+import { LESSONS } from "./learning";
 import { MOCK_ASSETS, sampleSeries } from "./market";
 
 const INTENDED_UNIVERSE: Record<string, string> = {
@@ -51,5 +52,31 @@ describe("mock market data", () => {
     expect(view.totalChange).toBeCloseTo(57.3, 2);
     expect(view.totalChangePercent).toBeCloseTo(4.8, 1);
     expect(view.holdings.map((h) => h.ticker)).toEqual(["AAPL", "NVDA", "AMZN", "NFLX"]);
+  });
+});
+
+
+describe("source-backed learning", () => {
+  it("uses visible primary-source metadata for core investing lessons", () => {
+    const sourced = LESSONS.flatMap((lesson) =>
+      lesson.steps
+        .filter((step) => step.kind === "concept" && step.source)
+        .map((step) => ({ lessonId: lesson.id, source: step.kind === "concept" ? step.source : undefined })),
+    );
+
+    expect(sourced.length).toBeGreaterThanOrEqual(8);
+    for (const item of sourced) {
+      expect(item.source).toBeTruthy();
+      expect(item.source!.url.startsWith("https://")).toBe(true);
+      expect(item.source!.verifiedAt).toMatch(/^20\d\d-\d\d-\d\d$/);
+      expect(["investor.gov", "sec.gov"]).toContain(new URL(item.source!.url).hostname.replace(/^www\./, ""));
+    }
+  });
+
+  it("teaches tokenized-security representation as distinct from the company itself", () => {
+    const lesson = LESSONS.find((item) => item.id === "stock-vs-tokenized-security");
+    expect(lesson).toBeTruthy();
+    expect(JSON.stringify(lesson)).toContain("same rights");
+    expect(JSON.stringify(lesson)).toContain("representation");
   });
 });

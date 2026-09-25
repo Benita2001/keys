@@ -390,7 +390,7 @@ A guardian authors a versioned Mandate describing what actions are allowed, the 
 
 Pyth supplies live market evidence to the execution path. It can make an action invalid or too large, but it can never expand human authority. Guardian widening is explicit, versioned and nonce-protected; old authorization becomes stale.
 
-The demo uses Solana Devnet, a demo SPL token, a server-held Devnet demo signer and the current AAPL Pyth proof lane. Cloudflare Durable Objects hold synchronized Family demo state and serialize reservations/idempotency across devices. Contextual learning remains first-class, but learning/XP/P&L never automatically changes limits.
+The demo uses Solana Devnet, a demo SPL token, a server-held Devnet demo signer and the current AAPL Pyth proof lane. Cloudflare Durable Objects hold synchronized Family demo state and serialize reservations/idempotency across devices. Contextual learning remains first-class: core investing claims show primary/official sources and a verification date, then route into Explore/Practice application. Learning/XP/P&L never automatically changes limits.
 
 Tessera is the selected pre-IPO sponsor surface. PreStocks remains integrated as a secondary representation/Practice layer with eligibility fail-closed by default, but is not entered as a bounty while Tessera remains in the submitted build.
 
@@ -465,7 +465,7 @@ Before recording:
 - confirm balance/test funding is sufficient;
 - confirm in-bounds amount;
 - confirm boundary amount;
-- rehearse exact widen value;
+- rehearse the exact ALLOW_ONCE request, retry and replay-refusal sequence;
 - verify Explorer link;
 - keep a backup recording of the canonical proof receipt;
 - do not expose secrets/dashboard environment values.
