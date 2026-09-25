@@ -1,3 +1,17 @@
+const rawCatalogResponse = await fetch('https://pyth.dourolabs.app/v1/symbols?asset_type=equity');
+const rawCatalogBody = await rawCatalogResponse.json();
+console.log('PYTH_RAW_CATALOG_SHAPE=' + JSON.stringify({
+  ok: rawCatalogResponse.ok,
+  status: rawCatalogResponse.status,
+  isArray: Array.isArray(rawCatalogBody),
+  keys: rawCatalogBody && typeof rawCatalogBody === 'object' ? Object.keys(rawCatalogBody).slice(0,20) : [],
+  sample: Array.isArray(rawCatalogBody)
+    ? rawCatalogBody.slice(0,2)
+    : rawCatalogBody && typeof rawCatalogBody === 'object'
+      ? Object.fromEntries(Object.entries(rawCatalogBody).slice(0,2))
+      : rawCatalogBody
+}));
+
 import { discoverPythProMarkets } from '../src/pyth-adapter.mjs';
 
 const apiKey = process.env.PYTH_PRO_API_KEY;
