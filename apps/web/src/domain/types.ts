@@ -11,7 +11,7 @@ export type Mode = "practice" | "money";
 
 export type DataStatus = "mock" | "live" | "stale";
 
-export type AssetCategory = "Technology" | "Consumer" | "Retail" | "Funds";
+export type AssetCategory = "Technology" | "Consumer" | "Retail" | "Funds" | "Private";
 
 export type MarketAsset = {
   id: string;
@@ -28,15 +28,47 @@ export type MarketAsset = {
   thingsToKnow: ThingToKnow[];
   price: number;
   dayChangePercent: number;
+  /**
+   * Where dayChangePercent comes from. "unknown" means we have a live price but
+   * no real change figure, so the UI hides the change instead of inventing one.
+   */
+  changeSource?: "pyth-history" | "sample" | "unknown";
   brand: { background: string; foreground: string; mark: string };
   network: "solana";
-  provider: "xstocks" | "demo";
-  priceSource: "pyth" | "mock";
+  provider: "xstocks" | "demo" | "prestocks" | "tessera";
+  priceSource: "pyth" | "mock" | "prestocks" | "tessera";
   dataStatus: DataStatus;
   practiceEnabled: boolean;
   moneyModeStatus: "demo" | "eligible" | "unavailable" | "unknown";
   /** ISO time of the price observation when live. */
   asOf?: string;
+  /** Private-market representation (PreStocks / Tessera). Never direct equity. */
+  representation?: PrivateRepresentation;
+};
+
+export type PrivateRepresentation = {
+  source: "PRESTOCKS" | "TESSERA";
+  /** Plain-language label, e.g. "Pre-IPO economic exposure · not shares". */
+  label: string;
+  kind: "PRE_IPO_ECONOMIC_EXPOSURE" | "LOAN_PARTICIPATION_RIGHT";
+  underlyingCompany: string;
+  contractAddress: string;
+  network: "solana-mainnet" | "solana";
+  productUrl?: string;
+  markPrice?: number | null;
+  tokenPrice?: number | null;
+  valuation?: number | null;
+  premiumDiscountPct?: number | null;
+  sector?: string | null;
+  receivedAt?: string;
+  eligibility: "UNKNOWN" | "ELIGIBLE" | "INELIGIBLE";
+};
+
+/** Where a chart's points come from. Sample points are never shown as Pyth history. */
+export type SeriesResult = {
+  points: PricePoint[];
+  source: "pyth-history" | "sample" | "unavailable";
+  resolution?: string;
 };
 
 export type ThingToKnow = {
@@ -176,6 +208,9 @@ export type GuardianDecision = "ALLOW_ONCE" | "WIDEN_MANDATE" | "REFUSE";
 
 export type BoundaryRequestStatus =
   | "PENDING_HUMAN_DECISION"
+  /** Guardian decided; the Solana transaction is being committed. */
+  | "ALLOW_ONCE_PENDING_CHAIN"
+  | "WIDEN_PENDING_CHAIN"
   | "ALLOWED_ONCE"
   | "ALLOWED_ONCE_USED"
   | "WIDENED"
@@ -221,6 +256,11 @@ export type ExecutionProof = {
    */
   simulated?: boolean;
   idempotencyKey?: string;
+  mandateAddress?: string;
+  /** e.g. DEMO_TOKEN: the capital the runtime moved. Never real shares. */
+  executionAsset?: string;
+  /** Pyth evidence the runtime verified for this action. Authority effect is always NONE. */
+  pyth?: { status?: string; feedId?: number; verification?: string; unitPrice?: number; publishTime?: string };
 };
 
 /**
@@ -255,7 +295,8 @@ export type IllustrationKey =
   | "chart"
   | "scale"
   | "basket"
-  | "shares";
+  | "shares"
+  | "private";
 
 export type LessonStep =
   | {
@@ -286,7 +327,7 @@ export type Lesson = {
   steps: LessonStep[];
 };
 
-export type ModuleIcon = "coins" | "building" | "pie" | "trend" | "scale" | "layers";
+export type ModuleIcon = "coins" | "building" | "pie" | "trend" | "scale" | "layers" | "rocket";
 
 export type LearningModule = {
   id: string;
@@ -296,9 +337,11 @@ export type LearningModule = {
   icon: ModuleIcon;
   tone: "green" | "blue" | "lavender" | "orange" | "aqua" | "pink";
   lessonIds: string[];
+  /** "core" modules unlock in order; "explore" modules are always open. */
+  track?: "core" | "explore";
 };
 
-export type ModuleState = "complete" | "current" | "locked";
+export type ModuleState = "complete" | "current" | "locked" | "open";
 
 /* ------------------------------------------------------------------ */
 /* Profile / progress                                                  */

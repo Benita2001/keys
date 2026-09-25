@@ -214,6 +214,29 @@ function PiggyScene({ className, title }: SvgProps) {
   );
 }
 
+/** A company that isn't listed yet: a closed exchange board and a rocket on the launchpad. */
+function PrivateScene({ className, title }: SvgProps) {
+  const id = useId();
+  return (
+    <svg viewBox="0 0 320 200" className={className} {...a11y(title)}>
+      <Backdrop id={id} from="#f0edff" to="#fff9f1" />
+      <rect x="28" y="40" width="130" height="88" rx="10" fill="#102b63" />
+      <text x="93" y="66" textAnchor="middle" fontSize="11" fontWeight="800" fill="#7fd4ff">STOCK EXCHANGE</text>
+      <rect x="44" y="76" width="98" height="14" rx="4" fill="#1d3f86" />
+      <rect x="44" y="96" width="70" height="14" rx="4" fill="#1d3f86" />
+      <rect x="56" y="136" width="74" height="26" rx="8" fill="#ffbc32" />
+      <text x="93" y="153" textAnchor="middle" fontSize="11" fontWeight="900" fill="#102b63">NOT LISTED YET</text>
+      <path d="M232 150V76c0-18 12-34 20-40 8 6 20 22 20 40v74z" fill="#ffffff" stroke="#dce6f2" strokeWidth="2" />
+      <circle cx="252" cy="88" r="9" fill="#8fb7ff" stroke="#1769f6" strokeWidth="3" />
+      <path d="M232 128l-14 22h14zM272 128l14 22h-14z" fill="#8b75f7" />
+      <path d="M242 150h20l-4 18h-12z" fill="#ff8a3d" />
+      <path d="M246 168h12l-6 14z" fill="#ffbc32" />
+      <path d="M190 176h120" stroke="#dce6f2" strokeWidth="4" strokeLinecap="round" />
+      <text x="252" y="40" textAnchor="middle" fontSize="12" fontWeight="900" fill="#6a4fe0">PRIVATE CO.</text>
+    </svg>
+  );
+}
+
 export function LessonIllustration({
   kind,
   caption,
@@ -233,6 +256,8 @@ export function LessonIllustration({
       return <BasketScene className={className} title={title} />;
     case "shares":
       return <SharesScene className={className} title={title} />;
+    case "private":
+      return <PrivateScene className={className} title={title} />;
     case "piggy":
     default:
       return <PiggyScene className={className} title={title} />;

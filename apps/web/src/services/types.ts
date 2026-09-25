@@ -14,7 +14,7 @@ import type {
   GuardianDecision,
   MarketAsset,
   Period,
-  PricePoint,
+  SeriesResult,
   Session,
 } from "@/domain/types";
 
@@ -31,7 +31,7 @@ export type Capabilities = {
 export interface MarketDataService {
   listAssets(): Promise<MarketAsset[]>;
   getAsset(ticker: string): Promise<MarketAsset | null>;
-  getSeries(ticker: string, period: Period): Promise<PricePoint[]>;
+  getSeries(ticker: string, period: Period): Promise<SeriesResult>;
 }
 
 export type MoneyActionInput = {
@@ -48,6 +48,8 @@ export type MoneyActionInput = {
    * can never execute the same intent twice.
    */
   idempotencyKey?: string;
+  /** Re-check of an already-submitted intent (same key): skip the pre-evaluate. */
+  recheck?: boolean;
 };
 
 export interface MoneyExecutionService {

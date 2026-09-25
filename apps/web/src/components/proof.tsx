@@ -86,3 +86,84 @@ export function onChainLabel(proof?: ExecutionProof): string {
   if (proof.status === "RUNTIME_PENDING") return "Submitted, waiting for confirmation";
   return "Not sent. No transaction exists for this action.";
 }
+
+function fmtTime(iso?: string) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "medium" });
+}
+
+/**
+ * Proof drawer body: consumer summary first, raw signature/program/nonce/Pyth
+ * under Technical details. Never shows a signature that wasn't returned.
+ */
+export function ProofDetails({
+  proof,
+  asset,
+  amount,
+  action = "Buy",
+  decisionSource,
+}: {
+  proof?: ExecutionProof;
+  asset: string;
+  amount: string;
+  action?: string;
+  decisionSource?: string;
+}) {
+  const confirmed = isVerifiableOnChain(proof);
+  const summary: [string, string][] = [
+    ["Status", confirmed ? "Confirmed" : proof?.status === "RUNTIME_PENDING" ? "Waiting for confirmation" : proof?.simulated ? "Simulated test run" : proof?.status === "PRACTICE_LOCAL" ? "Practice (virtual money)" : "Not sent"],
+    ["Network", proof?.network ? "Solana Devnet" : "—"],
+    ["Action", `${action} · ${asset}`],
+    ["Amount", amount],
+    ["Capital", proof?.executionAsset === "DEMO_TOKEN" || proof?.network ? "Devnet demo tokens · not real money or shares" : proof?.status === "PRACTICE_LOCAL" ? "Virtual practice money" : "—"],
+    ["Pyth evidence", proof?.pyth?.status ? `${proof.pyth.status === "FRESH" ? "Fresh" : proof.pyth.status}${typeof proof.pyth.unitPrice === "number" ? ` · $${proof.pyth.unitPrice.toFixed(2)}` : ""}` : "—"],
+  ];
+  const technical: [string, string][] = [
+    ["Transaction signature", proof?.signature ?? "—"],
+    ["Program", proof?.programId ?? "—"],
+    ["Mandate account", proof?.mandateAddress ?? "—"],
+    ["Mandate version / nonce", proof?.mandateVersion != null ? `v${proof.mandateVersion} · nonce ${proof.mandateNonce}` : "—"],
+    ["Pyth feed", proof?.pyth?.feedId != null ? `#${proof.pyth.feedId}${proof.pyth.verification ? ` · ${proof.pyth.verification}` : ""}` : "—"],
+    ["Pyth publish time", fmtTime(proof?.pyth?.publishTime)],
+    ["Executed at", fmtTime(proof?.executedAt)],
+    ["Idempotency key", proof?.idempotencyKey ?? "—"],
+  ];
+  if (decisionSource) technical.push(["Decision source", decisionSource]);
+  return (
+    <div>
+      <dl className="divide-y divide-line-soft rounded-[16px] border border-line-soft">
+        {summary.map(([k, v]) => (
+          <div key={k} className="flex items-start justify-between gap-4 px-3.5 py-2.5">
+            <dt className="text-[13px] font-bold text-ink-2">{k}</dt>
+            <dd className="max-w-[62%] text-right text-[13px] font-extrabold text-navy-strong">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      {confirmed ? (
+        <a
+          href={explorerTxUrl(proof.signature)}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-flex items-center gap-1 text-[13.5px] font-extrabold text-blue-strong hover:underline"
+        >
+          View on Solana Explorer <ExternalLink aria-hidden className="size-3.5" />
+          <span className="sr-only">(opens in a new tab)</span>
+        </a>
+      ) : null}
+      {proof && proof.status !== "PRACTICE_LOCAL" && proof.status !== "DEMO_NOT_EXECUTED" ? (
+        <details className="group mt-3 rounded-[16px] border border-line-soft px-3.5 py-2.5">
+          <summary className="cursor-pointer list-none text-[13px] font-extrabold text-navy-strong">Technical details</summary>
+          <dl className="mt-2 space-y-2">
+            {technical.map(([k, v]) => (
+              <div key={k}>
+                <dt className="text-[11.5px] font-bold text-ink-3">{k}</dt>
+                <dd className="break-all font-mono text-[11.5px] font-semibold text-navy">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      ) : null}
+    </div>
+  );
+}

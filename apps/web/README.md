@@ -8,9 +8,25 @@ Consumer frontend for Cresco, the family-facing experience on top of the KEYS bo
 npm install
 npm run dev        # http://localhost:3000
 npm run check      # typecheck + lint + test + build
+npx playwright test  # WebKit iPhone e2e (needs @playwright/test + `npx playwright install webkit`)
 ```
 
-Production uses the hosted KEYS v0.2 Cloudflare API by default. For local development you can point the frontend at a local API:
+Production uses the hosted KEYS v0.2 Cloudflare API by default. The hosted Worker only allows the production origin (CORS), so local dev goes through a same-origin relay in `next.config.ts` (`/keys-api/*` → `KEYS_API_UPSTREAM`):
+
+```bash
+cp .env.example .env.local   # NEXT_PUBLIC_KEYS_API_URL=/keys-api, NEXT_PUBLIC_KEYS_EXECUTION=runtime
+```
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_KEYS_API_URL` | KEYS API base (`/keys-api` locally, hosted Worker URL in production) |
+| `KEYS_API_UPSTREAM` | Relay target for `/keys-api` (server-side only) |
+| `NEXT_PUBLIC_KEYS_EXECUTION` | `runtime` = in-bounds AAPL actions execute on Solana Devnet (demo tokens) |
+| `NEXT_PUBLIC_PRIVY_APP_ID` | Optional embedded wallet (email/Google/Apple + Solana). Unset = hidden. Identity only, never Money authority |
+
+Never put `PYTH_PRO_API_KEY`, signer material or any server secret in a `NEXT_PUBLIC_*` variable.
+
+Or point the frontend at a local API:
 
 ```bash
 (cd ../.. && npm install && npm run api)                          # 127.0.0.1:8787
@@ -40,7 +56,7 @@ Mock proofs are `simulated: true` with `MOCK…` signatures and are labeled "Tes
 
 ## Truth labels
 
-Prices are samples unless tagged **Live · Pyth**. The current AAPL Money lane executes a **demo SPL token on Solana Devnet** through the KEYS program with Pyth evidence. Test funding is backend demo credit only. Cresco does not claim bank/card funding, brokerage, custody, real AAPL ownership, mainnet or real minor securities execution.
+Prices are samples unless tagged **Live · Pyth** (or **Delayed**). Private companies (PreStocks, Tessera) are Learn/Practice only and labeled as economic exposure / loan participation rights, never shares. The current AAPL Money lane executes a **demo SPL token on Solana Devnet** through the KEYS program with Pyth evidence. Test funding is backend demo credit only. Cresco does not claim bank/card funding, brokerage, custody, real AAPL ownership, mainnet or real minor securities execution.
 
 Docs: [design system](../../docs/CRESCO-FRONTEND-DESIGN-SYSTEM.md) · [backend handoff](../../docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md) · [implementation summary](../../docs/CRESCO-FRONTEND-IMPLEMENTATION-SUMMARY.md)
 

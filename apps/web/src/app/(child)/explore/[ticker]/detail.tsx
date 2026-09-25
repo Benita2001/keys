@@ -21,15 +21,16 @@ import { useEffect, useState } from "react";
 import { CompanyHero } from "@/components/illustrations/scenes";
 import { ThinkingKid } from "@/components/illustrations/people";
 import { CompanyLogo, PriceChange, PriceChart } from "@/components/finance";
-import { MoneyModeUnavailable, ModeSwitch } from "@/components/mode";
-import { DataStatusTag, DemoMoneyTag, EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
+import { MoneyModeUnavailable, MoneySyncState, ModeSwitch } from "@/components/mode";
+import { DataStatusTag, DemoMoneyTag, EmptyState, ErrorState, Provenance, Skeleton } from "@/components/ui/feedback";
 import { BottomSheet } from "@/components/ui/overlay";
 import { ActionButton, Card, IconCircle, PeriodSelector } from "@/components/ui/primitives";
 import { formatAmount, formatUsd } from "@/domain/format";
 import { assetRuleFor, evaluateBoundedAction, explainEvaluation, maxAllowedNow } from "@/domain/policy";
 import type { MarketAsset, Period, ThingToKnow } from "@/domain/types";
 import { useAsset, useSeries } from "@/hooks/data";
-import { useStore } from "@/state/store";
+import { MONEY_PROOF_TICKER } from "@/services";
+import { useMoneyTruth, useStore } from "@/state/store";
 
 const THING_ICONS: Record<ThingToKnow["icon"], React.ComponentType<{ className?: string }>> = {
   devices: MonitorSmartphone,
@@ -106,31 +107,57 @@ function Loaded({ asset }: { asset: MarketAsset }) {
             <div className="min-w-0 flex-1">
               <h1 className="text-[22px] font-black leading-tight text-navy-strong">{asset.companyName}</h1>
               <p className="text-[12.5px] font-bold text-ink-3">
-                {asset.ticker} · {asset.tokenizedTicker} on Solana
+                {asset.representation
+                  ? `${asset.representation.label}`
+                  : `${asset.ticker} · ${asset.tokenizedTicker} on Solana`}
               </p>
             </div>
+            <Provenance kind={asset.moneyModeStatus === "eligible" ? "money-proof" : "learn-practice"} />
           </div>
           <div className="mt-3 flex flex-wrap items-end gap-x-2 gap-y-1">
             <span className="text-[30px] font-black leading-none text-navy-strong tabular">{formatUsd(asset.price)}</span>
-            <PriceChange percent={asset.dayChangePercent} size="lg" className="mb-0.5" />
-            <span className="mb-1 text-[12px] font-bold text-ink-3">today</span>
-            <DataStatusTag status={asset.dataStatus} className="mb-1 ml-auto" />
+            {asset.changeSource !== "unknown" ? (
+              <>
+                <PriceChange percent={asset.dayChangePercent} size="lg" className="mb-0.5" />
+                <span className="mb-1 text-[12px] font-bold text-ink-3">today</span>
+              </>
+            ) : null}
+            <DataStatusTag status={asset.dataStatus} source={asset.priceSource} className="mb-1 ml-auto" />
           </div>
+          {asset.representation ? <RepresentationFacts asset={asset} /> : null}
         </Card>
 
-        <div className="mt-4">
-          <PeriodSelector options={PERIODS} value={period as (typeof PERIODS)[number]} onChange={setPeriod} label="Chart period" />
-          <div className="mt-2 min-h-[130px]">
+        {asset.representation ? null : (
+          <div className="mt-4">
+            <PeriodSelector options={PERIODS} value={period as (typeof PERIODS)[number]} onChange={setPeriod} label="Chart period" />
+            <div className="mt-2 min-h-[130px]">
+              {series.status === "success" && series.data.points.length > 1 ? (
+                <PriceChart
+                  points={series.data.points}
+                  trend={series.data.points[series.data.points.length - 1].v - series.data.points[0].v}
+                  label={`${asset.companyName} ${series.data.source === "pyth-history" ? "Pyth price history" : "sample chart"}, ${period}`}
+                  height={130}
+                />
+              ) : series.status === "error" ? (
+                <ErrorState onRetry={series.reload} />
+              ) : series.status === "success" ? (
+                <div className="grid h-[130px] place-items-center rounded-[16px] bg-surface-soft text-[13px] font-semibold text-ink-2">
+                  Price history is unavailable right now.
+                </div>
+              ) : (
+                <Skeleton className="h-[130px] w-full" />
+              )}
+            </div>
             {series.status === "success" ? (
-              <PriceChart points={series.data} trend={asset.dayChangePercent} label={`${asset.companyName} price history, ${period}`} height={130} />
-            ) : series.status === "error" ? (
-              <ErrorState onRetry={series.reload} />
-            ) : (
-              <Skeleton className="h-[130px] w-full" />
-            )}
+              <p className="mt-1 flex items-center gap-2 text-[11.5px] font-semibold text-ink-3">
+                <Provenance kind={series.data.source === "pyth-history" ? "pyth-history" : "sample-chart"} />
+                {series.data.source === "pyth-history"
+                  ? "Real Pyth Pro price history."
+                  : "Illustrative sample chart. Real history isn't connected for this company yet."}
+              </p>
+            ) : null}
           </div>
-          <p className="text-[11.5px] font-semibold text-ink-3">Chart history uses Pyth when the configured feed is entitled; otherwise Cresco falls back to clearly labeled sample data.</p>
-        </div>
+        )}
       </div>
 
       <div className="lg:sticky lg:top-8 lg:self-start">
@@ -166,7 +193,7 @@ function Loaded({ asset }: { asset: MarketAsset }) {
         </section>
 
         <div className="mt-5">
-          <ModeSwitch className="mb-3" />
+          {asset.representation ? null : <ModeSwitch className="mb-3" />}
           <ActionPanel asset={asset} onLearn={() => setLearnOpen(true)} />
         </div>
       </div>
@@ -201,6 +228,7 @@ function Loaded({ asset }: { asset: MarketAsset }) {
 /** CTA area. Practice → add; Money → evaluated against the active Mandate. */
 function ActionPanel({ asset, onLearn }: { asset: MarketAsset; onLearn: () => void }) {
   const { state } = useStore();
+  const money = useMoneyTruth();
   const { mandate } = state;
   const learn = (
     <ActionButton variant="secondary" onClick={onLearn} className="mt-2.5">
@@ -208,25 +236,35 @@ function ActionPanel({ asset, onLearn }: { asset: MarketAsset; onLearn: () => vo
     </ActionButton>
   );
 
-  if (state.mode === "practice") {
+  if (state.mode === "practice" || asset.representation) {
     return (
       <>
         <ActionButton href={`/invest/${asset.ticker}?mode=practice`}>Add to Practice Portfolio</ActionButton>
-        {learn}
+        {asset.representation ? (
+          <ActionButton variant="secondary" href="/lesson/what-is-a-pre-ipo-company" className="mt-2.5">
+            Learn about private companies
+          </ActionButton>
+        ) : (
+          learn
+        )}
       </>
     );
   }
 
+  if (!money.ready) return <MoneySyncState status={money.status} onRetry={money.refresh} />;
   if (!state.profile.parentLinked) return <MoneyModeUnavailable reason="parent" />;
   if (mandate.status !== "ACTIVE") return <MoneyModeUnavailable reason="paused" />;
 
   if (asset.moneyModeStatus === "unavailable") {
     return (
       <>
-        <MoneyLine asset={asset} note={`${asset.companyName} isn't available in Money Mode. You can still practice with it.`} />
-        <ActionButton disabled>Not available in Money Mode</ActionButton>
-        <ActionButton variant="secondary" href={`/invest/${asset.ticker}?mode=practice`} className="mt-2.5">
-          Practice this instead
+        <MoneyLine
+          asset={asset}
+          note={`${asset.companyName} is Practice-only for now. Apple is the only company connected to Money Mode today.`}
+        />
+        <ActionButton href={`/invest/${asset.ticker}?mode=practice`}>Practice with {asset.companyName}</ActionButton>
+        <ActionButton variant="secondary" href={`/explore/${MONEY_PROOF_TICKER}`} className="mt-2.5">
+          See Apple in Money Mode
         </ActionButton>
       </>
     );
@@ -280,5 +318,36 @@ function MoneyLine({ note }: { asset: MarketAsset; note: string }) {
       </div>
       <p className="mt-1.5 text-[13px] font-semibold text-ink-2">{note}</p>
     </div>
+  );
+}
+
+function compactUsd(n: number) {
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1 });
+}
+
+/** PreStocks / Tessera facts. Always states what the token is not. */
+function RepresentationFacts({ asset }: { asset: MarketAsset }) {
+  const r = asset.representation!;
+  const rows: [string, string][] = [
+    ["What it is", r.kind === "PRE_IPO_ECONOMIC_EXPOSURE" ? "A token tracking an estimated company value" : "A loan participation right"],
+    ["Shares, votes, dividends", "None. Not direct equity"],
+    ["Source", r.source === "PRESTOCKS" ? "PreStocks public API" : "Tessera public API"],
+  ];
+  if (typeof r.valuation === "number") rows.push(["Estimated valuation", compactUsd(r.valuation)]);
+  if (typeof r.premiumDiscountPct === "number")
+    rows.push([
+      "Token vs. estimate",
+      `${r.premiumDiscountPct >= 0 ? "+" : "−"}${Math.abs(r.premiumDiscountPct).toFixed(1)}% ${r.premiumDiscountPct >= 0 ? "premium" : "discount"}`,
+    ]);
+  rows.push(["Eligibility", r.eligibility === "UNKNOWN" ? "Not verified · Practice only" : r.eligibility]);
+  return (
+    <dl className="mt-3 divide-y divide-line-soft rounded-[14px] bg-surface-soft px-3 text-[12.5px]">
+      {rows.map(([k, v]) => (
+        <div key={k} className="flex items-start justify-between gap-3 py-2">
+          <dt className="font-bold text-ink-2">{k}</dt>
+          <dd className="text-right font-extrabold text-navy-strong">{v}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

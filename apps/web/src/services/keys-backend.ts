@@ -35,7 +35,18 @@ import type {
   Session,
 } from "@/domain/types";
 
-type KeysConfig = { url: string; execution: "demo" | "runtime"; timeoutMs: number };
+type KeysConfig = {
+  url: string;
+  execution: "demo" | "runtime";
+  /** Reads. */
+  timeoutMs: number;
+  /**
+   * Calls that submit a Solana Devnet transaction (execute, Mandate transition,
+   * guardian decisions). Aborting these early can interrupt the backend between
+   * the on-chain commit and its bookkeeping, so they get a long timeout.
+   */
+  chainTimeoutMs: number;
+};
 
 const PUBLIC_HOSTED_KEYS_API =
   "https://keys-api-stocklana.faadil-casecraft.workers.dev";
@@ -49,6 +60,27 @@ const BACKEND_SESSION_KEYS: Record<BackendRole, string> = {
   guardian: "cresco-keys-session-guardian-v1",
 };
 const BACKEND_ACTIVE_ROLE_KEY = "cresco-keys-session-active-role-v1";
+const BACKEND_NAME_KEYS: Record<BackendRole, string> = {
+  child: "cresco-keys-session-child-name-v1",
+  guardian: "cresco-keys-session-guardian-name-v1",
+};
+const DEFAULT_NAMES: Record<BackendRole, string> = { child: "Alex", guardian: "Sam" };
+
+/** Error with the HTTP status so the UI can tell auth, offline and server faults apart. */
+export class KeysApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code?: string,
+  ) {
+    super(message);
+    this.name = "KeysApiError";
+  }
+}
+
+export function isAuthError(e: unknown) {
+  return e instanceof KeysApiError && (e.status === 401 || e.status === 403);
+}
 
 function backendSessionToken(role?: BackendRole | null) {
   if (typeof window === "undefined") return null;
@@ -68,14 +100,56 @@ function backendSessionToken(role?: BackendRole | null) {
   }
 }
 
-function saveBackendSessionToken(token: string, role: BackendRole) {
+function saveBackendSessionToken(token: string, role: BackendRole, displayName?: string) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(BACKEND_SESSION_KEYS[role], token);
     window.localStorage.setItem(BACKEND_ACTIVE_ROLE_KEY, role);
+    if (displayName) window.localStorage.setItem(BACKEND_NAME_KEYS[role], displayName);
   } catch {
     // Storage may be unavailable; the current call still completed safely.
   }
+}
+
+function dropBackendSessionToken(role: BackendRole) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(BACKEND_SESSION_KEYS[role]);
+  } catch {
+    /* best effort */
+  }
+}
+
+function storedName(role: BackendRole) {
+  if (typeof window === "undefined") return DEFAULT_NAMES[role];
+  try {
+    return window.localStorage.getItem(BACKEND_NAME_KEYS[role]) || DEFAULT_NAMES[role];
+  } catch {
+    return DEFAULT_NAMES[role];
+  }
+}
+
+/** Which demo session GET requests should use (the view the user is in). */
+export function setActiveBackendRole(role: BackendRole) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(BACKEND_ACTIVE_ROLE_KEY, role);
+  } catch {
+    /* best effort */
+  }
+}
+
+export function activeBackendRole(): BackendRole | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(BACKEND_ACTIVE_ROLE_KEY) as BackendRole | null;
+  } catch {
+    return null;
+  }
+}
+
+export function hasBackendSession(role: BackendRole) {
+  return !!backendSessionToken(role);
 }
 
 function requiredRoleForRequest(path: string, method = "GET"): BackendRole | null {
@@ -135,7 +209,8 @@ export function keysConfig(): KeysConfig {
   return {
     url,
     execution: url ? execution : "demo",
-    timeoutMs: override?.timeoutMs ?? 8000,
+    timeoutMs: override?.timeoutMs ?? 12_000,
+    chainTimeoutMs: override?.chainTimeoutMs ?? 60_000,
   };
 }
 
@@ -152,21 +227,72 @@ export function keysApiUrl() {
   return keysConfig().url;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = backendSessionToken(
-    requiredRoleForRequest(path, init?.method ?? "GET"),
+function isChainWrite(path: string, method = "GET") {
+  if (method.toUpperCase() !== "POST") return false;
+  return (
+    path === "/api/v0.2/actions/execute" ||
+    path === "/api/v0.2/mandates/transition" ||
+    /\/api\/v0\.2\/boundary-requests\/[^/]+\/decision$/.test(path)
   );
-  const res = await fetch(`${keysConfig().url}${path}`, {
+}
+
+async function send(path: string, init: RequestInit | undefined, token: string | null) {
+  const cfg = keysConfig();
+  return fetch(`${cfg.url}${path}`, {
     ...init,
     headers: {
       "content-type": "application/json",
       ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...(init?.headers ?? {}),
     },
-    signal: AbortSignal.timeout(keysConfig().timeoutMs),
+    signal: AbortSignal.timeout(isChainWrite(path, init?.method) ? cfg.chainTimeoutMs : cfg.timeoutMs),
   });
-  if (!res.ok) throw new Error(`KEYS backend ${path} responded ${res.status}`);
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const role = requiredRoleForRequest(path, init?.method ?? "GET") ?? activeBackendRole();
+  let res = await send(path, init, backendSessionToken(role));
+
+  // Demo sessions are temporary. On an expired/missing session, mint a fresh
+  // role-scoped demo session once and retry. Never retried for the session route itself.
+  if (res.status === 401 && role && path !== "/api/v0.2/auth/demo-session") {
+    dropBackendSessionToken(role);
+    await createDemoSessionFor(role, storedName(role));
+    res = await send(path, init, backendSessionToken(role));
+  }
+
+  if (!res.ok) {
+    let code: string | undefined;
+    try {
+      code = ((await res.json()) as { error?: string })?.error;
+    } catch {
+      /* no body */
+    }
+    throw new KeysApiError(`KEYS backend ${path} responded ${res.status}`, res.status, code);
+  }
   return (await res.json()) as T;
+}
+
+async function createDemoSessionFor(role: BackendRole, displayName: string) {
+  const res = await send(
+    "/api/v0.2/auth/demo-session",
+    { method: "POST", body: JSON.stringify({ role, displayName }) },
+    null,
+  );
+  if (!res.ok) throw new KeysApiError("Could not start a demo session", res.status);
+  const result = (await res.json()) as { token: string; displayName: string; role: BackendRole };
+  saveBackendSessionToken(result.token, role, result.displayName);
+  return result;
+}
+
+/**
+ * Make sure a role-scoped KEYS demo session exists (hackathon auth, not
+ * identity/KYC). Used on bootstrap so a visitor who lands on any page gets
+ * backend truth instead of local defaults.
+ */
+export async function ensureBackendSession(role: BackendRole, displayName?: string) {
+  if (!backendSessionToken(role)) await createDemoSessionFor(role, displayName ?? storedName(role));
+  setActiveBackendRole(role);
 }
 
 export type KeysCapabilities = {
@@ -195,6 +321,13 @@ export type DevnetDemoRuntime = {
     nonce: number;
     maxActionNotionalMicroUsd: number;
     maxPeriodNotionalMicroUsd: number;
+  };
+  assetRule?: {
+    address: string;
+    mint: string;
+    enabled: boolean;
+    pythFeedId: number;
+    spentThisPeriodNotionalMicroUsd: number;
   };
   truthBoundary: {
     executionAsset: "DEMO_TOKEN";
@@ -308,15 +441,7 @@ export async function createBackendDemoSession(
   displayName: string,
 ): Promise<Session> {
   const backendRole = role === "parent" ? "guardian" : "child";
-  const result = await request<{
-    role: "guardian" | "child";
-    displayName: string;
-    token: string;
-  }>("/api/v0.2/auth/demo-session", {
-    method: "POST",
-    body: JSON.stringify({ role: backendRole, displayName }),
-  });
-  saveBackendSessionToken(result.token, backendRole);
+  const result = await createDemoSessionFor(backendRole, displayName);
   return {
     role: result.role === "guardian" ? "parent" : "child",
     displayName: result.displayName,
@@ -350,8 +475,25 @@ export function fetchFamilyState() {
       xp: number;
       weeklyMinutes: { at: string; minutes: number }[];
     };
+    activity?: BackendActivity[];
+    familyCode?: string;
+    /** In-flight executions the family ledger is holding against balance and period. */
+    reservations?: Record<string, { notional: number; asset: string; createdAt: string }>;
   }>("/api/v0.2/family/state");
 }
+
+/** A confirmed Money execution as recorded by the Family Durable Object. */
+export type BackendActivity = {
+  id: string;
+  kind: string;
+  ticker: string;
+  amount: number;
+  shares: number;
+  createdAt: string;
+  proof?: RawExecutionProof;
+};
+
+export type FamilyState = Awaited<ReturnType<typeof fetchFamilyState>>;
 
 export function persistLearningProgress(input: {
   lessonId: string;
@@ -416,9 +558,13 @@ export function fetchMarketSeries(symbol: string, period: string) {
     type: "V0_2_MARKET_SERIES";
     symbol: string;
     period: string;
-    status: "FRESH" | "STALE" | "UNAVAILABLE";
+    /** History is AVAILABLE/UNAVAILABLE; FRESH/STALE kept for older deployments. */
+    status: "AVAILABLE" | "FRESH" | "STALE" | "UNAVAILABLE";
+    source?: "PYTH_PRO_HISTORY";
+    feedId?: number;
+    resolution?: string;
     points: { t: number; v: number }[];
-    reasonCode?: string;
+    reasonCode?: string | null;
   }>(
     `/api/v0.2/market/series?symbol=${encodeURIComponent(symbol)}&period=${encodeURIComponent(period)}`,
   );
@@ -520,6 +666,56 @@ export function fetchTesseraRepresentations() {
   }>("/api/v0.2/integrations/tessera");
 }
 
+export function fetchTesseraRepresentation(asset: string) {
+  return request<{ contractVersion: "0.2"; type: "TESSERA_INTEGRATION_ASSET"; asset: TesseraRepresentation }>(
+    `/api/v0.2/integrations/tessera/${encodeURIComponent(asset)}`,
+  );
+}
+
+export type PreStocksRepresentation = {
+  source: "PRESTOCKS";
+  sourceUrl: string;
+  network: "solana-mainnet";
+  symbol: string;
+  name: string;
+  contractAddress: string;
+  productUrl: string;
+  representation: {
+    kind: "PRE_IPO_ECONOMIC_EXPOSURE";
+    directEquityOwnership: false;
+    votingRights: false;
+    dividendRights: false;
+    informationRights: false;
+  };
+  market: {
+    status: "AVAILABLE" | "UNAVAILABLE";
+    markPrice?: number | null;
+    markValuation?: number | null;
+    tokenPrice?: number | null;
+    impliedValuation?: number | null;
+    premiumDiscountPct?: number | null;
+    supply?: number | null;
+    receivedAt: string;
+  };
+  eligibility: { status: "UNKNOWN" | "ELIGIBLE" | "INELIGIBLE"; executionEligible: boolean; reasonCode?: string | null };
+  keysPolicy: { practiceAvailable: boolean; executionEligible: boolean; authorityEffect: "NONE"; rule?: string };
+};
+
+export function fetchPreStocks() {
+  return request<{
+    contractVersion: "0.2";
+    type: "PRESTOCKS_INTEGRATION_CATALOG";
+    integration: { sponsor: "PRESTOCKS"; status: string; authorityEffect: "NONE"; executionDefault: string };
+    assets: PreStocksRepresentation[];
+  }>("/api/v0.2/integrations/prestocks");
+}
+
+export function fetchPreStock(symbol: string) {
+  return request<{ contractVersion: "0.2"; type: "PRESTOCKS_INTEGRATION_ASSET"; asset: PreStocksRepresentation }>(
+    `/api/v0.2/integrations/prestocks/${encodeURIComponent(symbol)}`,
+  );
+}
+
 type LiveProof = {
   scenario?: { asset?: string };
   evaluation?: {
@@ -542,11 +738,33 @@ type BackendEvaluation = {
   requestedNotional?: number;
   standingLimit?: number;
   remainingPeriodNotional?: number;
+  /** Frozen contract integer units (the on-chain path reports these). */
+  requestedNotionalMicroUsd?: number;
+  standingLimitMicroUsd?: number;
+  remainingPeriodNotionalMicroUsd?: number;
   boundaryRequestAvailable?: boolean;
   guardianApprovalRequired?: boolean;
   mandateVersion?: number;
   mandateNonce?: number;
 };
+
+const fromMicro = (v?: number | null) => (typeof v === "number" && Number.isFinite(v) ? v / 1_000_000 : undefined);
+
+/** Accept both dollar and micro-USD fields; the UI always works in dollars. */
+export function normalizeEvaluation(e: BackendEvaluation, source: ActionEvaluation["source"]): ActionEvaluation {
+  return {
+    decision: e.decision,
+    reasonCode: e.reasonCode,
+    requestedNotional: e.requestedNotional ?? fromMicro(e.requestedNotionalMicroUsd),
+    standingLimit: e.standingLimit ?? fromMicro(e.standingLimitMicroUsd),
+    remainingPeriodNotional: e.remainingPeriodNotional ?? fromMicro(e.remainingPeriodNotionalMicroUsd),
+    boundaryRequestAvailable: e.boundaryRequestAvailable,
+    guardianApprovalRequired: e.guardianApprovalRequired,
+    mandateVersion: e.mandateVersion,
+    mandateNonce: e.mandateNonce,
+    source,
+  };
+}
 
 export async function evaluateAction(input: {
   mandate: CurrentMandate;
@@ -568,7 +786,7 @@ export async function evaluateAction(input: {
     method: "POST",
     body: JSON.stringify(body),
   });
-  return { ...result, source: "keys-backend" };
+  return normalizeEvaluation(result, "keys-backend");
 }
 
 /* ------------------------------------------------------------------ */
@@ -587,21 +805,60 @@ export type ExecuteRequest = {
 };
 
 /** Response body for POST /api/v0.2/actions/execute (HTTP 200 for every policy outcome). */
+export type RawExecutionProof = {
+  status: "CONFIRMED" | "PENDING";
+  network: "solana-devnet";
+  signature?: string;
+  programId: string;
+  mandateAddress?: string;
+  mandateVersion: number;
+  mandateNonce: number;
+  executedAt: string;
+  idempotencyKey: string;
+  simulated: boolean;
+  executionAsset?: string;
+  pyth?: {
+    source?: string;
+    feedId?: number;
+    verification?: string;
+    status?: string;
+    unitPriceMicroUsd?: number;
+    publishTime?: string;
+    authorityEffect?: "NONE";
+  } | null;
+};
+
 export type ExecuteResponse = {
   contractVersion: string;
   evaluation: BackendEvaluation;
-  executionProof: null | {
-    status: "CONFIRMED" | "PENDING";
-    network: "solana-devnet";
-    signature?: string;
-    programId: string;
-    mandateVersion: number;
-    mandateNonce: number;
-    executedAt: string;
-    idempotencyKey: string;
-    simulated: boolean;
-  };
+  executionProof: null | RawExecutionProof;
 };
+
+/** Normalize a backend proof (execute response or Family activity) for the UI. */
+export function toExecutionProof(p: RawExecutionProof): ExecutionProof {
+  return {
+    status: p.status === "CONFIRMED" ? "RUNTIME_CONFIRMED" : "RUNTIME_PENDING",
+    network: p.network,
+    signature: p.signature,
+    programId: p.programId,
+    mandateAddress: p.mandateAddress,
+    mandateVersion: p.mandateVersion,
+    mandateNonce: p.mandateNonce,
+    executedAt: p.executedAt,
+    simulated: p.simulated,
+    idempotencyKey: p.idempotencyKey,
+    executionAsset: p.executionAsset,
+    pyth: p.pyth
+      ? {
+          status: p.pyth.status,
+          feedId: p.pyth.feedId,
+          verification: p.pyth.verification,
+          unitPrice: typeof p.pyth.unitPriceMicroUsd === "number" ? p.pyth.unitPriceMicroUsd / 1_000_000 : undefined,
+          publishTime: p.pyth.publishTime,
+        }
+      : undefined,
+  };
+}
 
 export type ExecuteResult = {
   outcome: ExecutionOutcome;
@@ -627,7 +884,7 @@ function parseExecuteResponse(raw: unknown, idempotencyKey: string): ExecuteResu
   const r = raw as Partial<ExecuteResponse>;
   const e = r.evaluation;
   if (!e || !DECISIONS.includes(e.decision) || typeof e.reasonCode !== "string") return null;
-  const evaluation: ActionEvaluation = { ...e, source: "keys-runtime" };
+  const evaluation = normalizeEvaluation(e, "keys-runtime");
 
   if (e.decision !== "ALLOW") {
     return { outcome: "REFUSED", evaluation };
@@ -639,17 +896,7 @@ function parseExecuteResponse(raw: unknown, idempotencyKey: string): ExecuteResu
   if (p.status === "CONFIRMED" && (typeof p.signature !== "string" || p.signature.length < 32)) return null;
   if (typeof p.simulated !== "boolean" || typeof p.programId !== "string") return null;
 
-  const proof: ExecutionProof = {
-    status: p.status === "CONFIRMED" ? "RUNTIME_CONFIRMED" : "RUNTIME_PENDING",
-    network: p.network,
-    signature: p.signature,
-    programId: p.programId,
-    mandateVersion: p.mandateVersion,
-    mandateNonce: p.mandateNonce,
-    executedAt: p.executedAt,
-    simulated: p.simulated,
-    idempotencyKey: p.idempotencyKey,
-  };
+  const proof = toExecutionProof(p);
   return { outcome: p.status === "CONFIRMED" ? "EXECUTED" : "PENDING", evaluation, proof };
 }
 
@@ -664,25 +911,39 @@ function parseExecuteResponse(raw: unknown, idempotencyKey: string): ExecuteResu
  * - timeout, network error, 5xx, malformed body → UNKNOWN (may have executed)
  */
 export async function executeAction(body: ExecuteRequest): Promise<ExecuteResult> {
+  const post = () =>
+    send(
+      "/api/v0.2/actions/execute",
+      { method: "POST", headers: { "idempotency-key": body.idempotencyKey }, body: JSON.stringify(body) },
+      backendSessionToken("child"),
+    );
   let res: Response;
   try {
-    res = await fetch(`${keysConfig().url}/api/v0.2/actions/execute`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "idempotency-key": body.idempotencyKey,
-        ...(backendSessionToken("child")
-          ? { authorization: `Bearer ${backendSessionToken("child")}` }
-          : {}),
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(keysConfig().timeoutMs),
-    });
+    res = await post();
+    // An expired demo session was rejected before any execution: renew and retry the same key.
+    if (res.status === 401) {
+      dropBackendSessionToken("child");
+      await createDemoSessionFor("child", storedName("child"));
+      res = await post();
+    }
   } catch {
     return unknown("network-or-timeout");
   }
 
-  if (res.status >= 500) return unknown(`http-${res.status}`);
+  if (res.status >= 500 || res.status === 429) return unknown(`http-${res.status}`);
+  if (res.status === 400) {
+    // The runtime reports upstream faults (e.g. Solana RPC 429) as 400. Those are
+    // not policy refusals: keep the intent re-checkable with the same key.
+    let body: { error?: string; message?: string } | null = null;
+    try {
+      body = (await res.clone().json()) as { error?: string; message?: string };
+    } catch {
+      /* no body */
+    }
+    if (/429|rate|backend error|timeout|fetch failed|unavailable|blockhash/i.test(`${body?.message ?? ""}`)) {
+      return unknown("upstream-busy");
+    }
+  }
   if (!res.ok) {
     return {
       outcome: "REFUSED",

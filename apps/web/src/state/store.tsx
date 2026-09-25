@@ -9,7 +9,7 @@
  * made through services/moneyExecution, and learning/XP/P&L fields are never
  * read by any Mandate-changing code path.
  */
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import type {
   BoundaryRequest,
   CurrentMandate,
@@ -25,9 +25,19 @@ import {
   DEMO_PRACTICE_CASH,
   DEMO_PRACTICE_HOLDINGS,
   DEMO_PROFILE,
+  PRACTICE_SEED,
 } from "@/mocks/family";
+
+
 import { setDemoFlags, type DemoFlags } from "@/services";
-import { fetchFamilyState, keysBackendConfigured } from "@/services/keys-backend";
+import {
+  ensureBackendSession,
+  fetchDevnetDemoRuntime,
+  fetchFamilyState,
+  keysBackendConfigured,
+  toExecutionProof,
+  type FamilyState,
+} from "@/services/keys-backend";
 
 export type ActivityItem = {
   id: string;
@@ -38,6 +48,15 @@ export type ActivityItem = {
   reason?: string;
   proof: ExecutionProof;
   idempotencyKey?: string;
+};
+
+export type MoneyReceipt = {
+  id: string;
+  ticker: string;
+  amount: number;
+  shares: number;
+  createdAt: string;
+  proof?: ExecutionProof;
 };
 
 /** A Money intent whose outcome isn't confirmed yet. Re-checks must reuse its key. */
@@ -73,6 +92,11 @@ export type AppState = {
   requests: BoundaryRequest[];
   activity: ActivityItem[];
   pendingExecutions: PendingExecution[];
+  /** Confirmed Money executions from the backend (Devnet receipts). Cache only. */
+  moneyReceipts: MoneyReceipt[];
+  familyCode: string | null;
+  /** How each untouched seed lot was last sized: "live" is final, "sample" upgrades once live data arrives. */
+  practiceSeedPriced: Record<string, "live" | "sample">;
   settings: {
     weeklyLessonGoal: number;
     notifyBoundaryRequests: boolean;
@@ -108,6 +132,9 @@ export const initialState: AppState = {
   requests: [],
   activity: [],
   pendingExecutions: [],
+  moneyReceipts: [],
+  familyCode: null,
+  practiceSeedPriced: {},
   settings: {
     weeklyLessonGoal: 5,
     notifyBoundaryRequests: true,
@@ -122,7 +149,9 @@ type Action =
   | { type: "hydrate"; state: AppState }
   | {
       type: "syncBackend";
-      remote: Awaited<ReturnType<typeof fetchFamilyState>>;
+      remote: FamilyState;
+      /** On-chain AAPL rule spend (Pyth USD). The stricter of chain/ledger wins. */
+      chainSpent?: number | null;
     }
   | { type: "signIn"; session: Session }
   | { type: "signOut" }
@@ -133,6 +162,8 @@ type Action =
   | { type: "researched"; ticker: string }
   | { type: "practiceBuy"; ticker: string; amount: number; shares: number; reason?: string; proof: ExecutionProof }
   | { type: "moneyBuy"; ticker: string; amount: number; shares: number; reason?: string; proof: ExecutionProof; usedRequestId?: string; idempotencyKey?: string }
+  /** Size the untouched demo practice seed at the prices actually loaded. */
+  | { type: "pricePracticeSeed"; prices: Record<string, { price: number; live: boolean }> }
   | { type: "trackPending"; pending: PendingExecution }
   | { type: "clearPending"; idempotencyKey: string }
   | { type: "addRequest"; request: BoundaryRequest }
@@ -155,9 +186,25 @@ export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "hydrate":
       return action.state;
-    case "syncBackend":
+    case "syncBackend": {
+      const moneyReceipts: MoneyReceipt[] = (action.remote.activity ?? [])
+        .filter((a) => a.kind === "MONEY_EXECUTION")
+        .map((a) => ({
+          id: a.id,
+          ticker: a.ticker,
+          amount: a.amount,
+          shares: a.shares,
+          createdAt: a.createdAt,
+          proof: a.proof ? toExecutionProof(a.proof) : undefined,
+        }));
+      // An unconfirmed intent that the backend has since recorded is no longer pending.
+      const settled = new Set(moneyReceipts.map((r) => r.proof?.idempotencyKey).filter(Boolean));
+      // Held reservations count against balance and period exactly as the backend's
+      // reserve check does, so the UI never offers room the ledger won't grant.
+      const held = Object.values(action.remote.reservations ?? {}).reduce((sum, r) => sum + (Number(r.notional) || 0), 0);
       return {
         ...state,
+        pendingExecutions: state.pendingExecutions.filter((p) => !settled.has(p.idempotencyKey)),
         profile: {
           ...state.profile,
           childName: action.remote.profile.childName,
@@ -167,16 +214,20 @@ export function reducer(state: AppState, action: Action): AppState {
         mandate: {
           ...state.mandate,
           ...action.remote.mandate,
+          spentThisPeriod: Math.max((action.remote.mandate.spentThisPeriod ?? 0) + held, action.chainSpent ?? 0),
         },
         money: {
           holdings: action.remote.moneyHoldings,
-          balance: action.remote.balances.money,
+          balance: Math.max(0, action.remote.balances.money - held),
         },
         requests: action.remote.requests,
+        moneyReceipts,
+        familyCode: action.remote.familyCode ?? state.familyCode,
         completedLessons: action.remote.learning.completedLessons,
         xp: action.remote.learning.xp,
         learningMinutes: action.remote.learning.weeklyMinutes ?? [],
       };
+    }
     case "signIn":
       return { ...state, session: action.session };
     case "signOut":
@@ -229,6 +280,24 @@ export function reducer(state: AppState, action: Action): AppState {
           ...state.activity,
         ],
       };
+    case "pricePracticeSeed": {
+      // Only untouched seed lots (cost basis still exactly the seed's) are sized
+      // at the loaded price; anything the user bought keeps its real shares.
+      // A lot sized at a sample price is re-sized once, when a live price arrives.
+      let changed = false;
+      const priced = { ...state.practiceSeedPriced };
+      const holdings = state.practice.holdings.map((h) => {
+        const seed = PRACTICE_SEED.find((p) => p.ticker === h.ticker && Math.abs(p.costBasis - h.costBasis) < 0.001);
+        const quote = action.prices[h.ticker];
+        if (!seed || !quote || !(quote.price > 0)) return h;
+        const prev = priced[h.ticker];
+        if (prev === "live" || (prev === "sample" && !quote.live)) return h;
+        priced[h.ticker] = quote.live ? "live" : "sample";
+        changed = true;
+        return { ...h, shares: seed.value / quote.price };
+      });
+      return changed ? { ...state, practice: { ...state.practice, holdings }, practiceSeedPriced: priced } : state;
+    }
     case "trackPending":
       if (state.pendingExecutions.some((p) => p.idempotencyKey === action.pending.idempotencyKey)) return state;
       return { ...state, pendingExecutions: [...state.pendingExecutions, action.pending] };
@@ -292,6 +361,12 @@ export function restoreState(raw: string | null): AppState | null {
     ...initialState,
     ...(parsed as Partial<AppState>),
     pendingExecutions: Array.isArray(parsed.pendingExecutions) ? (parsed.pendingExecutions as PendingExecution[]) : [],
+    moneyReceipts: Array.isArray(parsed.moneyReceipts) ? (parsed.moneyReceipts as MoneyReceipt[]) : [],
+    familyCode: typeof parsed.familyCode === "string" ? parsed.familyCode : null,
+    practiceSeedPriced:
+      parsed.practiceSeedPriced && typeof parsed.practiceSeedPriced === "object"
+        ? (parsed.practiceSeedPriced as Record<string, "live" | "sample">)
+        : {},
     learningMinutes: Array.isArray(parsed.learningMinutes)
       ? (parsed.learningMinutes as { at: string; minutes: number }[])
       : [],
@@ -300,17 +375,45 @@ export function restoreState(raw: string | null): AppState | null {
   } as AppState;
 }
 
+/**
+ * Backend sync status. Money surfaces render only when `synced`; anything else
+ * fails closed (skeleton, error or unavailable) so local defaults can never
+ * pose as the family's real Money state.
+ */
+export type SyncStatus = "off" | "connecting" | "synced" | "error";
+
 type Store = {
   state: AppState;
   hydrated: boolean;
   dispatch: React.Dispatch<Action>;
+  sync: { status: SyncStatus; lastSyncedAt: number | null; error: string | null };
+  /** Re-fetch shared Family state now (after funding, execution, decisions, learning). */
+  refresh: (opts?: { chain?: boolean; passive?: boolean }) => Promise<void>;
 };
 
 const StoreContext = createContext<Store | null>(null);
 
+const POLL_MS = 15_000;
+const MIN_PASSIVE_GAP_MS = 5_000;
+/** Chain reads hit the backend's Solana RPC; keep them rare unless a mutation just happened. */
+const CHAIN_READ_MS = 120_000;
+
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [hydrated, setHydrated] = useReducer(() => true, false);
+  const backend = keysBackendConfigured();
+  const [sync, setSync] = useState<Store["sync"]>({
+    status: backend ? "connecting" : "off",
+    lastSyncedAt: null,
+    error: null,
+  });
+  const role: "child" | "guardian" = state.session?.role === "parent" ? "guardian" : "child";
+  const inflight = useRef<Promise<void> | null>(null);
+  const lastSynced = useRef(0);
+  // On-chain reads go through the backend's Devnet RPC, which is rate-limited.
+  // Poll the Family Durable Object freely; read the chain at most once a minute
+  // (and right after a mutation), keeping the last known value on failure.
+  const chainRead = useRef<{ at: number; spent: number | null }>({ at: 0, spent: null });
 
   useEffect(() => {
     try {
@@ -332,33 +435,88 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [state, hydrated]);
 
-  useEffect(() => {
-    if (!hydrated || !keysBackendConfigured()) return;
-
-    let cancelled = false;
-    const sync = async () => {
+  const refresh = useCallback(async (opts?: { chain?: boolean; passive?: boolean }) => {
+    if (!backend) return;
+    // Passive triggers (poll/focus/visibility) never hammer the API.
+    if (opts?.passive && Date.now() - lastSynced.current < MIN_PASSIVE_GAP_MS) return;
+    // Coalesce concurrent refreshes (poll + focus + post-mutation).
+    if (inflight.current) return inflight.current;
+    const run = (async () => {
       try {
-        const remote = await fetchFamilyState();
-        if (!cancelled) dispatch({ type: "syncBackend", remote });
-      } catch {
-        // Keep the last local snapshot. Money execution itself still fails closed.
+        await ensureBackendSession(role);
+        const readChain = opts?.chain || Date.now() - chainRead.current.at > CHAIN_READ_MS;
+        const [remote, runtime] = await Promise.all([
+          fetchFamilyState(),
+          readChain ? fetchDevnetDemoRuntime().catch(() => null) : Promise.resolve(null),
+        ]);
+        if (typeof runtime?.assetRule?.spentThisPeriodNotionalMicroUsd === "number") {
+          chainRead.current = {
+            at: Date.now(),
+            spent: Math.round(runtime.assetRule.spentThisPeriodNotionalMicroUsd / 10_000) / 100,
+          };
+        } else if (readChain) {
+          chainRead.current = { ...chainRead.current, at: Date.now() };
+        }
+        dispatch({ type: "syncBackend", remote, chainSpent: chainRead.current.spent });
+        lastSynced.current = Date.now();
+        setSync({ status: "synced", lastSyncedAt: Date.now(), error: null });
+      } catch (e) {
+        setSync((prev) => ({
+          status: prev.lastSyncedAt ? "synced" : "error",
+          lastSyncedAt: prev.lastSyncedAt,
+          error: e instanceof Error ? e.message : "sync failed",
+        }));
+      } finally {
+        inflight.current = null;
       }
-    };
+    })();
+    inflight.current = run;
+    return run;
+  }, [backend, role]);
 
-    void sync();
-    const id = window.setInterval(sync, 5000);
+  useEffect(() => {
+    if (!hydrated || !backend) return;
+    void refresh();
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh({ passive: true });
+    }, POLL_MS);
+    const onFocus = () => void refresh({ passive: true });
+    const onVisible = () => document.visibilityState === "visible" && void refresh({ passive: true });
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
-      cancelled = true;
       window.clearInterval(id);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [hydrated]);
+  }, [hydrated, backend, refresh]);
 
   useEffect(() => {
     setDemoFlags({ marketFailure: state.demoFlags.marketFailure, slowNetwork: state.demoFlags.slowNetwork });
   }, [state.demoFlags.marketFailure, state.demoFlags.slowNetwork]);
 
-  const value = useMemo(() => ({ state, dispatch, hydrated }), [state, hydrated]);
+  const value = useMemo(() => ({ state, dispatch, hydrated, sync, refresh }), [state, hydrated, sync, refresh]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
+}
+
+/**
+ * Money state the UI may show. `ready` is false until the backend has synced
+ * (or immediately true when no backend is configured, i.e. local demo mode).
+ */
+export function useMoneyTruth() {
+  const { state, sync, refresh } = useStore();
+  const ready = sync.status === "off" || sync.status === "synced";
+  return {
+    ready,
+    status: sync.status,
+    error: sync.error,
+    refresh,
+    mandate: state.mandate,
+    balance: state.money.balance,
+    holdings: state.money.holdings,
+    requests: state.requests,
+    receipts: state.moneyReceipts,
+  };
 }
 
 export function useStore() {

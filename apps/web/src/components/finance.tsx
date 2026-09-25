@@ -7,7 +7,7 @@ import { formatPercent, formatUsd, trendOf } from "@/domain/format";
 import type { HoldingView, MarketAsset, PricePoint } from "@/domain/types";
 import { Sprout } from "./illustrations/objects";
 import { Card, cn } from "./ui/primitives";
-import { Skeleton } from "./ui/feedback";
+import { DataStatusTag, Provenance, Skeleton } from "./ui/feedback";
 
 /* ------------------------------------------------------------------ */
 /* Identity                                                             */
@@ -207,6 +207,7 @@ export function WeeklyBars({ data, className }: { data: { day: string; minutes: 
 /* ------------------------------------------------------------------ */
 
 export function CompanyCard({ asset, series, href }: { asset: MarketAsset; series?: PricePoint[]; href: string }) {
+  const changeKnown = asset.changeSource !== "unknown";
   return (
     <li>
       <Link
@@ -215,17 +216,23 @@ export function CompanyCard({ asset, series, href }: { asset: MarketAsset; serie
       >
         <CompanyLogo asset={asset} size={44} />
         <div className="min-w-0 flex-1 leading-tight">
-          <div className="flex items-baseline gap-1.5">
+          <div className="flex items-center gap-1.5">
             <span className="truncate text-[15.5px] font-extrabold text-navy-strong">{asset.companyName}</span>
+            {asset.moneyModeStatus === "eligible" ? <Provenance kind="money-proof" className="text-[10px]" /> : null}
           </div>
-          <div className="text-[12px] font-bold text-ink-3">{asset.ticker}</div>
-          <div className="mt-0.5 flex items-center gap-1.5">
+          <div className="text-[12px] font-bold text-ink-3">{asset.representation ? asset.shortDescription : asset.ticker}</div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
             <span className="text-[14px] font-extrabold text-navy tabular">{formatUsd(asset.price)}</span>
-            <PriceChange percent={asset.dayChangePercent} showIcon={false} />
+            {changeKnown ? <PriceChange percent={asset.dayChangePercent} showIcon={false} /> : null}
+            <DataStatusTag status={asset.dataStatus} source={asset.priceSource} className="text-[10px]" />
           </div>
-          <div className="truncate text-[12px] font-semibold text-ink-2">{asset.shortDescription}</div>
+          {asset.representation ? null : <div className="truncate text-[12px] font-semibold text-ink-2">{asset.shortDescription}</div>}
         </div>
-        {series ? <MiniSparkline points={series} trend={asset.dayChangePercent} /> : <Skeleton className="h-7 w-[72px]" />}
+        {asset.representation || !changeKnown ? null : series ? (
+          <MiniSparkline points={series} trend={asset.dayChangePercent} />
+        ) : (
+          <Skeleton className="h-7 w-[72px]" />
+        )}
       </Link>
     </li>
   );

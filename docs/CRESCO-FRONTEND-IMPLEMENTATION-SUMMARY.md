@@ -116,3 +116,14 @@ Not claimed:
 Production auth/KYC, embedded wallets, fiat rails, custody/broker integration, mainnet, all-symbol market entitlements/history, and jurisdiction-specific minor-account compliance.
 
 For the Stocklana demo, these must remain honestly labeled rather than simulated as production capabilities.
+
+## Full backend integration pass (2026-09-25)
+
+- **Backend truth first:** demo-session bootstrap, 401 auto-renew, Family sync (poll + focus + after every mutation), Money gated until first sync and fail-closed. `useMoneyTruth()` is the single read path; `localStorage` is a cache only.
+- **Money:** evaluate → execute (AAPL only) with one idempotency key per intent; UNKNOWN/PENDING never shown as success; "Action confirmed on Solana Devnet" receipt with a consumer summary + Technical details (signature, program, mandate account, version/nonce, Pyth feed/price/publish time). Held reservations and on-chain period spend are respected.
+- **Boundary + guardian:** limit refusals offer Ask; guardian ALLOW_ONCE / WIDEN (period presets) / REFUSE with `*_PENDING_CHAIN` states; limits and pause changes refresh from chain.
+- **Explore:** 10 companies with per-row provenance (Live · Pyth / Delayed / Sample), Pyth discovery classes ("Explore how markets move"), Pyth history charts, and a Private companies section (8 PreStocks, 3 Tessera) that is Learn/Practice only.
+- **Learning:** new "Private companies" track (what a pre-IPO company is, PreStocks = exposure not shares, Tessera = loan participation right). Stats/streak/badges derived from synced progress; learning never changes authority.
+- **Embedded wallet:** env-gated Privy (email/Google/Apple + Solana embedded wallet) on Profile; identity only.
+- **Tests:** 67 unit/integration tests (adapter, micro-USD, upstream-429 → UNKNOWN, market truth, PreStocks/Tessera mapping, seed pricing, streak) + 14 WebKit iPhone e2e.
+- Integration matrix and backend issues: `docs/CRESCO-BACKEND-INTEGRATION-HANDOFF.md`.

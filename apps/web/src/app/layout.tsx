@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Nunito_Sans } from "next/font/google";
 import { ToastProvider } from "@/components/ui/feedback";
 import { StoreProvider } from "@/state/store";
+import { WalletProvider } from "@/components/wallet/provider";
 import "./globals.css";
 
 const nunitoSans = Nunito_Sans({
@@ -36,7 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <StoreProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <WalletProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </WalletProvider>
         </StoreProvider>
       </body>
     </html>

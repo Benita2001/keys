@@ -13,7 +13,9 @@ import { useStore } from "@/state/store";
 const AMOUNTS = [10, 25, 50, 100];
 
 export default function AddMoneyPage() {
-  const { state, dispatch } = useStore();
+  const { state, dispatch, refresh, sync } = useStore();
+  const backend = sync.status !== "off";
+  const [error, setError] = useState<string | null>(null);
   const guard = useSingleFlight();
   const toast = useToast();
   const [amount, setAmount] = useState<number | "custom">(25);
@@ -25,16 +27,25 @@ export default function AddMoneyPage() {
 
   const add = guard(async () => {
     setBusy(true);
-    const res = await funding.addMoney({ amount: value });
-    dispatch({ type: "addFunds", amount: res.amount });
+    setError(null);
+    let res;
+    try {
+      res = await funding.addMoney({ amount: value });
+    } catch {
+      setBusy(false);
+      setError("We couldn't add test money right now. Nothing changed. Try again.");
+      return;
+    }
+    if (backend) await refresh();
+    else dispatch({ type: "addFunds", amount: res.amount });
     setBusy(false);
     setDone(res.amount);
-    toast(`${formatAmount(res.amount)} demo money added`);
+    toast(`${formatAmount(res.amount)} ${backend ? "Devnet test money" : "demo money"} added`);
   });
 
   return (
     <div className="animate-rise mx-auto max-w-[560px]">
-      <PageHeader title="Add money" subtitle={`To ${state.profile.childName}'s Money Mode balance`} back="/parent" />
+      <PageHeader title={backend ? "Add Devnet test money" : "Add money"} subtitle={`To ${state.profile.childName}'s Money Mode balance`} back="/parent" />
       <div className="mt-5">
         <MoneyBalanceCard balance={state.money.balance} />
       </div>
@@ -43,7 +54,9 @@ export default function AddMoneyPage() {
         <Card className="mt-5 p-5 text-center">
           <CheckCircle2 aria-hidden className="animate-bloom mx-auto size-12 text-green" />
           <p className="mt-2 text-[18px] font-extrabold text-navy-strong">{formatAmount(done)} added</p>
-          <p className="mt-1 text-[13.5px] font-semibold text-ink-2">Demo funds only. No payment was taken.</p>
+          <p className="mt-1 text-[13.5px] font-semibold text-ink-2">
+            {backend ? "Devnet test credit only. No payment was taken and no real money moved." : "Demo funds only. No payment was taken."}
+          </p>
           <ActionButton className="mt-4" href="/parent" variant="secondary">
             Back to overview
           </ActionButton>
@@ -73,10 +86,17 @@ export default function AddMoneyPage() {
             </label>
           ) : null}
           <p className="mt-4 rounded-[14px] bg-yellow-soft px-3.5 py-3 text-[13px] font-semibold text-[#6f4a06]">
-            Demo mode: no bank or card is connected, and no payment is taken. This adds demo money so you can try Money Mode.
+            {backend
+              ? "No bank or card is connected and no payment is taken. This credits Devnet test money to the family ledger so you can try Money Mode."
+              : "Demo mode: no bank or card is connected, and no payment is taken. This adds demo money so you can try Money Mode."}
           </p>
+          {error ? (
+            <p role="alert" className="mt-4 rounded-[12px] bg-loss-soft px-3 py-2 text-[13px] font-bold text-loss-text">
+              {error}
+            </p>
+          ) : null}
           <ActionButton className="mt-5" disabled={!valid || busy} onClick={add}>
-            {busy ? "Adding…" : `Add ${valid ? formatAmount(value) : ""} demo money`}
+            {busy ? "Adding…" : `Add ${valid ? formatAmount(value) : ""} ${backend ? "Devnet test money" : "demo money"}`}
           </ActionButton>
         </>
       )}

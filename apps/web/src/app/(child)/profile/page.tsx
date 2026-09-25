@@ -9,6 +9,7 @@ import { useLevel } from "@/hooks/data";
 import { GOALS } from "@/mocks/family";
 import { useStore } from "@/state/store";
 import { clearBackendSessionToken } from "@/services/keys-backend";
+import { WalletAccountCard } from "@/components/wallet/account-card";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -51,6 +52,8 @@ export default function ProfilePage() {
           <p className="mt-1 text-[11.5px] font-bold text-ink-3">{formatNumber(toNext)} XP to Level {level + 1}</p>
         </div>
       </Card>
+
+      <WalletAccountCard />
 
       <ul className="mt-4 overflow-hidden rounded-[20px] border border-line-soft bg-surface">
         {rows.map((r, i) => (

@@ -59,6 +59,16 @@ export const MODULES: LearningModule[] = [
     tone: "aqua",
     lessonIds: ["build-your-portfolio"],
   },
+  {
+    id: "private-companies",
+    title: "Private Companies",
+    subtitle: "Pre-IPO, PreStocks and what you really own",
+    xp: 60,
+    icon: "rocket",
+    tone: "pink",
+    lessonIds: ["what-is-a-pre-ipo-company", "prestocks-exposure-not-shares", "loan-participation-rights"],
+    track: "explore",
+  },
 ];
 
 export const LESSONS: Lesson[] = [
@@ -292,6 +302,137 @@ export const LESSONS: Lesson[] = [
     ],
   },
 ];
+
+LESSONS.push(
+  {
+    id: "what-is-a-pre-ipo-company",
+    moduleId: "private-companies",
+    title: "What Is a Pre-IPO Company?",
+    minutes: 4,
+    xp: 20,
+    steps: [
+      {
+        kind: "concept",
+        title: "Public or private?",
+        illustration: "private",
+        body: "Apple is a public company: anyone can buy its shares on a stock exchange. SpaceX and OpenAI are private: their shares aren't on an exchange yet.",
+      },
+      {
+        kind: "concept",
+        title: "What is an IPO?",
+        illustration: "chart",
+        body: "An IPO (initial public offering) is when a private company first sells shares on a stock exchange. \"Pre-IPO\" means it hasn't happened yet, and it may never happen.",
+      },
+      {
+        kind: "quiz",
+        title: "Public or private?",
+        illustration: "private",
+        prompt: "A company's shares aren't traded on any stock exchange yet.",
+        question: "What kind of company is it?",
+        options: [
+          { id: "public", label: "A public company" },
+          { id: "private", label: "A private company" },
+          { id: "closed", label: "A company that closed" },
+        ],
+        correctId: "private",
+        correctExplanation: "Right. Until it lists on an exchange, it's a private company.",
+        retryHint: "Public companies are the ones anyone can buy on a stock exchange.",
+      },
+      {
+        kind: "concept",
+        title: "Why it's harder to know the price",
+        illustration: "scale",
+        body: "Public prices update all day as people trade. A private company's value is only estimated now and then, so it can jump a lot when new information arrives.",
+      },
+    ],
+  },
+  {
+    id: "prestocks-exposure-not-shares",
+    moduleId: "private-companies",
+    title: "PreStocks: Exposure, Not Shares",
+    minutes: 5,
+    xp: 20,
+    steps: [
+      {
+        kind: "concept",
+        title: "What is a PreStock?",
+        illustration: "shares",
+        body: "A PreStock is a token on Solana that tracks an estimated value of a private company, like SpaceX. Its price moves when that estimate moves.",
+      },
+      {
+        kind: "quiz",
+        title: "What do you own?",
+        illustration: "private",
+        prompt: "You hold a SpaceX PreStock.",
+        question: "Do you get a vote at SpaceX or dividends?",
+        options: [
+          { id: "yes", label: "Yes, I'm a shareholder" },
+          { id: "no", label: "No, it's economic exposure only" },
+          { id: "some", label: "Only votes, no dividends" },
+        ],
+        correctId: "no",
+        correctExplanation: "Exactly. A PreStock gives exposure to the estimated value, not shares, votes, dividends or information rights.",
+        retryHint: "Think about whether the token puts you on the company's list of shareholders.",
+      },
+      {
+        kind: "concept",
+        title: "Premium and discount",
+        illustration: "chart",
+        body: "The token's price can be above the company estimate (a premium) or below it (a discount). Cresco shows both so you can compare.",
+      },
+      {
+        kind: "quiz",
+        title: "Premium or discount?",
+        illustration: "scale",
+        prompt: "The estimate says $100, but the token trades at $105.",
+        question: "What is that difference called?",
+        options: [
+          { id: "premium", label: "A premium" },
+          { id: "discount", label: "A discount" },
+          { id: "dividend", label: "A dividend" },
+        ],
+        correctId: "premium",
+        correctExplanation: "Right. Paying more than the estimate is a premium.",
+        retryHint: "The token costs more than the estimate. Is that extra or less?",
+      },
+    ],
+  },
+  {
+    id: "loan-participation-rights",
+    moduleId: "private-companies",
+    title: "Loan Participation Rights",
+    minutes: 3,
+    xp: 20,
+    steps: [
+      {
+        kind: "concept",
+        title: "Another kind of private-market token",
+        illustration: "private",
+        body: "Tessera T-Tokens (like T-SpaceX) are loan participation rights linked to a private company. They're not direct equity: no shares, no votes, no dividends, and you're not on the company's cap table.",
+      },
+      {
+        kind: "quiz",
+        title: "Equity or not?",
+        illustration: "scale",
+        prompt: "You hold T-SpaceX.",
+        question: "Are you a SpaceX shareholder?",
+        options: [
+          { id: "yes", label: "Yes" },
+          { id: "no", label: "No, it's a loan participation right" },
+        ],
+        correctId: "no",
+        correctExplanation: "Correct. It's a loan participation right, not direct equity.",
+        retryHint: "Look at the name: is it a share, or a right linked to a loan?",
+      },
+      {
+        kind: "concept",
+        title: "In Cresco",
+        illustration: "storefront",
+        body: "You can explore and practice with private-company tokens using virtual money. They're not available in Money Mode, and learning about them never changes your limits.",
+      },
+    ],
+  },
+);
 
 export const MISSION = {
   id: "mission-why-companies-sell-shares",

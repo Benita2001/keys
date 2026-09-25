@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { AllocationChart, HoldingRow, InsightBanner, PriceChange, allocationColor } from "@/components/finance";
 import { PlantPot } from "@/components/illustrations/objects";
-import { MandateSummaryCard, MoneyModeUnavailable, ModeSwitch, PriceTruthLine, RequestStatusCard } from "@/components/mode";
+import { MandateSummaryCard, MoneyModeUnavailable, MoneySyncState, ModeSwitch, PriceTruthLine, RequestStatusCard } from "@/components/mode";
+import { DevnetReceipts } from "@/components/receipts";
 import { DemoMoneyTag, EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
 import { ActionButton, Card, PageHeader, PeriodSelector, SectionHeader } from "@/components/ui/primitives";
 import { formatUsd } from "@/domain/format";
 import type { PortfolioView } from "@/domain/types";
 import { usePortfolio } from "@/hooks/data";
 import { allAssetSnapshots, seriesFor } from "@/services";
-import { useStore } from "@/state/store";
+import { useMoneyTruth, useStore } from "@/state/store";
 
 const PERIODS = ["1D", "1W", "1M", "1Y", "All"] as const;
 const PERIOD_LABEL: Record<(typeof PERIODS)[number], string> = {
@@ -52,6 +53,7 @@ function insightFor(view: PortfolioView): { text: string; tone: "green" | "yello
 
 export default function PortfolioPage() {
   const { state } = useStore();
+  const money = useMoneyTruth();
   const mode = state.mode;
   const { assets, view } = usePortfolio(mode);
   const [period, setPeriod] = useState<(typeof PERIODS)[number]>("1M");
@@ -59,7 +61,9 @@ export default function PortfolioPage() {
   const title = mode === "practice" ? "My Practice Portfolio" : "My Money Portfolio";
 
   let body: React.ReactNode;
-  if (mode === "money" && !state.profile.parentLinked) {
+  if (mode === "money" && !money.ready) {
+    body = <MoneySyncState status={money.status} onRetry={money.refresh} />;
+  } else if (mode === "money" && !state.profile.parentLinked) {
     body = <MoneyModeUnavailable reason="parent" />;
   } else if (assets.status === "loading") {
     body = (
@@ -147,9 +151,13 @@ export default function PortfolioPage() {
                 <MoneySummary balance={view.cash} />
               </div>
               <MandateSummaryCard className="mt-4" mandate={state.mandate} who="My limits" />
+              <DevnetReceipts
+                receipts={state.moneyReceipts}
+                nameOf={(t) => allAssetSnapshots().find((a) => a.ticker === t)?.companyName ?? t}
+              />
             </>
           )}
-          <PriceTruthLine status={view.dataStatus} className="mt-4" />
+          <PriceTruthLine view={view} className="mt-4" />
         </div>
       </div>
     );

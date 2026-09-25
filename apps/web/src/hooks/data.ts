@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
+  Achievement,
+  AchievementId,
   DataStatus,
   Holding,
   HoldingView,
@@ -10,10 +12,10 @@ import type {
   ModuleState,
   Period,
   PortfolioView,
-  PricePoint,
+  SeriesResult,
 } from "@/domain/types";
 import { MODULES } from "@/mocks/learning";
-import { levelFor } from "@/mocks/family";
+import { ACHIEVEMENTS, levelFor } from "@/mocks/family";
 import { marketData } from "@/services";
 import { useStore } from "@/state/store";
 
@@ -51,7 +53,20 @@ function useFlagsKey() {
 
 export function useAssets() {
   const key = useFlagsKey();
-  return useAsync(() => marketData.listAssets(), [key]);
+  const { dispatch, hydrated } = useStore();
+  const assets = useAsync(() => marketData.listAssets(), [key]);
+  // Size the demo practice seed at loaded prices (upgraded once live prices arrive).
+  // Waits for hydration so a stored portfolio is never overwritten by a pre-hydration pass.
+  useEffect(() => {
+    if (!hydrated || assets.status !== "success") return;
+    dispatch({
+      type: "pricePracticeSeed",
+      prices: Object.fromEntries(
+        assets.data.map((a) => [a.ticker, { price: a.price, live: a.dataStatus === "live" || a.dataStatus === "stale" }]),
+      ),
+    });
+  }, [hydrated, assets.status, assets.data, dispatch]);
+  return assets;
 }
 
 export function useAsset(ticker: string) {
@@ -61,7 +76,7 @@ export function useAsset(ticker: string) {
 
 export function useSeries(ticker: string, period: Period) {
   const key = useFlagsKey();
-  return useAsync<PricePoint[]>(() => marketData.getSeries(ticker, period), [ticker, period, key]);
+  return useAsync<SeriesResult>(() => marketData.getSeries(ticker, period), [ticker, period, key]);
 }
 
 export function buildPortfolio(mode: Mode, holdings: Holding[], cash: number, assets: MarketAsset[]): PortfolioView {
@@ -122,10 +137,11 @@ export function useLevel() {
 
 /** Modules unlock in order: the first incomplete module is current, later ones are locked. */
 export function moduleStates(completedLessons: string[]): { id: string; state: ModuleState; done: number; total: number }[] {
-  const firstIncomplete = MODULES.findIndex((m) => !m.lessonIds.every((id) => completedLessons.includes(id)));
+  const firstIncomplete = MODULES.findIndex((m) => m.track !== "explore" && !m.lessonIds.every((id) => completedLessons.includes(id)));
   return MODULES.map((m, i) => {
     const done = m.lessonIds.filter((id) => completedLessons.includes(id)).length;
-    const state: ModuleState = done === m.lessonIds.length ? "complete" : i === firstIncomplete ? "current" : "locked";
+    const state: ModuleState =
+      done === m.lessonIds.length ? "complete" : m.track === "explore" ? "open" : i === firstIncomplete ? "current" : "locked";
     return { id: m.id, state, done, total: m.lessonIds.length };
   });
 }
@@ -133,4 +149,54 @@ export function moduleStates(completedLessons: string[]): { id: string; state: M
 export function useModuleStates() {
   const { state } = useStore();
   return useMemo(() => moduleStates(state.completedLessons), [state.completedLessons]);
+}
+
+/** Consecutive days (ending today or yesterday) with learning minutes. */
+export function learningStreak(minutes: { at: string; minutes: number }[], now = new Date()): number {
+  const days = new Set(
+    minutes.filter((m) => m.minutes > 0).map((m) => new Date(m.at).toISOString().slice(0, 10)),
+  );
+  const day = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  if (!days.has(day.toISOString().slice(0, 10))) day.setUTCDate(day.getUTCDate() - 1);
+  let streak = 0;
+  while (days.has(day.toISOString().slice(0, 10))) {
+    streak++;
+    day.setUTCDate(day.getUTCDate() - 1);
+  }
+  return streak;
+}
+
+/**
+ * Learning stats. With a backend they come from the synchronized learning
+ * summary (shared across devices); without one, from the local demo profile.
+ * Never an input to authority.
+ */
+export function useLearningStats() {
+  const { state, sync } = useStore();
+  const backend = sync.status !== "off";
+  return {
+    lessonsCompleted: backend ? state.completedLessons.length : state.priorLessonCount + state.completedLessons.length,
+    streakDays: backend ? learningStreak(state.learningMinutes) : state.streakDays,
+    researched: state.researched.length,
+  };
+}
+
+/**
+ * Badges earned from real activity (learning, curiosity, diversification).
+ * Never from trade frequency, risk or P&L, and never an input to authority.
+ */
+export function useAchievements(): Achievement[] {
+  const { state } = useStore();
+  const stats = useLearningStats();
+  const moneyBasics = MODULES.find((m) => m.id === "money-basics")?.lessonIds ?? [];
+  const practiceTickers = new Set(state.practice.holdings.map((h) => h.ticker));
+  const earned: Record<AchievementId, boolean> = {
+    "first-investor": practiceTickers.size > 0 || state.moneyReceipts.length > 0,
+    "streak-5": stats.streakDays >= 5,
+    "company-detective": stats.researched >= 4,
+    "diversification-pro": practiceTickers.size >= 4,
+    "money-master": moneyBasics.length > 0 && moneyBasics.every((id) => state.completedLessons.includes(id)),
+    "ten-lessons": stats.lessonsCompleted >= 10,
+  };
+  return ACHIEVEMENTS.map((a) => ({ ...a, earned: earned[a.id] }));
 }

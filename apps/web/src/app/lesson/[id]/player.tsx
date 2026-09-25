@@ -16,7 +16,7 @@ import {
 export function LessonPlayer({ lessonId }: { lessonId: string }) {
   const lesson = lessonById(lessonId)!;
   const mod = moduleById(lesson.moduleId)!;
-  const { state, dispatch } = useStore();
+  const { state, dispatch, refresh } = useStore();
   const modules = useModuleStates();
   const locked = modules.find((m) => m.id === mod.id)?.state === "locked";
 
@@ -37,7 +37,10 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
           lessonId: lesson.id,
           xp: alreadyDone ? 0 : lesson.xp,
           minutes: lesson.minutes,
-        }).catch(() => {
+        })
+          // Learning never changes authority; this only refreshes XP/streak everywhere.
+          .then(() => refresh())
+          .catch(() => {
           // The lesson remains usable offline; backend sync can recover later.
         });
       }

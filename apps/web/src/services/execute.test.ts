@@ -64,7 +64,7 @@ const servers: Mock[] = [];
 async function withScenario(scenario: string, timeoutMs = 2000) {
   const { mock, url } = await start(scenario);
   servers.push(mock);
-  configureKeysBackend({ url, execution: "runtime", timeoutMs });
+  configureKeysBackend({ url, execution: "runtime", timeoutMs, chainTimeoutMs: timeoutMs });
   return mock;
 }
 
@@ -125,6 +125,7 @@ describe("isolated runtime execute adapter (mock KEYS API)", () => {
       url: `http://127.0.0.1:${address.port}`,
       execution: "runtime",
       timeoutMs: 2000,
+      chainTimeoutMs: 2000,
     });
 
     const second = await executeAction(runtimeRequest(5, "intent-slow"));

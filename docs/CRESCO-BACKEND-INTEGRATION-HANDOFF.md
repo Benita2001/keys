@@ -155,3 +155,38 @@ Do not rebuild these backend mechanics in the frontend. Keep the judge-facing or
 `MY KEY → LEARN/PRACTICE → ALLOW → REFUSE → MARKET CHANGE → ASK FOR MORE ROOM → HUMAN WIDEN → ALLOW → STALE REFUSE`
 
 The hero remains the young person’s understandable freedom. Solana/Pyth/Cloudflare are proof layers, not the homepage story.
+
+## Frontend integration matrix (2026-09-25)
+
+All calls go through the single adapter `apps/web/src/services/keys-backend.ts`. Pages never call `fetch()` directly. Local dev uses the same-origin relay `/keys-api/*` → `KEYS_API_UPSTREAM` (`next.config.ts`) because Worker CORS only allows `https://cresco-lac.vercel.app`.
+
+| Surface | Source of truth | Route(s) | Status |
+|---|---|---|---|
+| Session bootstrap | Worker demo session (role-scoped bearer) | `POST /auth/demo-session` (auto-renew once on 401) | BACKEND |
+| Family state (balance, holdings, requests, activity, learning, reservations) | Family Durable Object | `GET /family/state` (poll 15s visible, focus, after every mutation) | BACKEND |
+| Current Mandate (limits, status, version/nonce) | DO + Devnet mandate/asset rule | `GET /family/state` + `GET /demo/runtime` (chain spend, ≤1 read / 2 min unless a mutation just happened) | BACKEND |
+| Money gating | Sync status | UI waits for first sync; fails closed on `error`, `PAUSED`, missing parent link | BACKEND |
+| Evaluate | Server | `POST /actions/evaluate` (micro-USD normalized to dollars) | BACKEND |
+| Execute (AAPL only) | Solana Devnet via Worker | `POST /actions/execute` with `idempotency-key`; 5xx/429/upstream-400 → UNKNOWN, re-check reuses the key | BACKEND · DEVNET |
+| Receipts / proof drawer | DO `activity` MONEY_EXECUTION | from `/family/state` | BACKEND · DEVNET |
+| Boundary request (child) | DO | `POST /boundary-requests` | BACKEND |
+| Guardian decision ALLOW_ONCE / WIDEN / REFUSE | DO + Devnet | `POST /boundary-requests/{id}/decision` (60s chain-write timeout; `*_PENDING_CHAIN` shown as "Finishing on Solana…") | BACKEND · DEVNET |
+| Limits change / pause | Devnet mandate transition | `POST /mandates/transition` then refresh | BACKEND · DEVNET |
+| Add test money | DO ledger (`realPaymentTaken: false`) | `POST /funding/deposits` then refresh | BACKEND (Devnet test credit) |
+| Learning progress | DO (authorityEffect NONE) | `POST /learning/progress` then refresh | BACKEND |
+| Explore quotes | Pyth Pro | `GET /market/quotes` FRESH→"Live · Pyth", STALE→"Delayed", UNAVAILABLE→"Sample" (never $0) | BACKEND (AAPL, TSLA live) |
+| Explore discovery | Pyth Pro | `GET /market/discovery` (equity FRESH overlays NVDA/MSFT; crypto/FX/metals/commodities shown as "Explore how markets move") | BACKEND |
+| Company history chart | Pyth Pro history | `GET /market/series` → "Pyth history" or "Sample chart" | BACKEND (AAPL, TSLA) |
+| Private companies | PreStocks, Tessera | `GET /integrations/prestocks`, `GET /integrations/tessera` → Learn/Practice only, never Money | BACKEND |
+| Practice portfolio | Browser (virtual money) | local reducer; valued with the same live/sample prices | LOCAL (by design) |
+| Embedded wallet | Privy (env-gated `NEXT_PUBLIC_PRIVY_APP_ID`) | email/Google/Apple + Solana embedded wallet; identity only, **never** KEYS authority | FRONTEND · needs Privy app ID |
+
+Remaining SAMPLE data: prices for the 6 companies without a configured or discoverable Pyth price (AMZN, NFLX, META, MCD, SPY, QQQ), their charts, and day change for discovery-only equities (shown without a change figure rather than a fake one).
+
+## Backend issues found during integration (for the KEYS owner)
+
+1. **Solana RPC rate limits break execute.** The Worker's public Devnet RPC (OnFinality) returns `429 Too Many Requests`; the Worker surfaces it as `400 BAD_REQUEST` (`failed to get info about account … 429`). Use a dedicated RPC key (Helius/Triton/QuickNode) plus retry with backoff. Frontend treats these as UNKNOWN, never as a refusal.
+2. **Orphaned reservations.** `handleExecute` calls `/reserve` and then `provider.execute`; if execute throws (e.g. the 429 above), `/finalize` never runs. The key then replays `EXECUTION_PENDING` forever and its notional stays held against balance and period. Fix: wrap `provider.execute` in try/catch and call `/finalize` with `success:false` (or add `/release`) when the chain call fails before a transaction was sent; add a TTL sweep for stale reservations. Two orphaned $5 reservations exist in the shared demo family from 2026-09-25 (keys `8eb43413-5fae-4f82-a804-8b26d55bda57` and one more); on-chain spend confirms neither executed. The frontend subtracts held reservations from available balance/period and offers "Stop waiting and start over" after 2 minutes.
+3. **Stuck guardian decision.** Request `br_b1275d09-84ac-4bea-87e9-bedfb8b4b718` is in `WIDEN_PENDING_CHAIN` although the widen landed on-chain (Mandate v6 / nonce 5, max period $100). Needs a reconcile path (`complete-widen` retry or a sweep that reads the chain).
+4. **Ledger vs chain period spend.** DO ledger says $15 spent; the Devnet asset rule says $52.997 (30-day rolling window started 2026-09-24 17:35 UTC). The frontend shows `max(ledger + held, chain)` so it never offers room the chain will refuse. Please expose `periodStartedAt` / `periodSeconds` in `/demo/runtime` and reconcile the ledger from chain.
+5. **Shared demo state was changed during QA:** guardian widened the period limit from $50 to $100 through the UI (committed on Devnet).

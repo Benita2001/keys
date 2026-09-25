@@ -11,7 +11,9 @@ import { useStore } from "@/state/store";
 export default function LearnPage() {
   const { state } = useStore();
   const modules = useModuleStates();
-  const complete = modules.filter((m) => m.state === "complete").length;
+  const core = MODULES.filter((m) => m.track !== "explore");
+  const explore = MODULES.filter((m) => m.track === "explore");
+  const complete = modules.filter((m) => m.state === "complete" && core.some((c) => c.id === m.id)).length;
 
   const hrefFor = (moduleId: string) => {
     const mod = MODULES.find((m) => m.id === moduleId)!;
@@ -29,18 +31,27 @@ export default function LearnPage() {
         <div className="flex items-center justify-between text-[13px] font-extrabold">
           <span className="text-navy-strong">Your Progress</span>
           <span className="text-ink-2 tabular">
-            {complete}/{MODULES.length} modules
+            {complete}/{core.length} modules
           </span>
         </div>
-        <ProgressBar value={complete / MODULES.length} tone="green" className="mt-2" label="Modules completed" />
+        <ProgressBar value={complete / core.length} tone="green" className="mt-2" label="Modules completed" />
       </div>
 
       <ol className="mt-4 space-y-3" aria-label="Modules">
-        {MODULES.map((m) => {
+        {core.map((m) => {
           const s = modules.find((x) => x.id === m.id)!;
           return <ModuleRow key={m.id} module={m} state={s.state} href={s.state === "locked" ? undefined : hrefFor(m.id)} />;
         })}
       </ol>
+
+      <h2 className="mt-7 text-[18px] font-extrabold text-navy-strong">Explore more</h2>
+      <p className="mt-1 text-[13px] font-semibold text-ink-2">Open anytime. These don&apos;t unlock anything in Money Mode.</p>
+      <ul className="mt-3 space-y-3" aria-label="Explore modules">
+        {explore.map((m) => {
+          const s = modules.find((x) => x.id === m.id)!;
+          return <ModuleRow key={m.id} module={m} state={s.state} href={hrefFor(m.id)} />;
+        })}
+      </ul>
 
       <div className="mt-5">
         <InsightBanner tone="blue">

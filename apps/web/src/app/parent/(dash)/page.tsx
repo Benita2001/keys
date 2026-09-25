@@ -23,7 +23,7 @@ import { ActionButton, Avatar, Card, IconCircle, SectionHeader } from "@/compone
 import { formatAmount } from "@/domain/format";
 import { isRequestStale } from "@/domain/policy";
 import type { PricePoint } from "@/domain/types";
-import { usePortfolio } from "@/hooks/data";
+import { useLearningStats, usePortfolio } from "@/hooks/data";
 import { MODULES } from "@/mocks/learning";
 import { allAssetSnapshots, mandates, seriesFor } from "@/services";
 import { useSingleFlight } from "@/hooks/single-flight";
@@ -41,14 +41,15 @@ const TOPIC_LABEL: Record<string, string> = {
 };
 
 export default function ParentDashboard() {
-  const { state, dispatch } = useStore();
+  const { state, dispatch, refresh } = useStore();
   const guard = useSingleFlight();
   const toast = useToast();
   const { assets, view } = usePortfolio("practice");
   const child = state.profile.childName;
   const [rangeDays, setRangeDays] = useState<7 | 30>(30);
   const pending = state.requests.filter((r) => r.status === "PENDING_HUMAN_DECISION" && !isRequestStale(r, state.mandate));
-  const lessonsCompleted = state.priorLessonCount + state.completedLessons.length;
+  const stats = useLearningStats();
+  const lessonsCompleted = stats.lessonsCompleted;
   const topics = MODULES.filter((m) => m.lessonIds.some((id) => state.completedLessons.includes(id))).map((m) => TOPIC_LABEL[m.id]);
   const nameOf = (t: string) => allAssetSnapshots().find((a) => a.ticker === t)?.companyName ?? t;
 
@@ -62,11 +63,19 @@ export default function ParentDashboard() {
   }, [view, rangeDays]);
 
   const togglePause = guard(async () => {
-    const next = await mandates.update({
-      mandate: state.mandate,
-      changes: { status: state.mandate.status === "ACTIVE" ? "PAUSED" : "ACTIVE" },
-    });
+    let next;
+    try {
+      next = await mandates.update({
+        mandate: state.mandate,
+        changes: { status: state.mandate.status === "ACTIVE" ? "PAUSED" : "ACTIVE" },
+      });
+    } catch {
+      toast("That change didn't go through. Nothing changed.");
+      void refresh({ chain: true });
+      return;
+    }
     dispatch({ type: "setMandate", mandate: next });
+    void refresh({ chain: true });
     toast(next.status === "PAUSED" ? "Money Mode paused" : "Money Mode resumed");
   });
 
@@ -136,7 +145,7 @@ export default function ParentDashboard() {
         <div className="min-w-0 space-y-5">
           <Card className="grid grid-cols-3 divide-x divide-line-soft py-3">
             <Stat icon={<BookOpen className="size-4" />} tone="blue" value={String(lessonsCompleted)} label="Lessons completed" />
-            <Stat icon={<Flame className="size-4" />} tone="orange" value={String(state.streakDays)} label="Day streak" />
+            <Stat icon={<Flame className="size-4" />} tone="orange" value={String(stats.streakDays)} label="Day streak" />
             <Stat icon={<Building2 className="size-4" />} tone="lavender" value={String(state.researched.length)} label="Companies researched" />
           </Card>
 

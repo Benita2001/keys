@@ -1,10 +1,10 @@
 "use client";
 
 import { CheckCircle2, Clock, Info, Send, ShieldCheck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CompanyLogo } from "@/components/finance";
 import { PlantPot } from "@/components/illustrations/objects";
-import { BoundaryMessage, BoundaryRequestSheet, MoneyModeUnavailable } from "@/components/mode";
+import { BoundaryMessage, BoundaryRequestSheet, MoneyModeUnavailable, MoneySyncState } from "@/components/mode";
 import { DataStatusTag, DemoMoneyTag, EmptyState, ErrorState, Skeleton, useToast } from "@/components/ui/feedback";
 import { BottomSheet } from "@/components/ui/overlay";
 import { ActionButton, BackButton, Card, Chip, cn } from "@/components/ui/primitives";
@@ -13,10 +13,10 @@ import { assetRuleFor, evaluateBoundedAction, explainEvaluation, maxAllowedNow, 
 import type { ActionEvaluation, ExecutionResult, MarketAsset, Mode } from "@/domain/types";
 import { useAsset } from "@/hooks/data";
 import { boundaryRequests, moneyExecution, practiceExecution } from "@/services";
-import { newIdempotencyKey } from "@/services/keys-backend";
-import { ExecutionProofNote, onChainLabel } from "@/components/proof";
+import { keysBackendConfigured, newIdempotencyKey } from "@/services/keys-backend";
+import { ExecutionProofNote, ProofDetails } from "@/components/proof";
 import { useSingleFlight } from "@/hooks/single-flight";
-import { useStore } from "@/state/store";
+import { useMoneyTruth, useStore } from "@/state/store";
 
 type Phase =
   | { kind: "edit" }
@@ -28,6 +28,7 @@ type Phase =
 
 export function InvestFlow({ ticker, initialMode, initialAmount }: { ticker: string; initialMode?: Mode; initialAmount?: number }) {
   const { state } = useStore();
+  const moneyTruth = useMoneyTruth();
   const asset = useAsset(ticker);
   const mode = initialMode ?? state.mode;
 
@@ -49,6 +50,10 @@ export function InvestFlow({ ticker, initialMode, initialAmount }: { ticker: str
         <ErrorState className="mt-6" onRetry={asset.reload} />
       ) : !asset.data ? (
         <EmptyState className="mt-6" title="We couldn't find that company" action={<ActionButton href="/explore">Explore</ActionButton>} />
+      ) : mode === "money" && !moneyTruth.ready ? (
+        <div className="mt-6">
+          <MoneySyncState status={moneyTruth.status} onRetry={moneyTruth.refresh} />
+        </div>
       ) : mode === "money" && !state.profile.parentLinked ? (
         <div className="mt-6">
           <MoneyModeUnavailable reason="parent" />
@@ -60,8 +65,11 @@ export function InvestFlow({ ticker, initialMode, initialAmount }: { ticker: str
   );
 }
 
+const STUCK_AFTER_MS = 2 * 60_000;
+
 function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; initialAmount?: number }) {
-  const { state, dispatch } = useStore();
+  const { state, dispatch, refresh } = useStore();
+  const backend = keysBackendConfigured();
   const guard = useSingleFlight();
   const toast = useToast();
   const { mandate } = state;
@@ -99,6 +107,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
   );
   const [askOpen, setAskOpen] = useState(false);
   const [asking, setAsking] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const amount = Number(amountText);
@@ -142,7 +151,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
     return next.key;
   };
 
-  const runMoney = async (idempotencyKey: string) => {
+  const runMoney = async (idempotencyKey: string, recheck = false) => {
     const result = await moneyExecution.execute({
       mandate,
       assetRule: assetRuleFor(mandate, asset.ticker),
@@ -152,20 +161,28 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
       balance: state.money.balance,
       allowOnce: allowOnce ?? null,
       idempotencyKey,
+      recheck,
     });
     // The allowance is only "used" when the standing Mandate alone would have refused.
     const usedAllowOnce = coveredByAllowOnce && preview?.decision !== "ALLOW";
     if (result.outcome === "EXECUTED" && result.shares != null && result.proof) {
-      dispatch({
-        type: "moneyBuy",
-        ticker: asset.ticker,
-        amount,
-        shares: result.shares,
-        reason: reason.trim() || undefined,
-        proof: result.proof,
-        usedRequestId: usedAllowOnce ? allowOnce?.id : undefined,
-        idempotencyKey,
-      });
+      if (backend) {
+        // The Family Durable Object is the source of truth for balance, holdings and
+        // allowance state: re-fetch instead of applying a local optimistic update.
+        dispatch({ type: "clearPending", idempotencyKey });
+        await refresh({ chain: true });
+      } else {
+        dispatch({
+          type: "moneyBuy",
+          ticker: asset.ticker,
+          amount,
+          shares: result.shares,
+          reason: reason.trim() || undefined,
+          proof: result.proof,
+          usedRequestId: usedAllowOnce ? allowOnce?.id : undefined,
+          idempotencyKey,
+        });
+      }
       setIntent(null);
       setPhase({ kind: "done", result, allowedOnce: usedAllowOnce });
     } else if (result.outcome === "PENDING" || result.outcome === "UNKNOWN") {
@@ -175,28 +192,58 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
     } else {
       dispatch({ type: "clearPending", idempotencyKey });
       setIntent(null);
+      // Limits or allowances may have changed under us: pull the current state.
+      if (backend) void refresh({ chain: true });
       setPhase({ kind: "boundary", evaluation: result.evaluation });
     }
+  };
+
+  // Clock for the "taking longer than usual" escape hatch.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (phase.kind !== "unconfirmed") return;
+    const id = window.setInterval(() => setNow(Date.now()), 10_000);
+    return () => window.clearInterval(id);
+  }, [phase.kind]);
+
+  // Drop the local tracker only. Any backend result for the old key still
+  // arrives through sync and shows in Money activity.
+  const stopWaiting = () => {
+    if (phase.kind !== "unconfirmed") return;
+    dispatch({ type: "clearPending", idempotencyKey: phase.idempotencyKey });
+    setIntent(null);
+    if (backend) void refresh({ chain: true });
+    setPhase({ kind: "edit" });
   };
 
   const recheck = guard(async () => {
     if (phase.kind !== "unconfirmed") return;
     setPhase({ ...phase, checking: true });
-    await runMoney(phase.idempotencyKey);
+    await runMoney(phase.idempotencyKey, true);
   });
 
   const sendRequest = guard(async (why: string) => {
     if (phase.kind !== "boundary") return;
     setAsking(true);
-    const request = await boundaryRequests.create({
-      mandate,
-      evaluation: phase.evaluation,
-      asset: asset.ticker,
-      type: "BUY",
-      amount,
-      reason: why,
-    });
+    setRequestError(null);
+    let request;
+    try {
+      request = await boundaryRequests.create({
+        mandate,
+        evaluation: phase.evaluation,
+        asset: asset.ticker,
+        type: "BUY",
+        amount,
+        reason: why,
+      });
+    } catch {
+      setAsking(false);
+      setRequestError("We couldn't send your request. Nothing changed. Try again in a moment.");
+      if (backend) void refresh();
+      return;
+    }
     dispatch({ type: "addRequest", request });
+    if (backend) void refresh();
     setAsking(false);
     setAskOpen(false);
     setPhase({ kind: "requested" });
@@ -213,12 +260,22 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
         <h1 className="mt-4 text-[26px] font-black text-navy-strong">
           {mode === "practice"
             ? "Added to your Practice Portfolio"
-            : phase.allowedOnce
-              ? `Done. ${state.profile.parentName} allowed this once.`
-              : "Done. Inside your limits."}
+            : phase.result.proof?.status === "RUNTIME_CONFIRMED" && !phase.result.proof.simulated
+              ? "Action confirmed on Solana Devnet"
+              : phase.allowedOnce
+                ? `Done. ${state.profile.parentName} allowed this once.`
+                : "Done. Inside your limits."}
         </h1>
-        <p className="mt-2 max-w-[34ch] text-[15px] font-semibold text-ink-2">
-          {formatAmount(amount)} in {asset.companyName} · about {formatShares(shares)} shares at a {asset.dataStatus === "live" ? "live" : "sample"} price of {formatUsd(asset.price)}.
+        <p className="mt-2 max-w-[36ch] text-[15px] font-semibold text-ink-2">
+          {phase.result.proof?.network
+            ? `${formatAmount(amount)} of ${asset.companyName} exposure${
+                typeof phase.result.proof.pyth?.unitPrice === "number"
+                  ? ` at a live Pyth price of ${formatUsd(phase.result.proof.pyth.unitPrice)}`
+                  : ""
+              } · Devnet demo tokens, not real shares.`
+            : mode === "practice"
+              ? `${formatAmount(amount)} in ${asset.companyName} · about ${formatShares(shares)} ${asset.representation ? "units" : "shares"} of virtual practice money at a ${asset.dataStatus === "live" ? "live" : "sample"} price of ${formatUsd(asset.price)}.`
+              : `${formatAmount(amount)} in ${asset.companyName} · demo only, nothing was bought.`}
         </p>
         {mode === "money" ? (
           <ExecutionProofNote
@@ -240,22 +297,15 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
           </ActionButton>
         </div>
         <BottomSheet open={detailsOpen} onClose={() => setDetailsOpen(false)} title="Transaction details">
-          <dl className="divide-y divide-line-soft rounded-[16px] border border-line-soft">
-            <Row k="Company" v={`${asset.companyName} (${asset.ticker})`} />
-            <Row k="Tokenized as" v={`${asset.tokenizedTicker} on Solana`} />
-            <Row k="Amount" v={formatAmount(amount)} />
-            <Row k="Mode" v={mode === "practice" ? "Practice (virtual money)" : "Money (demo)"} />
-            {phase.result.proof?.mandateVersion != null ? (
-              <Row k="Limits version" v={`v${phase.result.proof.mandateVersion} · nonce ${phase.result.proof.mandateNonce}`} />
-            ) : null}
-            <Row k="Decision" v={`${phase.result.evaluation.decision} · ${SOURCE_LABEL[phase.result.evaluation.source]}`} />
-            {phase.result.proof?.network ? <Row k="Network" v="Solana devnet (demo tokens)" /> : null}
-            <Row k="On-chain" v={onChainLabel(phase.result.proof)} />
-          </dl>
-          {phase.result.proof?.status === "DEMO_NOT_EXECUTED" || phase.result.proof?.status === "PRACTICE_LOCAL" ? (
+          <ProofDetails
+            proof={phase.result.proof}
+            asset={`${asset.companyName} (${asset.ticker})`}
+            amount={formatAmount(amount)}
+            decisionSource={`${phase.result.evaluation.decision} · ${SOURCE_LABEL[phase.result.evaluation.source] ?? phase.result.evaluation.source}`}
+          />
+          {phase.result.proof?.status === "DEMO_NOT_EXECUTED" ? (
             <p className="mt-3 text-[12.5px] font-semibold text-ink-3">
-              When Money Mode is connected to the KEYS Solana program, this screen shows the network, transaction signature and a
-              link to view it on Solana.
+              Demo mode: no transaction was sent. Connected to the KEYS runtime, this shows the Devnet signature and an explorer link.
             </p>
           ) : null}
         </BottomSheet>
@@ -265,17 +315,19 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
 
   if (phase.kind === "unconfirmed") {
     const pending = phase.result.outcome === "PENDING";
+    const since = state.pendingExecutions.find((p) => p.idempotencyKey === phase.idempotencyKey)?.createdAt;
+    const stuck = !!since && now - new Date(since).getTime() > STUCK_AFTER_MS;
     return (
       <div className="animate-rise mt-10 flex flex-1 flex-col items-center text-center" role="status">
         <span className="grid size-20 place-items-center rounded-full bg-blue-soft text-blue">
           <Clock className="size-9" />
         </span>
         <h1 className="mt-5 text-[26px] font-black text-navy-strong">
-          {pending ? "Sent. Waiting for confirmation." : "We're still checking on this."}
+          {pending ? "Still processing." : "We're still checking on this."}
         </h1>
         <p className="mt-2 max-w-[34ch] text-[15px] font-semibold text-ink-2">
           {pending
-            ? `${formatAmount(amount)} in ${asset.companyName} was submitted to Solana devnet and isn't confirmed yet.`
+            ? `${formatAmount(amount)} in ${asset.companyName} was accepted and isn't confirmed on Solana Devnet yet.`
             : `We couldn't confirm whether ${formatAmount(amount)} in ${asset.companyName} went through.`}{" "}
           Your balance won&apos;t change until it&apos;s confirmed, and checking again can never make it happen twice.
         </p>
@@ -283,9 +335,20 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
           <ActionButton onClick={recheck} disabled={phase.checking}>
             {phase.checking ? "Checking…" : "Check again"}
           </ActionButton>
-          <ActionButton variant="secondary" href="/home">
-            Back to Home
-          </ActionButton>
+          {stuck ? (
+            <ActionButton variant="secondary" onClick={stopWaiting}>
+              Stop waiting and start over
+            </ActionButton>
+          ) : (
+            <ActionButton variant="secondary" href="/home">
+              Back to Home
+            </ActionButton>
+          )}
+          {stuck ? (
+            <p className="text-[12.5px] font-semibold text-ink-3">
+              This is taking longer than usual. If it went through, it will show up in your Money activity.
+            </p>
+          ) : null}
         </div>
       </div>
     );
@@ -423,8 +486,18 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
               <div className="mt-4 rounded-[16px] bg-surface-soft p-3.5 text-[13.5px] font-semibold text-ink-2">
                 {validAmount ? (
                   <>
-                    You&apos;d own about <span className="font-extrabold text-navy-strong tabular">{formatShares(shares)}</span> shares of{" "}
-                    {asset.companyName}. Prices go up and down, so this could be worth more or less later.
+                    {mode === "money" && backend ? (
+                      <>
+                        That&apos;s about <span className="font-extrabold text-navy-strong tabular">{formatShares(shares)}</span> {asset.ticker} of
+                        exposure in Devnet demo tokens, not real shares. The price is checked with live Pyth data when you invest.
+                      </>
+                    ) : (
+                      <>
+                        You&apos;d own about <span className="font-extrabold text-navy-strong tabular">{formatShares(shares)}</span>{" "}
+                        {asset.representation ? "units" : "shares"} of {asset.companyName} with practice money. Prices go up and down, so
+                        this could be worth more or less later.
+                      </>
+                    )}
                   </>
                 ) : (
                   "Enter an amount to see what you'd own."
@@ -475,6 +548,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
         }
         parentName={state.profile.parentName}
         submitting={asking}
+        error={requestError}
         limitLabel={
           phase.kind === "boundary" && phase.evaluation.reasonCode === "PERIOD_LIMIT_EXCEEDED"
             ? `Left ${mandate.periodLabel}`
@@ -491,11 +565,3 @@ const SOURCE_LABEL: Record<ActionEvaluation["source"], string> = {
   "local-preview": "local preview",
 };
 
-function Row({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4 px-3.5 py-2.5">
-      <dt className="text-[13px] font-bold text-ink-2">{k}</dt>
-      <dd className="max-w-[60%] break-words text-right text-[13px] font-extrabold text-navy-strong">{v}</dd>
-    </div>
-  );
-}

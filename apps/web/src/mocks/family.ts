@@ -37,14 +37,14 @@ const price = (ticker: string) => MOCK_ASSETS.find((a) => a.ticker === ticker)!.
  * Practice holdings sized so that, at sample prices, the portfolio shows
  * $1,248.50, up $57.30 (+4.8%) — the approved mockup reference.
  */
-const practiceSeed: { ticker: string; value: number; costBasis: number }[] = [
+export const PRACTICE_SEED: { ticker: string; value: number; costBasis: number }[] = [
   { ticker: "AAPL", value: 399.2, costBasis: 369.6 },
   { ticker: "NVDA", value: 299.1, costBasis: 281.3 },
   { ticker: "AMZN", value: 275.4, costBasis: 263.28 },
   { ticker: "NFLX", value: 274.8, costBasis: 277.02 },
 ];
 
-export const DEMO_PRACTICE_HOLDINGS: Holding[] = practiceSeed.map((h) => ({
+export const DEMO_PRACTICE_HOLDINGS: Holding[] = PRACTICE_SEED.map((h) => ({
   ticker: h.ticker,
   shares: h.value / price(h.ticker),
   costBasis: h.costBasis,

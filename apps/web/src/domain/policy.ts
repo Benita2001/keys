@@ -139,6 +139,59 @@ export function maxAllowedNow(mandate: CurrentMandate, balance: number): number 
 const usd = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n % 1 ? 2 : 0 });
 
+/**
+ * Backend/program reason codes → the canonical codes the UI explains.
+ * On-chain program errors arrive as Anchor error names.
+ */
+const REASON_ALIASES: Record<string, ReasonCode | "ALLOWANCE_USED" | "ALLOWANCE_INVALID" | "EXECUTION_REFUSED" | "PRACTICE_ONLY" | "DEMO_CAPACITY"> = {
+  ActionAmountExceeded: "MANDATE_LIMIT_EXCEEDED",
+  PythNotionalExceeded: "MANDATE_LIMIT_EXCEEDED",
+  PYTH_NOTIONAL_EXCEEDED: "MANDATE_LIMIT_EXCEEDED",
+  PeriodAmountExceeded: "PERIOD_LIMIT_EXCEEDED",
+  PythPeriodNotionalExceeded: "PERIOD_LIMIT_EXCEEDED",
+  PYTH_PERIOD_NOTIONAL_EXCEEDED: "PERIOD_LIMIT_EXCEEDED",
+  MandateNotActive: "MANDATE_NOT_ACTIVE",
+  MandateExpired: "MANDATE_EXPIRED",
+  AssetRuleDisabled: "ASSET_OUTSIDE_MANDATE",
+  ASSET_OUTSIDE_RUNTIME: "ASSET_UNAVAILABLE",
+  ActionNotAllowed: "ACTION_OUTSIDE_MANDATE",
+  MarketConditionInvalidated: "MARKET_CONDITION_INVALIDATED",
+  PythEvidenceStale: "MARKET_EVIDENCE_STALE",
+  PYTH_MARKET_EVIDENCE_STALE: "MARKET_EVIDENCE_STALE",
+  PythConfidenceTooWide: "MARKET_CONFIDENCE_TOO_WIDE",
+  PYTH_CONFIDENCE_TOO_WIDE: "MARKET_CONFIDENCE_TOO_WIDE",
+  PythMessageInvalid: "MARKET_EVIDENCE_UNAVAILABLE",
+  PythFeedMismatch: "MARKET_EVIDENCE_UNAVAILABLE",
+  PYTH_SIGNATURE_VERIFICATION_FAILED: "MARKET_EVIDENCE_UNAVAILABLE",
+  PYTH_FEED_MISMATCH: "MARKET_EVIDENCE_UNAVAILABLE",
+  PYTH_MARKET_EVIDENCE_UNAVAILABLE: "MARKET_EVIDENCE_UNAVAILABLE",
+  PYTH_PRICE_UNAVAILABLE: "MARKET_EVIDENCE_UNAVAILABLE",
+  PYTH_FETCH_UNAVAILABLE: "MARKET_EVIDENCE_UNAVAILABLE",
+  AllowanceAlreadyUsed: "ALLOWANCE_USED",
+  StaleAllowance: "ALLOWANCE_INVALID",
+  AllowanceExpired: "ALLOWANCE_INVALID",
+  AllowanceRequestMismatch: "ALLOWANCE_INVALID",
+  AllowanceMandateMismatch: "ALLOWANCE_INVALID",
+  AllowanceBeneficiaryMismatch: "ALLOWANCE_INVALID",
+  AllowanceMintMismatch: "ALLOWANCE_INVALID",
+  AllowanceNotionalExceeded: "ALLOWANCE_INVALID",
+  SOLANA_EXECUTION_REFUSED: "EXECUTION_REFUSED",
+  AUTHORITY_RUNTIME_ERROR: "EXECUTION_REFUSED",
+  AUTHORITY_RUNTIME_UNAVAILABLE: "DECISION_UNAVAILABLE",
+  PRACTICE_ONLY: "PRACTICE_ONLY",
+  NO_AVAILABLE_DEMO_CAPACITY: "DEMO_CAPACITY",
+};
+
+export function canonicalReason(code: string): string {
+  return REASON_ALIASES[code] ?? code;
+}
+
+/** Limit refusals that can become a boundary request. */
+export function isLimitRefusal(code: string) {
+  const c = canonicalReason(code);
+  return c === "MANDATE_LIMIT_EXCEEDED" || c === "PERIOD_LIMIT_EXCEEDED";
+}
+
 /** Human, non-punitive explanation for a decision. Never says "denied". */
 export function explainEvaluation(
   evaluation: ActionEvaluation,
@@ -147,18 +200,43 @@ export function explainEvaluation(
   mode: "practice" | "money" = "money",
 ): { title: string; body: string } {
   const name = companyName ?? "this company";
-  switch (evaluation.reasonCode) {
+  switch (canonicalReason(evaluation.reasonCode)) {
+    case "ALLOWANCE_USED":
+      return {
+        title: "That one-time permission was already used.",
+        body: "Each “allow once” works for exactly one action. Choose an amount inside your limits or ask for more room again.",
+      };
+    case "ALLOWANCE_INVALID":
+      return {
+        title: "That one-time permission doesn't cover this.",
+        body: "It only works for the exact company and amount your parent allowed, under your current limits.",
+      };
+    case "EXECUTION_REFUSED":
+      return {
+        title: "The Solana program didn't accept this action.",
+        body: "Nothing was moved. Check your current limits and try again.",
+      };
+    case "PRACTICE_ONLY":
+      return { title: `${name} is Practice-only for now.`, body: "You can learn about it and practice with virtual money." };
+    case "DEMO_CAPACITY":
+      return {
+        title: "The Devnet demo is busy right now.",
+        body: "Nothing was moved. Try again in a moment.",
+      };
     case "WITHIN_MANDATE":
       return { title: "Inside your limits", body: "You can do this right now. No need to ask." };
     case "MANDATE_LIMIT_EXCEEDED":
       return {
-        title: "This is outside your current limit.",
+        title: "This is above your current per-action limit.",
         body: `You can invest up to ${usd(evaluation.standingLimit ?? mandate?.maxActionNotional ?? 0)} in one action. You're trying to invest ${usd(evaluation.requestedNotional ?? 0)}.`,
       };
     case "PERIOD_LIMIT_EXCEEDED":
       return {
-        title: "This would go past this month's limit.",
-        body: `You have ${usd(evaluation.remainingPeriodNotional ?? 0)} left to invest ${mandate?.periodLabel ?? "this period"}. You're trying to invest ${usd(evaluation.requestedNotional ?? 0)}.`,
+        title: "This would take you past your current period limit.",
+        body:
+          evaluation.remainingPeriodNotional != null
+            ? `You have ${usd(evaluation.remainingPeriodNotional)} left to invest ${mandate?.periodLabel ?? "this period"}.${evaluation.requestedNotional ? ` You're trying to invest ${usd(evaluation.requestedNotional)}.` : ""}`
+            : `You've used up your limit for ${mandate?.periodLabel ?? "this period"}. Ask for more room, or practice until it resets.`,
       };
     case "ASSET_OUTSIDE_MANDATE":
       return {
@@ -172,7 +250,7 @@ export function explainEvaluation(
       };
     case "MANDATE_NOT_ACTIVE":
       return {
-        title: "Money Mode is paused.",
+        title: "Money Mode is paused right now.",
         body: "Your parent or guardian has paused Money Mode. Practice still works as usual.",
       };
     case "MANDATE_REVOKED":
@@ -181,15 +259,15 @@ export function explainEvaluation(
       return { title: "Your limits have expired.", body: "Ask your parent or guardian to renew them." };
     case "STALE_NONCE":
       return {
-        title: "Your limits just changed.",
-        body: "This action was prepared under older limits. Check the new ones and try again.",
+        title: "Your limits changed.",
+        body: "Refreshing your current Money settings… Check the new limits and try again.",
       };
     case "MARKET_EVIDENCE_UNAVAILABLE":
     case "MARKET_EVIDENCE_STALE":
     case "MARKET_CONFIDENCE_TOO_WIDE":
       return {
-        title: "Price data isn't fresh enough right now.",
-        body: "Cresco only acts on up-to-date prices. Try again in a moment.",
+        title: "Market information changed.",
+        body: "Cresco needs fresh Pyth market data to check this action again. Nothing was moved. Try again in a moment.",
       };
     case "MARKET_CONDITION_INVALIDATED":
       return {
@@ -230,7 +308,7 @@ export function explainEvaluation(
 
 /** learningContext for a decision. Mirrors learningCueForAction in the backend. */
 export function learningContextFor(evaluation: ActionEvaluation): LearningContext | null {
-  switch (evaluation.reasonCode) {
+  switch (canonicalReason(evaluation.reasonCode)) {
     case "MANDATE_LIMIT_EXCEEDED":
     case "PERIOD_LIMIT_EXCEEDED":
       return {

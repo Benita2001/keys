@@ -5,8 +5,8 @@ import { useState } from "react";
 import { AchievementBadge } from "@/components/learning";
 import { Avatar, Card, PageHeader, ProgressBar } from "@/components/ui/primitives";
 import { formatNumber } from "@/domain/format";
-import { useLevel } from "@/hooks/data";
-import { ACHIEVEMENTS, CHALLENGES } from "@/mocks/family";
+import { useAchievements, useLearningStats, useLevel } from "@/hooks/data";
+import { CHALLENGES } from "@/mocks/family";
 import { moduleById } from "@/mocks/learning";
 import { useStore } from "@/state/store";
 
@@ -14,13 +14,15 @@ export default function WinsPage() {
   const { level, xp, progress, toNext } = useLevel();
   const [tab, setTab] = useState<"badges" | "challenges">("badges");
   const { state } = useStore();
+  const stats = useLearningStats();
+  const achievements = useAchievements();
   const stockLessons = moduleById("what-is-a-stock")?.lessonIds ?? [];
   // Challenge progress is derived from learning activity only: never from trades or P&L.
   const live: Record<string, number> = {
     "research-5": state.researched.length,
     "stock-module": stockLessons.filter((id) => state.completedLessons.includes(id)).length,
     reasons: 1 + state.activity.filter((a) => a.reason).length,
-    "streak-10": state.streakDays,
+    "streak-10": stats.streakDays,
   };
   const challenges = CHALLENGES.map((c) => ({ ...c, progress: Math.min(c.target, live[c.id] ?? c.progress) }));
 
@@ -59,7 +61,7 @@ export default function WinsPage() {
 
       {tab === "badges" ? (
         <ul id="panel-badges" role="tabpanel" className="mt-4 grid grid-cols-3 gap-x-2 gap-y-3 md:grid-cols-6">
-          {ACHIEVEMENTS.map((a) => (
+          {achievements.map((a) => (
             <AchievementBadge key={a.id} achievement={a} />
           ))}
         </ul>

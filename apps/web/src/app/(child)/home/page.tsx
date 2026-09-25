@@ -10,6 +10,7 @@ import {
   HeroSkeleton,
   MoneyHeroCard,
   MoneyModeUnavailable,
+  MoneySyncState,
   ModeSwitch,
   PracticeHeroCard,
   RequestStatusCard,
@@ -18,15 +19,18 @@ import { ErrorState } from "@/components/ui/feedback";
 import { Avatar, Card, ProgressBar, SectionHeader, StreakBadge, TextLink } from "@/components/ui/primitives";
 import { formatAmount, formatNumber } from "@/domain/format";
 import { remainingThisPeriod } from "@/domain/policy";
-import { useLevel, useModuleStates, usePortfolio } from "@/hooks/data";
-import { ACHIEVEMENTS, GOALS } from "@/mocks/family";
+import { useAchievements, useLearningStats, useLevel, useModuleStates, usePortfolio } from "@/hooks/data";
+import { GOALS } from "@/mocks/family";
 import { LESSONS, MISSION, MODULES, lessonById, moduleById } from "@/mocks/learning";
 import { allAssetSnapshots } from "@/services";
-import { useStore } from "@/state/store";
+import { useMoneyTruth, useStore } from "@/state/store";
 
 export default function HomePage() {
   const { state } = useStore();
+  const money = useMoneyTruth();
   const { level, xp, progress } = useLevel();
+  const stats = useLearningStats();
+  const achievements = useAchievements();
   const { assets, view } = usePortfolio(state.mode);
   const modules = useModuleStates();
 
@@ -47,6 +51,8 @@ export default function HomePage() {
       ) : (
         <PracticeHeroCard view={view} />
       )
+    ) : !money.ready ? (
+      <MoneySyncState status={money.status} onRetry={money.refresh} />
     ) : !state.profile.parentLinked ? (
       <MoneyModeUnavailable reason="parent" />
     ) : assets.status === "loading" ? (
@@ -76,7 +82,7 @@ export default function HomePage() {
             <ProgressBar value={progress} className="mt-1" height={6} />
           </Link>
         </div>
-        <StreakBadge days={state.streakDays} />
+        <StreakBadge days={stats.streakDays} />
       </header>
 
       <div className="mt-5 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
@@ -148,12 +154,12 @@ export default function HomePage() {
               <ChevronRight aria-hidden className="size-5 text-ink-3" />
             </div>
             <div className="mt-3 flex gap-2">
-              {ACHIEVEMENTS.slice(0, 4).map((a) => (
+              {achievements.slice(0, 4).map((a) => (
                 <BadgeArt key={a.id} badge={a.id} earned={a.earned} className="size-12" />
               ))}
             </div>
             <p className="mt-2 text-[13px] font-semibold text-ink-2">
-              {ACHIEVEMENTS.filter((a) => a.earned).length} badges earned for learning and curiosity.
+              {achievements.filter((a) => a.earned).length} badges earned for learning and curiosity.
             </p>
           </Link>
         </aside>

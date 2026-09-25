@@ -12,6 +12,7 @@ import {
   Lock,
   PieChart,
   Plus,
+  Rocket,
   Scale,
   Star,
   TrendingUp,
@@ -52,6 +53,7 @@ const MODULE_ICONS = {
   trend: TrendingUp,
   scale: Scale,
   layers: Layers,
+  rocket: Rocket,
 };
 
 const TONE_BG: Record<LearningModule["tone"], string> = {
@@ -125,6 +127,10 @@ export function ModuleRow({
         </span>
       ) : state === "current" ? (
         <span className="grid size-9 place-items-center rounded-full bg-white text-blue" aria-hidden>
+          <ChevronRight className="size-5" strokeWidth={3} />
+        </span>
+      ) : state === "open" ? (
+        <span className="grid size-8 place-items-center rounded-full bg-blue-soft text-blue" aria-hidden>
           <ChevronRight className="size-5" strokeWidth={3} />
         </span>
       ) : (

@@ -16,7 +16,7 @@ describe("BoundaryMessage", () => {
         onAdjust={() => {}}
       />,
     );
-    expect(screen.getByText("This is outside your current limit.")).toBeInTheDocument();
+    expect(screen.getByText("This is above your current per-action limit.")).toBeInTheDocument();
     expect(screen.getByText("You can invest up to $10 in one action. You're trying to invest $20.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /ask for more room/i })).toBeInTheDocument();
 
@@ -54,7 +54,7 @@ describe("ModeSwitch", () => {
 describe("DataStatusTag", () => {
   it("never labels mock prices as live", () => {
     render(<DataStatusTag status="mock" />);
-    expect(screen.getByText("Sample prices")).toBeInTheDocument();
+    expect(screen.getByText("Sample")).toBeInTheDocument();
     expect(screen.queryByText(/live/i)).not.toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@
 import { CheckCircle2, CloudOff, Info, RefreshCw, WifiOff } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { DataStatus } from "@/domain/types";
+import { keysRuntimeExecutionEnabled } from "@/services/keys-backend";
 import { ActionButton, cn } from "./primitives";
 
 export function Skeleton({ className }: { className?: string }) {
@@ -83,30 +84,75 @@ export function OfflineState() {
   );
 }
 
-/**
- * Truth label for prices. Mock prices must never look live.
- */
-export function DataStatusTag({ status, className }: { status: DataStatus; className?: string }) {
-  const map = {
-    mock: { text: "Sample prices", cls: "bg-surface-soft text-ink-2 border border-line-soft" },
-    live: { text: "Live · Pyth", cls: "bg-green-soft text-green-strong" },
-    stale: { text: "Delayed", cls: "bg-yellow-soft text-warning" },
-  }[status];
+export type ProvenanceKind =
+  | "live"
+  | "live-prestocks"
+  | "live-tessera"
+  | "delayed"
+  | "sample"
+  | "devnet"
+  | "practice"
+  | "learn-practice"
+  | "money-proof"
+  | "unavailable"
+  | "pyth-history"
+  | "sample-chart";
+
+const PROVENANCE: Record<ProvenanceKind, { text: string; cls: string; dot?: string }> = {
+  live: { text: "Live · Pyth", cls: "bg-green-soft text-green-strong", dot: "bg-green" },
+  "live-prestocks": { text: "Live · PreStocks", cls: "bg-green-soft text-green-strong", dot: "bg-green" },
+  "live-tessera": { text: "Live · Tessera", cls: "bg-green-soft text-green-strong", dot: "bg-green" },
+  "pyth-history": { text: "Pyth history", cls: "bg-green-soft text-green-strong", dot: "bg-green" },
+  delayed: { text: "Delayed", cls: "bg-yellow-soft text-[#8a5406]" },
+  sample: { text: "Sample", cls: "bg-surface-soft text-ink-2 border border-line-soft" },
+  "sample-chart": { text: "Sample chart", cls: "bg-surface-soft text-ink-2 border border-line-soft" },
+  devnet: { text: "Devnet", cls: "bg-lavender-soft text-[#5b43c9]" },
+  practice: { text: "Practice", cls: "bg-blue-soft text-blue-strong" },
+  "learn-practice": { text: "Learn / Practice", cls: "bg-blue-soft text-blue-strong" },
+  "money-proof": { text: "Money proof", cls: "bg-navy text-white", dot: "bg-[#7be49f]" },
+  unavailable: { text: "Unavailable", cls: "bg-surface-soft text-ink-2 border border-line-soft" },
+};
+
+/** One provenance badge for every data/truth label in Cresco. */
+export function Provenance({ kind, className, label }: { kind: ProvenanceKind; className?: string; label?: string }) {
+  const p = PROVENANCE[kind];
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold", map.cls, className)}>
-      {status === "live" ? <span aria-hidden className="size-1.5 rounded-full bg-green" /> : <Info aria-hidden className="size-3" />}
-      {map.text}
+    <span
+      className={cn("inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-bold", p.cls, className)}
+      title={label}
+    >
+      {p.dot ? <span aria-hidden className={cn("size-1.5 rounded-full", p.dot)} /> : <Info aria-hidden className="size-3" />}
+      {label ?? p.text}
     </span>
   );
 }
 
-/** Truth label for Money Mode while no real funding/custody is integrated. */
+/** Truth label for a price. Mock prices must never look live. */
+export function DataStatusTag({
+  status,
+  source,
+  className,
+}: {
+  status: DataStatus;
+  source?: "pyth" | "mock" | "prestocks" | "tessera";
+  className?: string;
+}) {
+  const kind: ProvenanceKind =
+    status === "live"
+      ? source === "prestocks"
+        ? "live-prestocks"
+        : source === "tessera"
+          ? "live-tessera"
+          : "live"
+      : status === "stale"
+        ? "delayed"
+        : "sample";
+  return <Provenance kind={kind} className={className} />;
+}
+
+/** Truth label for Money Mode balances: Devnet test capital, never real money. */
 export function DemoMoneyTag({ className }: { className?: string }) {
-  return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full bg-yellow-soft px-2 py-0.5 text-[11px] font-extrabold text-[#8a5406]", className)}>
-      <Info aria-hidden className="size-3" /> Demo money
-    </span>
-  );
+  return <Provenance kind="devnet" label={keysRuntimeExecutionEnabled() ? "Devnet test money" : "Demo money"} className={className} />;
 }
 
 /* ------------------------------------------------------------------ */

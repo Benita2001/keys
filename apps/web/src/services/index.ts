@@ -10,6 +10,8 @@ import type {
   ExecutionResult,
   MarketAsset,
   Period,
+  PricePoint,
+  SeriesResult,
 } from "@/domain/types";
 import { EXPLORE_ORDER, MOCK_ASSETS, sampleSeries } from "@/mocks/market";
 import {
@@ -22,6 +24,11 @@ import {
   executeAction,
   fetchMarketQuotes,
   fetchMarketSeries,
+  fetchPreStocks,
+  fetchPythMarketDiscovery,
+  fetchTesseraRepresentations,
+  type PreStocksRepresentation,
+  type TesseraRepresentation,
   keysBackendConfigured,
   keysRuntimeExecutionEnabled,
   newIdempotencyKey,
@@ -76,52 +83,257 @@ export function getCapabilities(): Capabilities {
 /* Market data                                                         */
 /* ------------------------------------------------------------------ */
 
-let quoteOverlay:
-  | Promise<Awaited<ReturnType<typeof fetchMarketQuotes>> | null>
-  | null = null;
+/** Small TTL cache so every screen doesn't refetch, but prices never freeze. */
+function cached<T>(ttlMs: number, load: () => Promise<T>) {
+  let value: { at: number; data: Promise<T> } | null = null;
+  return {
+    get(): Promise<T> {
+      if (!value || Date.now() - value.at > ttlMs) {
+        const data = load();
+        value = { at: Date.now(), data };
+        // A failed load must not be cached.
+        data.catch(() => {
+          if (value?.data === data) value = null;
+        });
+      }
+      return value.data;
+    },
+    clear() {
+      value = null;
+    },
+  };
+}
 
-async function withLiveOverlay(assets: MarketAsset[]): Promise<MarketAsset[]> {
+const COMPANY_TICKERS = EXPLORE_ORDER;
+/** The only asset with a proven Money (Devnet) lane today. */
+export const MONEY_PROOF_TICKER = "AAPL";
+
+const quotesCache = cached(20_000, () => fetchMarketQuotes(COMPANY_TICKERS));
+const discoveryCache = cached(60_000, () => fetchPythMarketDiscovery());
+const intradayCache = new Map<string, ReturnType<typeof cached<PricePoint[] | null>>>();
+const preStocksCache = cached(60_000, () => fetchPreStocks());
+const tesseraCache = cached(60_000, () => fetchTesseraRepresentations());
+
+/** Real Pyth 1D history points, or null when history is unavailable. */
+function pythIntraday(ticker: string) {
+  let entry = intradayCache.get(ticker);
+  if (!entry) {
+    entry = cached(60_000, async () => {
+      const series = await fetchMarketSeries(ticker, "1D");
+      const pts = series.points ?? [];
+      return series.status === "UNAVAILABLE" || pts.length < 2 ? null : pts;
+    });
+    intradayCache.set(ticker, entry);
+  }
+  return entry.get().catch(() => null);
+}
+
+/** Real day change from Pyth 1D history (first vs last point), or null. */
+async function pythDayChange(ticker: string) {
+  const pts = await pythIntraday(ticker);
+  if (!pts || !pts[0].v) return null;
+  return ((pts[pts.length - 1].v - pts[0].v) / pts[0].v) * 100;
+}
+
+/**
+ * List sparkline: real Pyth 1D history when this asset's change comes from it,
+ * otherwise an illustrative sample shape (the row is labeled Sample).
+ */
+export async function sparklineSeries(asset: MarketAsset): Promise<PricePoint[]> {
+  if (asset.changeSource === "pyth-history") {
+    const pts = await pythIntraday(asset.ticker);
+    if (pts) return pts;
+  }
+  return sparklineFor(asset);
+}
+
+/** Test/demo hook: drop cached market data. */
+export function clearMarketCaches() {
+  quotesCache.clear();
+  discoveryCache.clear();
+  preStocksCache.clear();
+  tesseraCache.clear();
+  intradayCache.clear();
+}
+
+/**
+ * Overlay backend truth onto the company universe:
+ * 1. /market/quotes FRESH/STALE → live/delayed price (AAPL, TSLA today)
+ * 2. /market/discovery FRESH equity feeds → live price (e.g. NVDA, MSFT)
+ * 3. otherwise the clearly labeled sample value stays (never $0)
+ * Money eligibility follows the proven runtime lane, not price availability.
+ */
+async function withBackendTruth(assets: MarketAsset[]): Promise<MarketAsset[]> {
   if (!keysBackendConfigured()) return assets;
+  const runtime = keysRuntimeExecutionEnabled();
 
-  quoteOverlay ??= fetchMarketQuotes(assets.map((asset) => asset.ticker)).catch(
-    () => null,
+  const [quotes, discovery] = await Promise.all([
+    quotesCache.get().catch(() => null),
+    discoveryCache.get().catch(() => null),
+  ]);
+  const bySymbol = new Map((quotes?.quotes ?? []).map((q) => [q.symbol, q]));
+  const discoveryEquities = new Map(
+    (discovery?.classes ?? [])
+      .filter((c) => c.id === "equity")
+      .flatMap((c) => c.feeds)
+      .filter((f) => f.priceStatus === "FRESH" && typeof f.price === "number" && f.price > 0)
+      .map((f) => [f.displaySymbol, f]),
   );
-  const response = await quoteOverlay;
-  if (!response) return assets;
 
-  const bySymbol = new Map(response.quotes.map((quote) => [quote.symbol, quote]));
-  return assets.map((asset) => {
-    const quote = bySymbol.get(asset.ticker);
-    if (
-      !quote ||
-      !["FRESH", "STALE"].includes(quote.status) ||
-      typeof quote.price !== "number"
-    ) {
-      return asset;
-    }
+  const overlaid = await Promise.all(
+    assets.map(async (asset): Promise<MarketAsset> => {
+      const moneyModeStatus = runtime ? (asset.ticker === MONEY_PROOF_TICKER ? "eligible" : "unavailable") : asset.moneyModeStatus;
+      const quote = bySymbol.get(asset.ticker);
+      if (quote && (quote.status === "FRESH" || quote.status === "STALE") && typeof quote.price === "number" && quote.price > 0) {
+        const change = await pythDayChange(asset.ticker);
+        return {
+          ...asset,
+          moneyModeStatus,
+          price: quote.price,
+          priceSource: "pyth",
+          dataStatus: quote.status === "FRESH" ? "live" : "stale",
+          asOf: quote.publishTime ?? undefined,
+          dayChangePercent: change ?? 0,
+          changeSource: change == null ? "unknown" : "pyth-history",
+        };
+      }
+      const feed = discoveryEquities.get(asset.ticker);
+      if (feed && typeof feed.price === "number") {
+        return {
+          ...asset,
+          moneyModeStatus,
+          price: feed.price,
+          priceSource: "pyth",
+          dataStatus: "live",
+          asOf: feed.publishTime ?? undefined,
+          dayChangePercent: 0,
+          changeSource: "unknown",
+        };
+      }
+      return { ...asset, moneyModeStatus, changeSource: "sample" };
+    }),
+  );
+  return overlaid;
+}
 
-    return {
-      ...asset,
-      price: quote.price,
-      priceSource: "pyth" as const,
-      dataStatus: quote.status === "FRESH" ? ("live" as const) : ("stale" as const),
-      asOf: quote.publishTime ?? undefined,
-    };
-  });
+function preStockToAsset(p: PreStocksRepresentation): MarketAsset | null {
+  const price = p.market.tokenPrice ?? p.market.markPrice;
+  if (p.market.status !== "AVAILABLE" || typeof price !== "number" || price <= 0) return null;
+  const company = p.name.replace(/\s*PreStocks$/i, "");
+  return {
+    id: `prestocks-${p.symbol.toLowerCase()}`,
+    companyName: company,
+    ticker: p.symbol,
+    tokenizedTicker: `${company} PreStock`,
+    category: "Private",
+    shortDescription: "Pre-IPO exposure · not shares",
+    about: `${company} is a private company, so its shares aren't traded on a public stock market. A ${company} PreStock is a token on Solana that tracks an estimate of the company's value. Owning one does not make you a shareholder: no voting, no dividends and no information rights.`,
+    thingsToKnow: [
+      { icon: "bolt", text: "Private companies aren't on a public stock exchange", tone: "orange" },
+      { icon: "heart", text: "The token tracks an estimated value, not a share", tone: "pink" },
+      { icon: "globe", text: "Valuations of private companies can change suddenly", tone: "blue" },
+      { icon: "swords", text: "Practice only in Cresco: eligibility isn't verified", tone: "aqua" },
+    ],
+    price,
+    dayChangePercent: 0,
+    changeSource: "unknown",
+    brand: { background: "#102b63", foreground: "#ffbc32", mark: company.slice(0, 1).toUpperCase() },
+    network: "solana",
+    provider: "prestocks",
+    priceSource: "prestocks",
+    dataStatus: "live",
+    practiceEnabled: p.keysPolicy.practiceAvailable,
+    moneyModeStatus: "unavailable",
+    asOf: p.market.receivedAt,
+    representation: {
+      source: "PRESTOCKS",
+      label: "Pre-IPO economic exposure · not shares",
+      kind: "PRE_IPO_ECONOMIC_EXPOSURE",
+      underlyingCompany: company,
+      contractAddress: p.contractAddress,
+      network: "solana-mainnet",
+      productUrl: p.productUrl,
+      markPrice: p.market.markPrice,
+      tokenPrice: p.market.tokenPrice,
+      valuation: p.market.markValuation,
+      premiumDiscountPct: p.market.premiumDiscountPct,
+      receivedAt: p.market.receivedAt,
+      eligibility: p.eligibility.status,
+    },
+  };
+}
+
+function tesseraToAsset(t: TesseraRepresentation): MarketAsset | null {
+  const price = t.market.markPrice;
+  if (t.market.status !== "AVAILABLE" || typeof price !== "number" || price <= 0) return null;
+  return {
+    id: `tessera-${t.symbol.toLowerCase()}`,
+    companyName: t.symbol,
+    ticker: t.symbol.toUpperCase(),
+    tokenizedTicker: t.symbol,
+    category: "Private",
+    shortDescription: "Loan participation right · not direct equity",
+    about: `${t.symbol} is a Tessera T-Token linked to ${t.underlyingCompany}. It is a loan participation right, not direct equity: it gives no shareholder, voting or dividend rights and it isn't on ${t.underlyingCompany}'s cap table.`,
+    thingsToKnow: [
+      { icon: "heart", text: "A loan participation right, not a share", tone: "pink" },
+      { icon: "bolt", text: `Its price follows an estimate of ${t.underlyingCompany}'s value`, tone: "orange" },
+      { icon: "globe", text: "Jurisdiction restrictions apply", tone: "blue" },
+      { icon: "swords", text: "Practice only in Cresco: eligibility isn't verified", tone: "aqua" },
+    ],
+    price,
+    dayChangePercent: 0,
+    changeSource: "unknown",
+    brand: { background: "#f0edff", foreground: "#6a4fe0", mark: "T" },
+    network: "solana",
+    provider: "tessera",
+    priceSource: "tessera",
+    dataStatus: "live",
+    practiceEnabled: t.keysPolicy.practiceAvailable,
+    moneyModeStatus: "unavailable",
+    asOf: t.market.receivedAt,
+    representation: {
+      source: "TESSERA",
+      label: "Loan participation right · not direct equity",
+      kind: "LOAN_PARTICIPATION_RIGHT",
+      underlyingCompany: t.underlyingCompany,
+      contractAddress: t.contractAddress,
+      network: "solana",
+      markPrice: t.market.markPrice,
+      valuation: t.market.markValuation,
+      sector: t.sector,
+      receivedAt: t.market.receivedAt,
+      eligibility: t.eligibility.status,
+    },
+  };
+}
+
+/** Private-market representations (PreStocks + Tessera). Learn / Practice only. */
+export async function listPrivateAssets(): Promise<MarketAsset[]> {
+  if (!keysBackendConfigured()) return [];
+  const [ps, ts] = await Promise.all([preStocksCache.get().catch(() => null), tesseraCache.get().catch(() => null)]);
+  return [
+    ...(ps?.assets ?? []).map(preStockToAsset),
+    ...(ts?.assets ?? []).map(tesseraToAsset),
+  ].filter((a): a is MarketAsset => a !== null);
+}
+
+export async function listDiscovery() {
+  return discoveryCache.get();
 }
 
 export const marketData: MarketDataService = {
   async listAssets() {
     await latency();
     if (flags.marketFailure) throw new Error("Market data unavailable");
-    const ordered = EXPLORE_ORDER.map((t) => MOCK_ASSETS.find((a) => a.ticker === t)!);
-    return withLiveOverlay(ordered);
+    const ordered = COMPANY_TICKERS.map((t) => MOCK_ASSETS.find((a) => a.ticker === t)!);
+    const [companies, privates] = await Promise.all([withBackendTruth(ordered), listPrivateAssets().catch(() => [])]);
+    return [...companies, ...privates];
   },
   async getAsset(ticker) {
     const all = await this.listAssets();
     return all.find((a) => a.ticker === ticker.toUpperCase()) ?? null;
   },
-  async getSeries(ticker, period) {
+  async getSeries(ticker, period): Promise<SeriesResult> {
     await latency(160);
     if (flags.marketFailure) throw new Error("Market data unavailable");
 
@@ -129,22 +341,22 @@ export const marketData: MarketDataService = {
       try {
         const live = await fetchMarketSeries(ticker, period);
         if (live.status !== "UNAVAILABLE" && live.points.length > 1) {
-          return live.points;
+          return { points: live.points, source: "pyth-history", resolution: live.resolution };
         }
       } catch {
-        // Historical market data is optional for this hackathon lane.
+        // History unavailable → fall through to an explicitly labeled sample.
       }
     }
 
     const asset = MOCK_ASSETS.find((a) => a.ticker === ticker);
-    if (!asset) return [];
-    return sampleSeries(ticker, asset.price, asset.dayChangePercent, period);
+    if (!asset) return { points: [], source: "unavailable" };
+    return { points: sampleSeries(ticker, asset.price, asset.dayChangePercent, period), source: "sample" };
   },
 };
 
 /** 1D sample series for list sparklines (sample data, derived from the asset's price). */
 export function sparklineFor(asset: MarketAsset) {
-  return sampleSeries(asset.ticker, asset.price, asset.dayChangePercent, "1D");
+  return sampleSeries(asset.ticker, asset.price, asset.changeSource === "unknown" ? 0 : asset.dayChangePercent, "1D");
 }
 
 /** Synchronous sample series for derived views (e.g. portfolio period change). */
@@ -269,14 +481,34 @@ function sharesFor(input: MoneyActionInput) {
 
 export const moneyExecution: MoneyExecutionService = {
   async evaluate(input) {
-    await latency(200);
+    if (!keysBackendConfigured()) await latency(200);
     return decide(input);
   },
   async execute(input) {
-    await latency(520);
-
     if (keysBackendConfigured() && keysRuntimeExecutionEnabled()) {
       const key = input.idempotencyKey ?? newIdempotencyKey();
+      const refused = (evaluation: ActionEvaluation): ExecutionResult => ({
+        ok: false,
+        outcome: "REFUSED",
+        evaluation,
+        ticker: input.asset.ticker,
+        amount: input.amount,
+        idempotencyKey: key,
+      });
+
+      const pre = preflight(input);
+      if (pre) return refused(pre);
+
+      // 1. Evaluate server-side first (no side effects). Skipped on re-checks of an
+      //    already-submitted intent and when an exact ALLOW_ONCE covers the action;
+      //    execute re-evaluates atomically on the server either way.
+      const coveredOnce = allowOnceCovers(input);
+      if (!input.recheck && !coveredOnce) {
+        const evaluation = await decide(input);
+        if (evaluation.decision !== "ALLOW") return refused(evaluation);
+      }
+
+      // 2. Execute on Solana Devnet with a stable idempotency key.
       const runtime = await executeAction(
         buildExecuteRequest({
           mandate: input.mandate,
@@ -285,7 +517,7 @@ export const moneyExecution: MoneyExecutionService = {
           type: input.type,
           notional: input.amount,
           idempotencyKey: key,
-          allowOnceRequestId: input.allowOnce?.id,
+          allowOnceRequestId: coveredOnce ? input.allowOnce?.id : undefined,
         }),
       );
 
@@ -302,6 +534,7 @@ export const moneyExecution: MoneyExecutionService = {
       };
     }
 
+    await latency(520);
     const evaluation = await decide(input);
     const ok = evaluation.decision === "ALLOW";
     const result: ExecutionResult = {

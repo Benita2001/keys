@@ -11,6 +11,11 @@ const routes = [
   "/profile",
   "/parent",
   "/parent/limits",
+  "/parent/add-money",
+  "/explore/AAPL",
+  "/explore/SPACEX",
+  "/invest/AAPL?mode=money&amount=5",
+  "/lesson/what-is-a-pre-ipo-company",
 ];
 
 for (const route of routes) {

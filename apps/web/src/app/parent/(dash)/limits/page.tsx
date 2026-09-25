@@ -15,7 +15,8 @@ const PER_ACTION = [5, 10, 20, 25, 50];
 const PER_PERIOD = [25, 50, 100, 200];
 
 export default function ParentLimitsPage() {
-  const { state, dispatch } = useStore();
+  const { state, dispatch, refresh } = useStore();
+  const [saveError, setSaveError] = useState<string | null>(null);
   const guard = useSingleFlight();
   const toast = useToast();
   const m = state.mandate;
@@ -37,11 +38,21 @@ export default function ParentLimitsPage() {
 
   const save = guard(async () => {
     setSaving(true);
-    const next = await mandates.update({
-      mandate: m,
-      changes: { maxActionNotional: perAction, maxPeriodNotional: perPeriod, allowedAssets: allowed, status: paused ? "PAUSED" : "ACTIVE" },
-    });
+    setSaveError(null);
+    let next;
+    try {
+      next = await mandates.update({
+        mandate: m,
+        changes: { maxActionNotional: perAction, maxPeriodNotional: perPeriod, allowedAssets: allowed, status: paused ? "PAUSED" : "ACTIVE" },
+      });
+    } catch {
+      setSaving(false);
+      setSaveError("The new limits weren't saved on Solana. Nothing changed. The limits may have changed in another session; check them and try again.");
+      void refresh({ chain: true });
+      return;
+    }
     dispatch({ type: "setMandate", mandate: next });
+    void refresh({ chain: true });
     setSaving(false);
     setConfirm(false);
     toast(`${child}'s limits updated`);
@@ -149,8 +160,13 @@ export default function ParentLimitsPage() {
         <p className="mt-3 text-[12.5px] font-semibold text-ink-3">
           This creates a new version of {child}&apos;s limits (v{m.version + 1}). Anything prepared under the old limits gets checked again.
         </p>
+        {saveError ? (
+          <p role="alert" className="mt-3 rounded-[12px] bg-loss-soft px-3 py-2 text-[13px] font-bold text-loss-text">
+            {saveError}
+          </p>
+        ) : null}
         <ActionButton className="mt-4" onClick={save} disabled={saving} data-autofocus>
-          {saving ? "Saving…" : "Confirm change"}
+          {saving ? "Saving on Solana…" : "Confirm change"}
         </ActionButton>
       </Modal>
     </div>

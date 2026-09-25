@@ -14,12 +14,12 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useState } from "react";
-import { explainEvaluation, isRequestStale, learningContextFor, remainingThisPeriod } from "@/domain/policy";
+import { explainEvaluation, isLimitRefusal, isRequestStale, learningContextFor, remainingThisPeriod } from "@/domain/policy";
 import { formatAmount, formatPercent, formatUsd } from "@/domain/format";
 import type { ActionEvaluation, BoundaryRequest, CurrentMandate, Mode, PortfolioView } from "@/domain/types";
 import { useStore } from "@/state/store";
 import { PlantPot } from "./illustrations/objects";
-import { DataStatusTag, DemoMoneyTag, Skeleton } from "./ui/feedback";
+import { DataStatusTag, DemoMoneyTag, Provenance, Skeleton } from "./ui/feedback";
 import { BottomSheet } from "./ui/overlay";
 import { ActionButton, Card, cn, IconCircle } from "./ui/primitives";
 
@@ -331,7 +331,7 @@ export function BoundaryMessage({
         </p>
       ) : null}
       <div className="mt-4 grid gap-2">
-        {onAsk && evaluation.boundaryRequestAvailable ? (
+        {onAsk && (evaluation.boundaryRequestAvailable || isLimitRefusal(evaluation.reasonCode)) ? (
           <ActionButton size="md" className="w-full" onClick={onAsk}>
             Ask for more room
           </ActionButton>
@@ -362,8 +362,10 @@ export function BoundaryRequestSheet({
   limit,
   parentName,
   submitting,
+  error,
   limitLabel = "Your current limit",
 }: {
+  error?: string | null;
   limitLabel?: string;
   open: boolean;
   onClose: () => void;
@@ -406,6 +408,11 @@ export function BoundaryRequestSheet({
         </span>
       </label>
       <p className="text-[12.5px] font-semibold text-ink-3">Your reason stays private to your family. It is never published on a blockchain.</p>
+      {error ? (
+        <p role="alert" className="mt-3 rounded-[12px] bg-loss-soft px-3 py-2 text-[13px] font-bold text-loss-text">
+          {error}
+        </p>
+      ) : null}
       <ActionButton className="mt-4" disabled={!reason.trim() || submitting} onClick={() => onSubmit(reason)} arrow={!submitting}>
         {submitting ? "Sending…" : `Send to ${parentName}`}
       </ActionButton>
@@ -420,6 +427,8 @@ export function RequestStatusCard({ request, companyName }: { request: BoundaryR
     ? { text: "Limits changed", tone: "bg-surface-soft text-ink-2" }
     : {
     PENDING_HUMAN_DECISION: { text: "Waiting for your parent", tone: "bg-yellow-soft text-[#8a5a07]" },
+    ALLOW_ONCE_PENDING_CHAIN: { text: "Finishing on Solana…", tone: "bg-blue-soft text-blue-strong" },
+    WIDEN_PENDING_CHAIN: { text: "Finishing on Solana…", tone: "bg-blue-soft text-blue-strong" },
     ALLOWED_ONCE: { text: "Allowed once", tone: "bg-green-soft text-green-strong" },
     ALLOWED_ONCE_USED: { text: "Used", tone: "bg-surface-soft text-ink-2" },
     WIDENED: { text: "Limits widened", tone: "bg-green-soft text-green-strong" },
@@ -483,11 +492,24 @@ export function MoneyModeUnavailable({ reason }: { reason: "parent" | "paused" }
   );
 }
 
-export function PriceTruthLine({ status, className }: { status: PortfolioView["dataStatus"]; className?: string }) {
+export function PriceTruthLine({ view, className }: { view: PortfolioView; className?: string }) {
+  const live = view.holdings.filter((h) => h.asset.dataStatus === "live").length;
+  const total = view.holdings.length;
+  const status: PortfolioView["dataStatus"] = total > 0 && live === total ? "live" : live > 0 ? "stale" : "mock";
   return (
     <p className={cn("flex items-center gap-1.5 text-[12px] font-semibold text-ink-3", className)}>
-      <DataStatusTag status={status} />
-      {status === "mock" ? "Prices are samples for learning, not live quotes." : null}
+      {status === "live" ? (
+        <Provenance kind="live" label="Live prices" />
+      ) : status === "mock" ? (
+        <DataStatusTag status="mock" />
+      ) : (
+        <Provenance kind="sample" label="Mixed" />
+      )}
+      {status === "live"
+        ? "Every holding is valued with a live price."
+        : status === "mock"
+          ? "Prices are samples for learning, not live quotes."
+          : `${live} of ${total} holdings use live prices (Pyth or PreStocks/Tessera); the rest use sample prices.`}
     </p>
   );
 }
@@ -497,5 +519,32 @@ export function ArrowLink({ href, children }: { href: string; children: React.Re
     <Link href={href} className="inline-flex items-center gap-1 text-[13px] font-extrabold text-blue">
       {children} <ArrowRight aria-hidden className="size-3.5" />
     </Link>
+  );
+}
+
+/**
+ * Money surfaces wait for backend truth. Nothing Money-related renders from
+ * local defaults while connecting, and a failed sync fails closed.
+ */
+export function MoneySyncState({ status, onRetry }: { status: string; onRetry: () => void }) {
+  if (status === "connecting") {
+    return (
+      <div role="status" aria-busy="true" className="rounded-[20px] border border-line-soft bg-surface p-4">
+        <p className="text-[14px] font-extrabold text-navy-strong">Connecting to your family&apos;s Money account…</p>
+        <div className="skeleton mt-3 h-4 w-2/3 rounded-[8px]" />
+        <div className="skeleton mt-2 h-4 w-1/2 rounded-[8px]" />
+      </div>
+    );
+  }
+  return (
+    <div role="alert" className="rounded-[20px] border border-line-soft bg-surface p-4">
+      <p className="text-[15px] font-extrabold text-navy-strong">We can&apos;t reach your family&apos;s Money account.</p>
+      <p className="mt-1 text-[13.5px] font-semibold text-ink-2">
+        Nothing will be invested until it&apos;s back. Practice still works.
+      </p>
+      <ActionButton variant="ghost" size="sm" className="mt-3" onClick={onRetry}>
+        Try again
+      </ActionButton>
+    </div>
   );
 }

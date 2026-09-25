@@ -9,13 +9,23 @@ import { Modal } from "@/components/ui/overlay";
 import { ActionButton, Card, Chip, IconCircle, PageHeader, cn } from "@/components/ui/primitives";
 import { formatAmount } from "@/domain/format";
 import type { GuardianDecision } from "@/domain/types";
+import { canonicalReason } from "@/domain/policy";
 import { allAssetSnapshots, boundaryRequests } from "@/services";
 import { useSingleFlight } from "@/hooks/single-flight";
 import { useStore } from "@/state/store";
 
+const DECIDED_COPY: Partial<Record<string, string>> = {
+  REFUSED: "You said not this time.",
+  WIDENED: "You widened the limits.",
+  WIDEN_PENDING_CHAIN: "Widening on Solana… The new limits apply once the transaction confirms.",
+  ALLOW_ONCE_PENDING_CHAIN: "Allowing once on Solana… This finishes when the transaction confirms.",
+  ALLOWED_ONCE: "You allowed this once.",
+  ALLOWED_ONCE_USED: "You allowed this once, and it has been used.",
+};
+
 export default function RequestDecisionPage() {
   const { id } = useParams<{ id: string }>();
-  const { state, dispatch } = useStore();
+  const { state, dispatch, refresh } = useStore();
   const guard = useSingleFlight();
   const toast = useToast();
   const request = state.requests.find((r) => r.id === id);
@@ -23,11 +33,15 @@ export default function RequestDecisionPage() {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [widenOpen, setWidenOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const m = state.mandate;
   const child = state.profile.childName;
 
   const widenOptions = request ? [request.requestedNotional, Math.max(request.requestedNotional, 25), 50].filter((v, i, a) => a.indexOf(v) === i && v > m.maxActionNotional) : [];
   const [newPerAction, setNewPerAction] = useState<number>(widenOptions[0] ?? m.maxActionNotional);
+  const minPeriod = request ? Math.ceil((m.spentThisPeriod + request.requestedNotional) / 10) * 10 : m.maxPeriodNotional;
+  const periodOptions = [minPeriod, 100, 150].filter((v, i, a) => a.indexOf(v) === i && v > m.maxPeriodNotional && v >= minPeriod);
+  const [pickedPeriod, setPickedPeriod] = useState<number | null>(null);
 
   if (!request) {
     return <EmptyState className="mt-6" title="Request not found" body="It may have been decided already." action={<ActionButton href="/parent">Back to overview</ActionButton>} />;
@@ -35,20 +49,32 @@ export default function RequestDecisionPage() {
   const asset = allAssetSnapshots().find((a) => a.ticker === request.asset);
   const decided = request.status !== "PENDING_HUMAN_DECISION";
   const stale = request.mandateNonce !== m.nonce;
-  const periodRequest = request.reasonCode === "PERIOD_LIMIT_EXCEEDED";
-  const newPerPeriod = Math.max(m.maxPeriodNotional, periodRequest ? m.spentThisPeriod + request.requestedNotional : newPerAction);
+  const periodRequest = canonicalReason(request.reasonCode) === "PERIOD_LIMIT_EXCEEDED";
+  const newPerPeriod = periodRequest
+    ? (pickedPeriod ?? periodOptions[0] ?? m.maxPeriodNotional)
+    : Math.max(m.maxPeriodNotional, newPerAction);
 
   const decide = guard(async () => {
     if (!choice) return;
     setBusy(true);
-    const res = await boundaryRequests.decide({
-      request,
-      decision: choice,
-      mandate: m,
-      newLimits: choice === "WIDEN_MANDATE" ? { maxActionNotional: periodRequest ? m.maxActionNotional : newPerAction, maxPeriodNotional: newPerPeriod } : undefined,
-      note: note.trim() || undefined,
-    });
+    setError(null);
+    let res;
+    try {
+      res = await boundaryRequests.decide({
+        request,
+        decision: choice,
+        mandate: m,
+        newLimits: choice === "WIDEN_MANDATE" ? { maxActionNotional: periodRequest ? m.maxActionNotional : newPerAction, maxPeriodNotional: newPerPeriod } : undefined,
+        note: note.trim() || undefined,
+      });
+    } catch {
+      setBusy(false);
+      setError("That decision didn't go through. Nothing changed. The request may already be decided, or the limits changed. Try again.");
+      void refresh();
+      return;
+    }
     dispatch({ type: "decideRequest", request: res.request, mandate: res.mandate });
+    void refresh({ chain: true });
     setBusy(false);
     setWidenOpen(false);
     setChoice(null);
@@ -105,7 +131,7 @@ export default function RequestDecisionPage() {
       {decided ? (
         <Card className="mt-4 p-4 text-center">
           <p className="text-[16px] font-extrabold text-navy-strong">
-            {request.status === "REFUSED" ? "You said not this time." : request.status === "WIDENED" ? "You widened the limits." : "You allowed this once."}
+            {DECIDED_COPY[request.status] ?? "This request has been decided."}
           </p>
         </Card>
       ) : stale ? (
@@ -153,6 +179,11 @@ export default function RequestDecisionPage() {
               />
             </label>
           ) : null}
+          {error ? (
+          <p role="alert" className="mt-3 rounded-[12px] bg-loss-soft px-3 py-2 text-[13px] font-bold text-loss-text">
+            {error}
+          </p>
+        ) : null}
           <ActionButton className="mt-5" onClick={() => (choice === "WIDEN_MANDATE" ? setWidenOpen(true) : decide())}
             disabled={!choice || busy}>
             {choice === "WIDEN_MANDATE" ? "Review new limits" : "Confirm decision"}
@@ -169,14 +200,28 @@ export default function RequestDecisionPage() {
               </Chip>
             ))}
           </div>
-        ) : null}
+        ) : (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {periodOptions.map((v) => (
+              <Chip key={v} selected={newPerPeriod === v} onClick={() => setPickedPeriod(v)}>
+                {formatAmount(v)} per month
+              </Chip>
+            ))}
+          </div>
+        )}
         <ul className="space-y-2 rounded-[16px] border border-line-soft p-3.5 text-[14px] font-semibold">
           <li className="flex items-center justify-between">
             <span className="text-ink-2">Per action</span>
             <span className="flex items-center gap-2 font-extrabold tabular">
-              <span className="text-ink-3 line-through">{formatAmount(m.maxActionNotional)}</span>
-              <ArrowRight aria-hidden className="size-4 text-ink-3" />
-              <span className="text-navy-strong">{formatAmount(periodRequest ? m.maxActionNotional : newPerAction)}</span>
+              {periodRequest || newPerAction === m.maxActionNotional ? (
+                <span className="text-navy-strong">{formatAmount(m.maxActionNotional)}</span>
+              ) : (
+                <>
+                  <span className="text-ink-3 line-through">{formatAmount(m.maxActionNotional)}</span>
+                  <ArrowRight aria-hidden className="size-4 text-ink-3" />
+                  <span className="text-navy-strong">{formatAmount(newPerAction)}</span>
+                </>
+              )}
             </span>
           </li>
           <li className="flex items-center justify-between">
@@ -197,6 +242,11 @@ export default function RequestDecisionPage() {
         <p className="mt-3 text-[12.5px] font-semibold text-ink-3">
           This creates version {m.version + 1} of {child}&apos;s limits. Only you can make this change.
         </p>
+        {error ? (
+          <p role="alert" className="mt-3 rounded-[12px] bg-loss-soft px-3 py-2 text-[13px] font-bold text-loss-text">
+            {error}
+          </p>
+        ) : null}
         <ActionButton className="mt-4" onClick={decide} disabled={busy} data-autofocus>
           {busy ? "Saving…" : "Confirm new limits"}
         </ActionButton>
