@@ -108,6 +108,14 @@ current_truth:
   cresco_webkit_iphone_qa: PASS
   cresco_webkit_iphone_qa_run: "https://github.com/Faadil1/keys/actions/runs/36115749387"
   backend_default_cors_origin: "https://cresco-lac.vercel.app"
+  cresco_submission_frontend: "https://cresco-lac.vercel.app"
+  cresco_visual_lab: READY_FOR_SEPARATE_CLOUDFLARE_PAGES_DEPLOY
+  cresco_visual_lab_path: apps/visual-lab
+  cresco_visual_lab_ci: PASS
+  cresco_visual_lab_ci_run: "https://github.com/Faadil1/keys/actions/runs/36118245596"
+  cresco_visual_lab_submission_status: NOT_SUBMISSION_CANONICAL
+  cresco_visual_lab_data_mode: READ_ONLY_PYTH_TESSERA_PRESTOCKS
+  cresco_visual_lab_family_state_mutation: DISABLED
   backend_deployment_guide: docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md
   tessera_bounty: ACTIVE_LIVE_API_INTEGRATED
   tessera_live_proof: PASS
@@ -251,4 +259,5 @@ active_step:
     - "Surface the confirmed Devnet receipt/program/version/nonce/Pyth evidence without turning the UI into a protocol dashboard."
     - "Use Tessera only as a secondary Learn/Practice representation surface: loan participation right, not direct equity; never present it as current Money execution."
     - "Use Pyth multi-market discovery to broaden Learn/Practice across verified live equities, crypto, FX, metals and commodities while keeping AAPL as the primary Money proof."
+    - "Deploy apps/visual-lab as a separate Cloudflare Pages project for visual exploration only; keep cresco-lac.vercel.app as the submission frontend."
     - "Keep production auth/KYC, wallets, fiat rails, custody/mainnet and all-symbol history explicitly outside the hackathon truth boundary."
