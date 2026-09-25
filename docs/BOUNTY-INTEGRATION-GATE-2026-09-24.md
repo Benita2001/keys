@@ -1,7 +1,7 @@
 # KEYS — Stocklana Bounty Integration Gate
 
 Date: 2026-09-24  
-Status: **PYTH + PRESTOCKS + TESSERA ACTIVE; CLAWPUMP / METEORA HELD OUTSIDE CORE**
+Status: **PYTH + TESSERA ENTER; PRESTOCKS INTEGRATED BUT NOT ENTERED DUE TO BOUNTY EXCLUSIVITY; CLAWPUMP / METEORA HELD OUTSIDE CORE**
 
 ## Governing rule
 
@@ -12,10 +12,18 @@ Sponsor tracks may extend KEYS only when they strengthen the locked Family bound
 | Track | KEYS state | Decision |
 | --- | --- | --- |
 | Pyth | Signed live market evidence is already load-bearing in the canonical Solana capital path | **ACTIVE / ENTER** |
-| PreStocks | Official public token API is now integrated with fail-closed eligibility | **ACTIVE / ENTER** |
+| PreStocks | Official public token API is integrated with fail-closed eligibility, but the official bounty excludes projects integrating any non-PreStocks pre-IPO token | **INTEGRATED / DO NOT ENTER WHILE TESSERA IS PRESENT** |
 | Tessera | Official public keyless token-details API integrated; live T-OpenAI / T-Kalshi / T-SpaceX representations are normalized fail-closed | **ACTIVE / ENTER** |
 | Clawpump | Requires a real Stocknized Agent deployment and RWA/Meteora pairing | **HOLD OUTSIDE CORE** |
 | Meteora | Requires a genuine DBC/stock-launch use case | **HOLD OUTSIDE CORE** |
+
+### Bounty compatibility constraint
+
+The official Stocklana PreStocks bounty states that projects integrating **any non-PreStocks pre-IPO token are ineligible** for that bounty.
+
+Because the canonical KEYS build now integrates Tessera T-Tokens, KEYS must **not select the PreStocks bounty** unless Tessera is removed from the canonical submitted build before deadline.
+
+This is a sponsor-track eligibility rule, not a technical failure. The PreStocks adapter may remain as an honest representation/Practice integration, but it is not a bounty target in the current submission configuration.
 
 ## Pyth — proven
 
@@ -128,13 +136,14 @@ Activate only if a later Clawpump sidecar genuinely needs a stock-paired DBC lau
 
 1. Stocklana main track.
 2. Pyth sponsor track.
-3. PreStocks sponsor track.
-4. Tessera sponsor track.
+3. Tessera sponsor track.
+
+PreStocks remains technically integrated but is **not selected as a bounty** while Tessera remains in the canonical build, because the official PreStocks rules make that combination ineligible.
 
 Clawpump and Meteora remain outside the core unless a later product-native activation case independently justifies them.
 
 ## Benita integration rule
 
-Pyth stays in the core proof. PreStocks and Tessera are secondary representation / Learn / Practice surfaces using their live integration routes. Both remain fail-closed for execution eligibility unless explicitly verified, and neither creates KEYS authority.
+Pyth stays in the core proof. Tessera is the selected pre-IPO sponsor surface. PreStocks may remain a secondary representation / Learn / Practice integration, but it is not a selected bounty while Tessera is present. Both remain fail-closed for execution eligibility unless explicitly verified, and neither creates KEYS authority.
 
 Do not turn the homepage into a sponsor dashboard.
