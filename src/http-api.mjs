@@ -30,6 +30,11 @@ import {
 } from './prestocks-adapter.mjs';
 
 import {
+  fetchTesseraCatalog,
+  tesseraIntegrationSummary
+} from './tessera-adapter.mjs';
+
+import {
   configuredDevnetExecutionProviderFromEnv
 } from './devnet-execution-provider.mjs';
 
@@ -300,6 +305,69 @@ export async function routeKeysHttp({
         contractVersion: V2_CONTRACT_VERSION,
         type: 'PRESTOCKS_INTEGRATION_ASSET',
         integration: preStocksIntegrationSummary(),
+        asset
+      }
+    };
+  }
+
+  if (method === 'GET' && path === '/api/v0.2/integrations/tessera') {
+    const provider =
+      services?.tesseraCatalogProvider ?? (() => fetchTesseraCatalog());
+    const assets = await provider();
+
+    return {
+      status: 200,
+      headers: JSON_HEADERS,
+      body: {
+        contractVersion: V2_CONTRACT_VERSION,
+        type: 'TESSERA_INTEGRATION_CATALOG',
+        integration: tesseraIntegrationSummary(),
+        assets
+      }
+    };
+  }
+
+  const tesseraAssetMatch =
+    method === 'GET'
+      ? path.match(/^\/api\/v0\.2\/integrations\/tessera\/([A-Za-z0-9_-]+)$/)
+      : null;
+
+  if (tesseraAssetMatch) {
+    const provider =
+      services?.tesseraCatalogProvider ?? (() => fetchTesseraCatalog());
+    const assets = await provider();
+    const lookup = tesseraAssetMatch[1]
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
+    const asset = assets.find((item) =>
+      [item?.id, item?.code, item?.symbol, item?.underlyingCompany]
+        .map((value) =>
+          String(value ?? '')
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '')
+        )
+        .includes(lookup)
+    );
+
+    if (!asset) {
+      return {
+        status: 404,
+        headers: JSON_HEADERS,
+        body: {
+          contractVersion: V2_CONTRACT_VERSION,
+          error: 'TESSERA_ASSET_NOT_FOUND',
+          query: tesseraAssetMatch[1]
+        }
+      };
+    }
+
+    return {
+      status: 200,
+      headers: JSON_HEADERS,
+      body: {
+        contractVersion: V2_CONTRACT_VERSION,
+        type: 'TESSERA_INTEGRATION_ASSET',
+        integration: tesseraIntegrationSummary(),
         asset
       }
     };

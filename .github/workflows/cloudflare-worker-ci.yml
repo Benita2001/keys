@@ -9,6 +9,7 @@ on:
       - "src/devnet-execution-provider.mjs"
       - "src/pyth-adapter.mjs"
       - "src/prestocks-adapter.mjs"
+      - "src/tessera-adapter.mjs"
       - "fixtures/**"
       - "wrangler.jsonc"
       - "package.json"

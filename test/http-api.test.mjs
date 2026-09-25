@@ -697,3 +697,81 @@ test('v0.2 execute route preserves an on-chain refusal without fabricating proof
   assert.equal(result.body.evaluation.reasonCode, 'PYTH_NOTIONAL_EXCEEDED');
   assert.equal(result.body.executionProof, null);
 });
+
+
+test('v0.2 exposes Tessera as a live representation sponsor integration without granting authority', async () => {
+  const asset = {
+    source: 'TESSERA',
+    id: 'T-OpenAI',
+    code: 'tOpenAI',
+    underlyingCompany: 'OpenAI',
+    contractAddress: 'oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ',
+    tokenStandard: 'TOKEN_2022',
+    representation: {
+      kind: 'LOAN_PARTICIPATION_RIGHT',
+      directEquityOwnership: false
+    },
+    eligibility: {
+      status: 'UNKNOWN',
+      executionEligible: false,
+      reasonCode: 'JURISDICTION_AND_USER_ELIGIBILITY_NOT_VERIFIED'
+    },
+    keysPolicy: {
+      practiceAvailable: true,
+      executionEligible: false,
+      authorityEffect: 'NONE'
+    }
+  };
+
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.2/integrations/tessera',
+    services: {
+      tesseraCatalogProvider: async () => [asset]
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.type, 'TESSERA_INTEGRATION_CATALOG');
+  assert.equal(result.body.integration.status, 'LIVE_PUBLIC_API_INTEGRATED');
+  assert.equal(result.body.integration.authorityEffect, 'NONE');
+  assert.equal(result.body.assets[0].representation.kind, 'LOAN_PARTICIPATION_RIGHT');
+  assert.equal(result.body.assets[0].eligibility.executionEligible, false);
+});
+
+test('v0.2 Tessera asset route resolves a T-Token by underlying company', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.2/integrations/tessera/openai',
+    services: {
+      tesseraCatalogProvider: async () => [{
+        source: 'TESSERA',
+        id: 'T-OpenAI',
+        code: 'tOpenAI',
+        symbol: 'T-OpenAI',
+        underlyingCompany: 'OpenAI',
+        contractAddress: 'oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ',
+        eligibility: { status: 'UNKNOWN', executionEligible: false },
+        keysPolicy: { authorityEffect: 'NONE' }
+      }]
+    }
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.type, 'TESSERA_INTEGRATION_ASSET');
+  assert.equal(result.body.asset.id, 'T-OpenAI');
+  assert.equal(result.body.asset.keysPolicy.authorityEffect, 'NONE');
+});
+
+test('v0.2 Tessera asset route fails explicitly for an unknown representation', async () => {
+  const result = await routeKeysHttp({
+    method: 'GET',
+    path: '/api/v0.2/integrations/tessera/unknown',
+    services: {
+      tesseraCatalogProvider: async () => []
+    }
+  });
+
+  assert.equal(result.status, 404);
+  assert.equal(result.body.error, 'TESSERA_ASSET_NOT_FOUND');
+});
