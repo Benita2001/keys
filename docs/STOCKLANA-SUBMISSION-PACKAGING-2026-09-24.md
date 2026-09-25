@@ -99,7 +99,10 @@ All current hackathon technical gates are closed.
 - Tessera live API integration: run `36112072978` — **PASS**;
 - hosted Tessera route: run `36112229684` — **PASS**;
 - Cresco Tessera Learn/Practice surface: web `36112502712`, WebKit `36112502709` — **PASS**;
-- Node/API CI: run `36082140540` — **PASS**.
+- Pyth multi-market discovery: run `36115570744` — **PASS**;
+- hosted non-mutating market-discovery proof: run `36115973480` — **PASS**;
+- Cresco multi-market Web / WebKit: `36115749327` / `36115749387` — **PASS**;
+- Node/API CI: **PASS**.
 
 There is no remaining implementation gate before judge recording. Production auth/KYC, embedded wallets, fiat rails, regulated brokerage/custody, mainnet and all-symbol live history remain intentionally outside the hackathon truth boundary.
 
@@ -120,6 +123,10 @@ Rule:
 Current proof feed:
 
 `Equity.US.AAPL/USD` — feed id `922`.
+
+**AAPL is our primary execution proof, not our market universe.**
+
+The same Pyth integration now powers an entitlement-checked Learn/Practice discovery layer across verified equities, crypto, FX, metals and commodities. Only AAPL is presented as the current proven Money execution lane.
 
 ## PreStocks sponsor integration
 
@@ -246,11 +253,11 @@ Voice:
 
 ### 2:25–2:40 — learning
 
-Show a contextual Learn/Practice beat.
+Show a contextual Learn/Practice beat, including the broader live Pyth market discovery surface.
 
 Voice:
 
-> “Because the user is young, learning is part of the product — but it never becomes a competence score that silently unlocks money.”
+> “Because the user is young, learning is part of the product. They can explore how stocks, crypto, currencies, metals and commodities behave using live Pyth data — but learning or market access never silently unlocks Money authority.”
 
 ### 2:40–2:52 — PreStocks
 
@@ -337,7 +344,8 @@ Clarify this is role-scoped demo auth, not KYC.
 ### 3:45–4:20 — market and sponsor surfaces
 
 Show:
-- market quotes route;
+- market discovery route + market quotes route;
+- catalog vs entitlement distinction;
 - FRESH/STALE/UNAVAILABLE;
 - AAPL Pyth Pro History for 7/30-day-style views;
 - fail-closed history for unentitled/unconfigured feeds;
@@ -418,7 +426,7 @@ It is not a generic bypass. The execution must cite the exact approved request i
 
 ### “Why AAPL?”
 
-AAPL is the current entitled/proven Pyth execution lane, not a product dependency. The Mandate mechanism is asset-agnostic. Other UI assets are labeled honestly according to available market evidence.
+AAPL is the current entitled/proven Pyth **Money execution lane**, not the whole market universe. KEYS now proves live Pyth discovery across equities, crypto, FX, metals and commodities, but those additional markets remain Learn/Practice until their representation, eligibility and execution path are independently proven.
 
 ### “Are all prices live?”
 
