@@ -10,8 +10,9 @@ Main submission: **KEYS Family**
 Sponsor tracks:
 - **Pyth**
 - **PreStocks**
+- **Tessera**
 
-Do not add Clawpump, Meteora or Tessera unless their activation gates change before submission.
+Do not add Clawpump or Meteora unless their activation gates change before submission.
 
 Official platform submission surfaces support:
 - GitHub repository;
@@ -95,6 +96,9 @@ All current hackathon technical gates are closed.
 - ALLOW_ONCE execution: `5463is82CjnnTxAA6ZLFzyoAhQ9v1yLQvfYGqWfNoFKX6KodrnZLoREHaV6oA3Px7H3BX5Ms4uBKWcFEu5RukA8t`;
 - reuse of the same allowance: **REFUSE — `AllowanceAlreadyUsed`**;
 - hosted AAPL Pyth Pro History + Durable Object concurrency: run `36066208304` — **PASS**;
+- Tessera live API integration: run `36112072978` — **PASS**;
+- hosted Tessera route: run `36112229684` — **PASS**;
+- Cresco Tessera Learn/Practice surface: web `36112502712`, WebKit `36112502709` — **PASS**;
 - Node/API CI: run `36082140540` — **PASS**.
 
 There is no remaining implementation gate before judge recording. Production auth/KYC, embedded wallets, fiat rails, regulated brokerage/custody, mainnet and all-symbol live history remain intentionally outside the hackathon truth boundary.
@@ -134,6 +138,26 @@ Default:
 - authority effect = NONE.
 
 Do not imply direct private-company equity ownership or live minor execution.
+
+
+## Tessera sponsor integration
+
+Tessera strengthens KEYS' representation-learning layer with live private-market T-Token metadata.
+
+Current live routes:
+- `GET /api/v0.2/integrations/tessera`
+- `GET /api/v0.2/integrations/tessera/:asset`
+
+Canonical proof:
+- live API proof: `36112072978` — **PASS**
+- hosted Cloudflare proof: `36112229684` — **PASS**
+- Cresco Web / WebKit: `36112502712` / `36112502709` — **PASS**
+
+Judge framing:
+
+> “A token ticker is not the same thing as owning company shares. Tessera lets KEYS show that distinction with real private-market representations: these T-Tokens are loan participation rights. Eligibility and KEYS authority remain separate, and we keep them in Learn/Practice unless explicitly proven executable.”
+
+Tessera does **not** widen a Mandate, does not create Money eligibility, and is not claimed as real minor securities execution.
 
 ## 3-minute pitch video
 
@@ -318,6 +342,7 @@ Show:
 - AAPL Pyth Pro History for 7/30-day-style views;
 - fail-closed history for unentitled/unconfigured feeds;
 - PreStocks fail-closed eligibility.
+- Tessera live T-Token representation data, fail-closed for Money execution.
 
 ### 4:20–5:00 — evidence / truth boundary
 
@@ -402,6 +427,11 @@ No. Only fresh entitled Pyth quotes are labeled live. Unavailable symbols stay c
 ### “What is PreStocks doing here?”
 
 It demonstrates the representation problem that KEYS has to reason about: underlying company, token representation, holder eligibility and KEYS authority are separate concepts. PreStocks does not automatically make an asset executable.
+
+
+### “What is Tessera doing here?”
+
+Tessera gives KEYS a real private-market representation example. Its T-Tokens are loan participation rights rather than direct equity, so the product can teach the difference between the underlying company, the token representation, user eligibility and KEYS authority. The integration is live, but execution remains fail-closed and we do not claim real minor securities execution.
 
 ### “How would this become a real company?”
 
