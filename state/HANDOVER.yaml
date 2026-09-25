@@ -1,5 +1,5 @@
 project: KEYS
-handover_version: 17
+handover_version: 18
 updated_at: "2026-09-24"
 status: V0_2_CRESCO_STATEFUL_DEVNET_FAMILY_INTEGRATION_PASS
 
@@ -177,8 +177,8 @@ current_pyth_proof:
   symbol: Equity.US.AAPL/USD
   feed_id: 922
   entitlement_run: "https://github.com/Faadil1/keys/actions/runs/36035283447"
-  devnet_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36034651466"
-  execution_signature: "3pFf5gFTQANbeJkxdLLdZho2iwgtsmXS36WdQroGPoUwuF7txaxRzQrJf2mcMajBj7BsnvrAEj5a148erm6TboP1"
+  devnet_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36082140600"
+  execution_signature: "5Rk18AzvwkneqNeqDiPmPU7VWJEE4YnT45SwdKhmYzRkCHx3ydsYYQrisV26Tk7VAtNkaEWRWjEQ6YUPBifDyX2K"
   verification: ONCHAIN_PYTH_LAZER
   authority_effect: NONE
   execution_asset: DEMO_TOKEN
@@ -219,7 +219,6 @@ next_work:
   sequence:
     - "Preserve the passing Devnet ALLOW_ONCE proof, hosted Pyth-history proof and multi-asset Durable Object concurrency proof as judge evidence."
     - "Record the canonical Family demo with the confirmed Devnet receipt and ALLOW_ONCE proof."
-    - "Record the canonical Family demo with a confirmed Devnet receipt."
     - "Prepare submission copy and Q&A using only verified claims."
     - "Do not reopen production auth/KYC, embedded wallets, fiat rails, custody/mainnet or all-symbol history before submission unless required by judging."
 
