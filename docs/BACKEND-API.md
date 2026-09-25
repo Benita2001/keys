@@ -181,6 +181,30 @@ Family session required. Returns holdings/activity finalized from confirmed Mone
 
 ## Market
 
+### GET /api/v0.2/market/discovery
+
+Public KEYS market-discovery surface backed by the current Pyth Pro catalog plus **server-side entitlement probes**.
+
+It currently proves live accessible discovery across:
+- US equities / ETFs;
+- crypto;
+- FX;
+- metals;
+- commodities / energy futures.
+
+The response distinguishes:
+- `PRIMARY_MONEY_PROOF` — currently AAPL only;
+- `LEARN_PRACTICE_ONLY` — every other discovered market feed.
+
+Important invariants:
+- public Pyth catalog presence does not equal KEYS entitlement;
+- entitlement does not equal Money execution eligibility;
+- market evidence has `authorityEffect=NONE`;
+- unavailable feeds never become fabricated prices.
+
+Canonical proof: `36115570744`  
+Hosted non-mutating proof: `36115973480`.
+
 ### GET /api/v0.2/market/quotes?symbols=AAPL,NVDA,...
 
 Public market-evidence surface.
