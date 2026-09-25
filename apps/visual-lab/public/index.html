@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#fff8ee" />
+    <meta name="description" content="Cresco Visual Lab — a playful family investing experience for young people." />
+    <title>Cresco Visual Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,500;6..12,600;6..12,700;6..12,800&family=Schoolbell&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+
+    <header class="lab-header">
+      <a class="brand" href="/" aria-label="Cresco Visual Lab home">
+        <span class="brand-mark" aria-hidden="true">
+          <span class="brand-mark-dot"></span>
+          <span class="brand-mark-stem"></span>
+        </span>
+        <span>
+          <strong>Cresco</strong>
+          <small>visual lab</small>
+        </span>
+      </a>
+
+      <nav class="direction-switcher" aria-label="Visual directions">
+        <button class="direction-button is-active" data-route="garden">
+          <span>01</span> Key Garden
+        </button>
+        <button class="direction-button" data-route="playground">
+          <span>02</span> Market Playground
+        </button>
+        <button class="direction-button" data-route="family">
+          <span>03</span> Family Room
+        </button>
+      </nav>
+
+      <div class="live-pill" id="live-pill">
+        <span class="live-dot"></span>
+        Read-only lab
+      </div>
+    </header>
+
+    <main id="main" class="page-shell" tabindex="-1">
+      <section id="view-garden" class="direction-view is-active" data-view="garden">
+        <div class="garden-hero">
+          <div class="hero-copy">
+            <p class="hand-note">your money, your pace ✦</p>
+            <div class="hello-row">
+              <div class="kid-avatar" aria-hidden="true">
+                <span class="hair"></span>
+                <span class="face">A</span>
+              </div>
+              <div>
+                <p class="eyebrow">THURSDAY · 8:42 AM</p>
+                <h1>Hey Alex, your Key is open.</h1>
+              </div>
+            </div>
+            <p class="hero-body">
+              You can make your own choices inside the space your family agreed on.
+              If you reach the edge, you choose what happens next.
+            </p>
+            <div class="hero-actions">
+              <button class="primary-action" type="button" data-route-target="playground">
+                Explore the money world
+                <span aria-hidden="true">→</span>
+              </button>
+              <button class="soft-action" type="button">Practice first</button>
+            </div>
+          </div>
+
+          <div class="key-card-wrap">
+            <article class="key-card">
+              <div class="key-card-top">
+                <span class="mini-label">MY KEY</span>
+                <span class="key-status"><i></i> Open</span>
+              </div>
+              <div class="key-shape" aria-hidden="true">
+                <div class="key-ring"><span>$10</span><small>each move</small></div>
+                <div class="key-stem"></div>
+                <div class="key-tooth one"></div>
+                <div class="key-tooth two"></div>
+              </div>
+              <div class="key-rules">
+                <div>
+                  <span>Weekly space</span>
+                  <strong>$50</strong>
+                </div>
+                <div>
+                  <span>Money lane</span>
+                  <strong>AAPL</strong>
+                </div>
+                <div>
+                  <span>Family check-in</span>
+                  <strong>Sunday</strong>
+                </div>
+              </div>
+              <p class="key-caption">Inside your Key, you don’t need to ask every time.</p>
+            </article>
+            <span class="doodle-arrow" aria-hidden="true">↝</span>
+            <span class="doodle-label">freedom with edges</span>
+          </div>
+        </div>
+
+        <div class="garden-grid">
+          <article class="paper-card mission-card">
+            <div class="paper-card-head">
+              <span class="round-icon sun-icon">☀</span>
+              <span class="mini-label">TODAY'S TINY MISSION</span>
+            </div>
+            <h2>Why does gold move differently from Apple?</h2>
+            <p>Three minutes. One idea. Then try it in Practice.</p>
+            <div class="mission-progress">
+              <div><span></span></div>
+              <strong>2 / 3</strong>
+            </div>
+            <button class="text-action" type="button" data-route-target="playground">Finish the mission →</button>
+          </article>
+
+          <article class="paper-card family-pulse">
+            <div class="paper-card-head">
+              <div class="avatar-stack" aria-hidden="true">
+                <span class="avatar alex">A</span>
+                <span class="avatar sam">S</span>
+              </div>
+              <span class="mini-label">FAMILY PULSE</span>
+            </div>
+            <blockquote>“Try one company you already know this week. Tell me what surprised you.”</blockquote>
+            <p>— Sam</p>
+            <span class="promise-chip">No hidden score · no secret unlocks</span>
+          </article>
+
+          <article class="paper-card week-card">
+            <div class="paper-card-head">
+              <span class="round-icon leaf-icon">✦</span>
+              <span class="mini-label">YOUR WEEK</span>
+            </div>
+            <div class="week-number"><strong>34</strong><span>min learning</span></div>
+            <div class="week-bars" aria-label="Learning minutes this week">
+              <span style="height:38%"></span><span style="height:70%"></span><span style="height:44%"></span>
+              <span style="height:84%"></span><span style="height:56%"></span><span style="height:22%"></span><span style="height:12%"></span>
+            </div>
+            <p class="week-foot">Learning helps you understand. <strong>It never changes your limits by itself.</strong></p>
+          </article>
+        </div>
+
+        <div class="family-strip">
+          <div>
+            <p class="hand-note">family promise</p>
+            <h2>Grown-up rules. Young-person choices.</h2>
+          </div>
+          <p>
+            Cresco should feel like a place a 12-year-old wants to open, while a parent still trusts what happens inside it.
+          </p>
+          <div class="family-strip-art" aria-hidden="true">
+            <span class="bubble b1">learn</span>
+            <span class="bubble b2">choose</span>
+            <span class="bubble b3">ask</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-playground" class="direction-view" data-view="playground">
+        <div class="playground-intro">
+          <div>
+            <p class="hand-note">market playground ✦</p>
+            <h1>Explore the money world without pretending everything is buyable.</h1>
+            <p>
+              Live Pyth market truth when available. AAPL stays the primary Money proof.
+              Everything else is a place to learn, compare and practice.
+            </p>
+          </div>
+          <div class="compass-card" aria-hidden="true">
+            <span class="orbit o1">stocks</span>
+            <span class="orbit o2">crypto</span>
+            <span class="orbit o3">fx</span>
+            <span class="orbit o4">metals</span>
+            <div class="compass-core">
+              <strong>AAPL</strong>
+              <small>Money proof</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="source-row">
+          <span class="source-badge" id="market-source-badge">Loading Pyth…</span>
+          <span>Feed access ≠ Money eligibility</span>
+          <span>Authority effect: none</span>
+        </div>
+
+        <div class="market-grid" id="market-grid" aria-live="polite"></div>
+
+        <div class="representation-shelf">
+          <div class="shelf-copy">
+            <p class="hand-note">same company, different wrapper</p>
+            <h2>What are you actually holding?</h2>
+            <p>
+              Cresco can teach the difference between a company, a token representation,
+              eligibility and family authority before money ever moves.
+            </p>
+          </div>
+          <div class="representation-cards">
+            <article>
+              <span class="rep-provider tessera">Tessera</span>
+              <strong>Private-market representation</strong>
+              <p>Loan participation right · not direct equity.</p>
+              <small id="tessera-status">Checking live catalog…</small>
+            </article>
+            <article>
+              <span class="rep-provider prestocks">PreStocks</span>
+              <strong>Representation ≠ permission</strong>
+              <p>Learn what a token represents before asking if it can be used.</p>
+              <small id="prestocks-status">Checking live catalog…</small>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-family" class="direction-view" data-view="family">
+        <div class="family-hero">
+          <div>
+            <p class="hand-note">same family, two kinds of control</p>
+            <h1>Alex gets room to move. Sam only steps in at the edge.</h1>
+            <p>
+              The family experience should feel supportive, not supervisory:
+              a shared agreement that gives the young person real space.
+            </p>
+          </div>
+          <div class="family-portrait" aria-label="Alex and Sam family illustration">
+            <div class="portrait-person kid">
+              <span class="portrait-head">A</span>
+              <span class="portrait-body"></span>
+            </div>
+            <div class="portrait-person parent">
+              <span class="portrait-head">S</span>
+              <span class="portrait-body"></span>
+            </div>
+            <span class="portrait-spark s1">✦</span>
+            <span class="portrait-spark s2">♡</span>
+          </div>
+        </div>
+
+        <div class="family-dashboard">
+          <article class="family-key-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="mini-label">ALEX'S KEY</span>
+                <h2>Room to choose</h2>
+              </div>
+              <span class="open-badge">Open</span>
+            </div>
+            <div class="limit-ruler">
+              <span class="limit-fill" style="width:62%"></span>
+              <span class="limit-dot" style="left:62%"></span>
+            </div>
+            <div class="limit-labels">
+              <span>$0</span><strong>$10 each move</strong><span>$10</span>
+            </div>
+            <div class="key-list">
+              <div><span class="check">✓</span><p><strong>Choose freely</strong><small>inside the Key</small></p></div>
+              <div><span class="check">✓</span><p><strong>Practice anything</strong><small>learning never changes authority</small></p></div>
+              <div><span class="boundary">↗</span><p><strong>Ask only at the edge</strong><small>when the next move is outside</small></p></div>
+            </div>
+          </article>
+
+          <article class="request-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="mini-label">ONE REQUEST</span>
+                <h2>“Can I have a little more room?”</h2>
+              </div>
+              <span class="avatar sam">S</span>
+            </div>
+            <div class="request-compare">
+              <div><small>Current</small><strong>$10</strong><span>each move</span></div>
+              <span class="compare-arrow">→</span>
+              <div><small>Requested</small><strong>$20</strong><span>one time</span></div>
+            </div>
+            <p class="request-reason">“I compared Apple with Microsoft and want to try the bigger amount once.”</p>
+            <div class="guardian-choices">
+              <button type="button">Allow once</button>
+              <button type="button">Widen Key</button>
+              <button type="button" class="quiet-choice">Not now</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="family-principles">
+          <article>
+            <span class="principle-number">01</span>
+            <strong>Private by default</strong>
+            <p>Family conversations stay family-sized, not social-feed sized.</p>
+          </article>
+          <article>
+            <span class="principle-number">02</span>
+            <strong>No competence score</strong>
+            <p>Learning can build confidence, but it never silently unlocks more money.</p>
+          </article>
+          <article>
+            <span class="principle-number">03</span>
+            <strong>Proof without protocol noise</strong>
+            <p>Receipts are there when needed; the main experience still speaks human.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <aside class="lab-note" aria-label="Visual lab note">
+      <span class="lab-note-title">Visual Lab</span>
+      <span>Explore freely. Nothing here mutates the Family demo.</span>
+    </aside>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
