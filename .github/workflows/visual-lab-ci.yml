@@ -1,0 +1,56 @@
+name: visual-lab-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/visual-lab/**"
+      - "docs/CRESCO-VISUAL-LAB-2026-09-25.md"
+      - ".github/workflows/visual-lab-ci.yml"
+  pull_request:
+    paths:
+      - "apps/visual-lab/**"
+      - ".github/workflows/visual-lab-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check browser and Pages Function JavaScript
+        run: |
+          node --check apps/visual-lab/public/app.js
+          node --check apps/visual-lab/functions/api/markets.js
+          node --check apps/visual-lab/functions/api/tessera.js
+          node --check apps/visual-lab/functions/api/prestocks.js
+
+      - name: Enforce read-only lab boundary
+        run: |
+          if grep -R -n -E '/actions/execute|/mandates/transition|/funding/deposits|/boundary-requests' apps/visual-lab/functions; then
+            echo "Visual Lab must not call mutable Family routes."
+            exit 1
+          fi
+          grep -R -n '/api/v0.2/market/discovery' apps/visual-lab/functions/api/markets.js
+          grep -R -n '/api/v0.2/integrations/tessera' apps/visual-lab/functions/api/tessera.js
+          grep -R -n '/api/v0.2/integrations/prestocks' apps/visual-lab/functions/api/prestocks.js
+
+      - name: Verify Cloudflare Pages surface
+        run: |
+          test -f apps/visual-lab/public/index.html
+          test -f apps/visual-lab/public/_redirects
+          test -f apps/visual-lab/public/_headers
+          test -f apps/visual-lab/wrangler.jsonc
+          grep -q 'Key Garden' apps/visual-lab/public/index.html
+          grep -q 'Market Playground' apps/visual-lab/public/index.html
+          grep -q 'Family Room' apps/visual-lab/public/index.html
+          grep -q 'AAPL stays the primary Money proof' apps/visual-lab/public/index.html
+          echo "CRESCO_VISUAL_LAB_CI=PASS"
