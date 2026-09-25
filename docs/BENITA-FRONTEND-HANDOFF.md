@@ -91,10 +91,12 @@ Proof/bootstrap compatibility:
 - `GET /api/v0.2/demo/maya`
 - `GET /api/v0.2/demo/runtime`
 
-Sponsor extension:
+Sponsor extensions:
 
 - `GET /api/v0.2/integrations/prestocks`
 - `GET /api/v0.2/integrations/prestocks/:symbol`
+- `GET /api/v0.2/integrations/tessera`
+- `GET /api/v0.2/integrations/tessera/:asset`
 
 The semantic contract remains frozen in `docs/FRONTEND-BACKEND-CONTRACT-V0.2.md`.
 
@@ -146,3 +148,20 @@ These are intentionally deferred and must not be faked:
 - jurisdiction-specific minor-account compliance.
 
 For the current Stocklana submission, the Family Devnet/test-money path is the correct truthful implementation.
+
+
+## Tessera frontend rule
+
+Tessera is now an active sponsor integration and is live through the KEYS Cloudflare backend.
+
+In Cresco it belongs in **Learn / Practice / representation understanding**, not in the current Money execution lane.
+
+Required labels/invariants:
+- “Loan participation right · not direct equity”;
+- eligibility is not inferred from wallet possession;
+- `executionEligible=false` by default;
+- `authorityEffect=NONE`;
+- do not imply shareholder, voting, dividend or cap-table rights;
+- do not make Tessera the homepage hero or a sponsor dashboard.
+
+The Explore surface may show live T-OpenAI, T-Kalshi and T-SpaceX representation cards as secondary learning context. AAPL remains the current proven Money execution asset.
