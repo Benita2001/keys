@@ -165,3 +165,34 @@ Required labels/invariants:
 - do not make Tessera the homepage hero or a sponsor dashboard.
 
 The Explore surface may show live T-OpenAI, T-Kalshi and T-SpaceX representation cards as secondary learning context. AAPL remains the current proven Money execution asset.
+
+
+## Multi-market exploration rule
+
+Benita's broader-market exploration request is now implemented through the KEYS Pyth Market Discovery layer.
+
+Route:
+- `GET /api/v0.2/market/discovery`
+
+Current **live/proven** classes:
+- Stocks & ETFs — AAPL, NVDA, MSFT sample from current entitlement;
+- Crypto — BTC, ETH, SOL;
+- FX — EUR/USD, USD/JPY, GBP/USD;
+- Metals — Gold/XAU, Silver/XAG, Aluminium 3M;
+- Commodities / Energy — current entitled Brent future(s).
+
+Rates are not currently proven and must not be labeled live.
+
+Frontend rule:
+- AAPL = **Primary Money proof**;
+- every other discovered market = **Learn / Practice**;
+- “Live · Pyth” means the hosted backend actually verified current entitlement;
+- feed entitlement never implies Money eligibility;
+- do not add Buy/Money affordances to non-AAPL discovery feeds.
+
+The Explore page now surfaces these market classes above the original company universe.
+
+Canonical proof: `36115570744`  
+Hosted proof: `36115973480`  
+Web: `36115749327`  
+WebKit/iPhone: `36115749387`.
