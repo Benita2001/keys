@@ -109,13 +109,17 @@ current_truth:
   cresco_webkit_iphone_qa_run: "https://github.com/Faadil1/keys/actions/runs/36115749387"
   backend_default_cors_origin: "https://cresco-lac.vercel.app"
   cresco_submission_frontend: "https://cresco-lac.vercel.app"
-  cresco_visual_lab: READY_FOR_SEPARATE_CLOUDFLARE_PAGES_DEPLOY
+  cresco_visual_lab: LIVE_INTERACTIVE_CLOUDFLARE_PAGES
   cresco_visual_lab_path: apps/visual-lab
+  cresco_visual_lab_url: "https://cresco-visual-lab.pages.dev/"
   cresco_visual_lab_ci: PASS
   cresco_visual_lab_ci_run: "https://github.com/Faadil1/keys/actions/runs/36118245596"
   cresco_visual_lab_submission_status: NOT_SUBMISSION_CANONICAL
-  cresco_visual_lab_data_mode: READ_ONLY_PYTH_TESSERA_PRESTOCKS
+  cresco_visual_lab_data_mode: LIVE_READONLY_PYTH_TESSERA_PRESTOCKS_PLUS_LOCAL_SANDBOX_MUTATIONS
   cresco_visual_lab_family_state_mutation: DISABLED
+  cresco_visual_lab_sandbox_persistence: BROWSER_LOCALSTORAGE
+  cresco_visual_lab_interactions: PRACTICE_PLUS_AAPL_BOUNDARY_REQUEST_GUARDIAN_DECISION_ALLOW_ONCE_WIDEN_DENY
+  cresco_visual_lab_cloudflare_deploy_commit: 5aaea33bf8fdeadd148beb8e01f23d177b5d1441
   backend_deployment_guide: docs/CLOUDFLARE-BACKEND-DEPLOYMENT.md
   tessera_bounty: ACTIVE_LIVE_API_INTEGRATED
   tessera_live_proof: PASS
