@@ -12,6 +12,7 @@ Cresco is no longer a browser-only prototype. The hackathon Family experience is
 
 - **Money Mode AAPL** → KEYS backend → Solana Devnet → demo SPL token.
 - **Pyth** → fresh market truth in the execution path; only fresh entitled quotes are labeled live.
+- **Multi-market discovery** → live entitlement-checked Pyth exploration across equities, crypto, FX, metals and commodities; AAPL remains the only primary Money proof and all other discovered feeds remain Learn/Practice.
 - **Mandate** → server/on-chain source of authority; client Mandate is no longer trusted as authority input.
 - **Boundary requests** → persisted/shared; guardian decisions persist.
 - **ALLOW_ONCE** → exact request id + asset + amount ceiling + nonce + one successful use; deployed Devnet proof PASS, then reuse REFUSE with `AllowanceAlreadyUsed`.
@@ -56,6 +57,21 @@ AAPL, NVDA, TSLA, NFLX, AMZN, MSFT, META, MCD, SPY, QQQ.
 The frontend requests quotes from the KEYS market route. A quote is overlaid only when Pyth returns `FRESH` or `STALE`; otherwise the existing value remains visibly **Sample prices**.
 
 Configured entitled history now comes from Pyth Pro History through the backend. Unavailable or unconfigured history remains an explicitly labeled sample fallback rather than fabricated live data.
+
+### Multi-market Explore
+
+The Explore page now exposes live Pyth market-class cards when the backend has verified entitlement.
+
+Current proven examples:
+- AAPL / NVDA / MSFT;
+- BTC / ETH / SOL;
+- EUR/USD / USD/JPY / GBP/USD;
+- Gold / Silver / Aluminium 3M;
+- a currently entitled Brent futures feed.
+
+Rates are not currently proven live.
+
+This broadens the learning universe without broadening Money authority. AAPL remains the reference Money execution lane.
 
 ## Security/truth boundary
 
