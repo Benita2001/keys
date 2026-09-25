@@ -1,7 +1,7 @@
 # Stocklana — KEYS Submission Packaging
 
 Date: 2026-09-24  
-Status: **HOSTED SMOKE PASS — FINAL SOLANA ALLOW_ONCE UPGRADE GATE REMAINS**
+Status: **ALL CURRENT TECHNICAL GATES PASS — READY FOR JUDGE RECORDING + FINAL PACKAGING**
 
 ## Submission target
 
@@ -81,6 +81,23 @@ Canonical program:
 Network:
 
 **Solana Devnet**
+
+## Final technical proof closure
+
+All current hackathon technical gates are closed.
+
+- canonical program: `ABjE6V5q9VbD3CAHDXxvztY5kXQmDXHRcEP1kZ4KSSfk`;
+- ALLOW_ONCE program upgrade: run `36079506597` — **PASS**;
+- deployment signature: `54d7EgdAgk7TQz6a4ReH5FxdETLxHAzQeo6T3W9gbXrSMPNECMAyShfZuvdCxKVKL1oaAWNQodFTf5LVrNm7z8C8`;
+- deployment slot: `503748084`;
+- final HTTP→Devnet bridge: run `36082140600` — **PASS**;
+- ALLOW_ONCE grant: `574BuAQxEtMCgZ6PWhv9F681qqZBfioopNPqUzHKFSYjetR8gtTpTgEFBXwC8YxgMDYrr8WYznGSqVUr2CZFTEm5`;
+- ALLOW_ONCE execution: `5463is82CjnnTxAA6ZLFzyoAhQ9v1yLQvfYGqWfNoFKX6KodrnZLoREHaV6oA3Px7H3BX5Ms4uBKWcFEu5RukA8t`;
+- reuse of the same allowance: **REFUSE — `AllowanceAlreadyUsed`**;
+- hosted AAPL Pyth Pro History + Durable Object concurrency: run `36066208304` — **PASS**;
+- Node/API CI: run `36082140540` — **PASS**.
+
+There is no remaining implementation gate before judge recording. Production auth/KYC, embedded wallets, fiat rails, regulated brokerage/custody, mainnet and all-symbol live history remain intentionally outside the hackathon truth boundary.
 
 ## Why Pyth is necessary
 
@@ -372,7 +389,7 @@ A Cloudflare Durable Object serializes the family reservation, period spend and 
 
 ### “How does Allow once work?”
 
-It is not a generic bypass. The execution must cite the exact approved request id, match its asset and current nonce, stay at or below the approved amount, and the permission is consumed after successful use.
+It is not a generic bypass. The execution must cite the exact approved request id, match its asset and current nonce, stay at or below the approved amount, and the permission is consumed after successful use. This is now proven on Devnet: grant → one execution → second use REFUSE with `AllowanceAlreadyUsed`.
 
 ### “Why AAPL?”
 
