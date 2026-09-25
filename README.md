@@ -133,11 +133,15 @@ See [multi-market evidence](evidence/pyth/PYTH-MULTI-MARKET-DISCOVERY-PROOF-2026
 
 ## Sponsor integrations
 
-KEYS currently targets the Stocklana main track plus three sponsor tracks that strengthen the locked product.
+KEYS currently targets the Stocklana main track plus two sponsor tracks that strengthen the locked product: Pyth and Tessera.
 
 ### Pyth — proven
 
 Pyth is load-bearing market truth in the canonical Solana capital path: signed live Pyth Pro/Lazer evidence, on-chain verification, USD/notional enforcement, market-condition refusal, and authority effect `NONE`.
+
+### PreStocks bounty eligibility note
+
+The PreStocks integration remains in KEYS as a fail-closed representation/Practice surface. However, the canonical submitted build also integrates Tessera, and the official PreStocks bounty excludes projects integrating any non-PreStocks pre-IPO token. KEYS therefore does **not** target the PreStocks bounty in the current submission configuration.
 
 ### PreStocks — live API integration
 
