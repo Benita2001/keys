@@ -42,13 +42,13 @@ current_truth:
   cresco_web_ci: PASS
   cresco_web_ci_run: "https://github.com/Faadil1/keys/actions/runs/36057960828"
   current_node_ci: PASS
-  current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36070676334"
+  current_node_ci_run: "https://github.com/Faadil1/keys/actions/runs/36082140540"
   cresco_aapl_migration: PASS_FULL_STACK
   cresco_aapl_bridge_revalidation_run: "https://github.com/Faadil1/keys/actions/runs/36035543689"
   cresco_live_proof_lane_ui: IMPLEMENTED_WEB_CI_PASS
   cresco_devnet_execution_bridge: PASS_PROVEN_HTTP_TO_SOLANA_DEVNET
-  cresco_devnet_execution_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36034651466"
-  cresco_devnet_execution_signature: "3pFf5gFTQANbeJkxdLLdZho2iwgtsmXS36WdQroGPoUwuF7txaxRzQrJf2mcMajBj7BsnvrAEj5a148erm6TboP1"
+  cresco_devnet_execution_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36082140600"
+  cresco_devnet_execution_signature: "5Rk18AzvwkneqNeqDiPmPU7VWJEE4YnT45SwdKhmYzRkCHx3ydsYYQrisV26Tk7VAtNkaEWRWjEQ6YUPBifDyX2K"
   cresco_devnet_mandate: "AnBnNwACbwQ7KMN46jBoDS5pxsek2AdHV6X1B1uA7hXp"
   cresco_current_proof_asset: AAPL
   cresco_current_pyth_feed_id: 922
@@ -71,17 +71,21 @@ current_truth:
   backend_public_url: "https://keys-api-stocklana.faadil-casecraft.workers.dev"
   hosted_stateful_smoke: PASS
   hosted_stateful_smoke_run: "https://github.com/Faadil1/keys/actions/runs/36066208304"
-  devnet_allow_once_program_upgrade: BLOCKED_EXTERNAL_DEVNET_FUNDING
+  devnet_allow_once_program_upgrade: PASS_DEPLOYED
   devnet_allow_once_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/36079506597"
-  devnet_allow_once_required_lamports: 2371812520
-  devnet_allow_once_available_lamports: 1948895627
-  devnet_allow_once_shortfall_lamports: 422916893
+  devnet_allow_once_deploy_signature: "54d7EgdAgk7TQz6a4ReH5FxdETLxHAzQeo6T3W9gbXrSMPNECMAyShfZuvdCxKVKL1oaAWNQodFTf5LVrNm7z8C8"
+  devnet_allow_once_deploy_slot: 503748084
+  devnet_allow_once_bridge_run: "https://github.com/Faadil1/keys/actions/runs/36082140600"
+  devnet_allow_once_grant_signature: "574BuAQxEtMCgZ6PWhv9F681qqZBfioopNPqUzHKFSYjetR8gtTpTgEFBXwC8YxgMDYrr8WYznGSqVUr2CZFTEm5"
+  devnet_allow_once_execution_signature: "5463is82CjnnTxAA6ZLFzyoAhQ9v1yLQvfYGqWfNoFKX6KodrnZLoREHaV6oA3Px7H3BX5Ms4uBKWcFEu5RukA8t"
+  devnet_allow_once_receipt: "9Cync4s4rBj6Co71MdGXuNfdNQ793fzfDu7Q1p5ZUexf"
+  devnet_allow_once_reuse: REFUSE_AllowanceAlreadyUsed
   aapl_assetrule_toggle_code: IMPLEMENTED_ONCHAIN_INSTRUCTION_CLIENT
   family_state_durable_object: IMPLEMENTED_SQLITE
   family_role_sessions: IMPLEMENTED_DEMO_CHILD_GUARDIAN
   family_server_owned_mandate: IMPLEMENTED
   family_boundary_request_persistence: IMPLEMENTED
-  family_allow_once_exact_single_use: IMPLEMENTED_CODE_LOCAL_PROOF_DEVNET_UPGRADE_PENDING
+  family_allow_once_exact_single_use: PASS_DEVNET_ONCHAIN_SINGLE_USE
   family_durable_idempotency_reservations: IMPLEMENTED
   family_test_funding: IMPLEMENTED_NO_REAL_PAYMENT
   family_learning_sync: IMPLEMENTED_AUTHORITY_EFFECT_NONE
@@ -218,9 +222,8 @@ active_step:
   owner: Faadil
   support_owner: Benita
   next:
-    - "Fund the canonical Devnet upgrade authority by at least 422916893 additional lamports, then rerun solana-devnet-authority-proof; the current blocker is external Devnet funding."
-    - "After the upgrade succeeds, re-run the Devnet execution bridge and capture ALLOW_ONCE single-use evidence."
-    - "Keep the now-passing hosted Pyth-history and Durable Object concurrency proofs as submission evidence."
+    - "Keep the passing Devnet ALLOW_ONCE single-use proof, hosted Pyth-history proof and Durable Object concurrency proof as submission evidence."
+    - "Record the judge demo with the confirmed Devnet program/receipt/signatures visible in the proof lane."
     - "Record the judge demo: My Key -> in-bounds Devnet action -> boundary -> guardian decision -> widen -> same action -> stale refusal."
     - "Surface the confirmed Devnet receipt/program/version/nonce/Pyth evidence without turning the UI into a protocol dashboard."
     - "Keep production auth/KYC, wallets, fiat rails, custody/mainnet and all-symbol history explicitly outside the hackathon truth boundary."
