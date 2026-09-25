@@ -8,6 +8,7 @@ on:
       - "src/http-api.mjs"
       - "src/devnet-execution-provider.mjs"
       - "src/pyth-adapter.mjs"
+      - "scripts/pyth-market-discovery-proof.mjs"
       - "src/prestocks-adapter.mjs"
       - "src/tessera-adapter.mjs"
       - "fixtures/**"

@@ -1,0 +1,32 @@
+name: pyth-market-discovery-proof
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/pyth-adapter.mjs'
+      - 'src/cloudflare-family-api.mjs'
+      - 'scripts/pyth-market-discovery-proof.mjs'
+      - 'test/pyth-adapter.test.mjs'
+      - '.github/workflows/pyth-market-discovery-proof.yml'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  discovery-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PYTH_PRO_API_KEY: ${{ secrets.PYTH_PRO_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify real Pyth multi-market discovery
+        run: npm run proof:pyth-markets

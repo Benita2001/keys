@@ -4,6 +4,9 @@ import {
   PYTH_PRO_EQUITY_FEEDS,
   fetchPythProSnapshot,
   fetchPythProHistory,
+  normalizePythProCatalogRow,
+  fetchPythProCatalog,
+  discoverPythProMarkets,
   fetchPythProSolanaPayload,
   normalizePythProSnapshot,
   normalizePythSnapshot
@@ -279,4 +282,86 @@ test('Pyth Pro history fails closed on entitlement refusal', async () => {
   assert.equal(out.status, 'UNAVAILABLE');
   assert.equal(out.reasonCode, 'PYTH_NOT_ENTITLED');
   assert.deepEqual(out.points, []);
+});
+
+
+test('normalizes Pyth Pro catalog rows without assuming one response casing', () => {
+  const out = normalizePythProCatalogRow({
+    symbol: 'Crypto.BTC/USD',
+    price_feed_id: 1,
+    asset_type: 'crypto',
+    min_channel: 'fixed_rate@200ms'
+  });
+  assert.equal(out.symbol, 'Crypto.BTC/USD');
+  assert.equal(out.feedId, 1);
+  assert.equal(out.assetType, 'crypto');
+  assert.equal(out.minChannel, 'fixed_rate@200ms');
+});
+
+test('fetches public Pyth catalog by asset class', async () => {
+  const requested = [];
+  const out = await fetchPythProCatalog({
+    assetTypes: ['equity', 'crypto'],
+    fetchImpl: async (url) => {
+      requested.push(new URL(url).searchParams.get('asset_type'));
+      return {
+        ok: true,
+        status: 200,
+        async json() {
+          const assetType = new URL(url).searchParams.get('asset_type');
+          return [{
+            symbol: assetType === 'equity' ? 'Equity.US.AAPL/USD' : 'Crypto.BTC/USD',
+            price_feed_id: assetType === 'equity' ? 922 : 1,
+            asset_type: assetType,
+            min_channel: 'fixed_rate@50ms'
+          }];
+        }
+      };
+    }
+  });
+
+  assert.deepEqual(requested.sort(), ['crypto', 'equity']);
+  assert.equal(out.equity.feeds[0].feedId, 922);
+  assert.equal(out.crypto.feeds[0].symbol, 'Crypto.BTC/USD');
+});
+
+test('market discovery keeps AAPL primary while other entitled markets remain Learn/Practice only', async () => {
+  const out = await discoverPythProMarkets({
+    apiKey: 'test-token',
+    perClass: 2,
+    assetTypes: ['equity', 'crypto'],
+    catalogProvider: async () => ({
+      equity: {
+        status: 'AVAILABLE',
+        feeds: [
+          { symbol: 'Equity.US.NVDA/USD', feedId: 100, minChannel: 'fixed_rate@50ms' },
+          { symbol: 'Equity.US.AAPL/USD', feedId: 922, minChannel: 'fixed_rate@50ms' }
+        ]
+      },
+      crypto: {
+        status: 'AVAILABLE',
+        feeds: [
+          { symbol: 'Crypto.ETH/USD', feedId: 2, minChannel: 'fixed_rate@50ms' },
+          { symbol: 'Crypto.BTC/USD', feedId: 1, minChannel: 'fixed_rate@50ms' }
+        ]
+      }
+    }),
+    snapshotProvider: async ({ feed }) => ({
+      status: 'FRESH',
+      price: feed.feedId === 922 ? 335 : 100,
+      publishTime: '2026-09-25T08:00:00.000Z'
+    })
+  });
+
+  const aapl = out.classes.flatMap((group) => group.feeds)
+    .find((feed) => feed.symbol === 'Equity.US.AAPL/USD');
+  const btc = out.classes.flatMap((group) => group.feeds)
+    .find((feed) => feed.symbol === 'Crypto.BTC/USD');
+
+  assert.equal(aapl.productMode, 'PRIMARY_MONEY_PROOF');
+  assert.equal(aapl.moneyExecutionProven, true);
+  assert.equal(btc.productMode, 'LEARN_PRACTICE_ONLY');
+  assert.equal(btc.moneyExecutionProven, false);
+  assert.equal(btc.entitlementStatus, 'ACCESSIBLE');
+  assert.equal(out.truthBoundary.entitlementDoesNotImplyMoneyExecution, true);
 });

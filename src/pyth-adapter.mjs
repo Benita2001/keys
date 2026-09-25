@@ -499,3 +499,242 @@ export async function fetchPythProSolanaPayload({
         }
   };
 }
+
+
+export const PYTH_PRO_MARKET_CLASSES = Object.freeze({
+  equity: Object.freeze({
+    id: 'equity',
+    label: 'Stocks & ETFs',
+    learningAngle: 'Companies, sectors, diversification and public-market trading sessions'
+  }),
+  crypto: Object.freeze({
+    id: 'crypto',
+    label: 'Crypto',
+    learningAngle: '24/7 markets, volatility and digital-asset market structure'
+  }),
+  fx: Object.freeze({
+    id: 'fx',
+    label: 'FX',
+    learningAngle: 'Currency pairs, exchange rates and global purchasing power'
+  }),
+  metal: Object.freeze({
+    id: 'metal',
+    label: 'Metals',
+    learningAngle: 'Precious metals, macro risk and non-company assets'
+  }),
+  rates: Object.freeze({
+    id: 'rates',
+    label: 'Rates',
+    learningAngle: 'Interest rates, fixed income and the cost of capital'
+  }),
+  commodity: Object.freeze({
+    id: 'commodity',
+    label: 'Commodities & Energy',
+    learningAngle: 'Real-world inputs, futures and cyclical supply/demand markets'
+  })
+});
+
+const PYTH_MARKET_DISCOVERY_PREFERENCES = Object.freeze({
+  equity: ['AAPL', 'NVDA', 'MSFT', 'SPY', 'QQQ', 'TSLA'],
+  crypto: ['BTC', 'ETH', 'SOL'],
+  fx: ['EUR/USD', 'USD/JPY', 'GBP/USD'],
+  metal: ['XAU', 'XAG', 'GOLD', 'SILVER'],
+  rates: ['US10', 'US2', '10Y', '2Y'],
+  commodity: ['WTI', 'BRENT', 'NGD', 'USOIL', 'NATURAL']
+});
+
+function catalogRows(body) {
+  if (Array.isArray(body)) return body;
+  if (Array.isArray(body?.symbols)) return body.symbols;
+  if (Array.isArray(body?.data)) return body.data;
+  return [];
+}
+
+function pythCatalogFeedId(row) {
+  const candidate =
+    row?.price_feed_id ??
+    row?.priceFeedId ??
+    row?.feed_id ??
+    row?.feedId ??
+    row?.id;
+  const parsed = Number(candidate);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function normalizePythProCatalogRow(row, fallbackAssetType = null) {
+  const symbol = String(
+    row?.symbol ?? row?.ticker ?? row?.display_symbol ?? row?.name ?? ''
+  ).trim();
+  const feedId = pythCatalogFeedId(row);
+  if (!symbol || feedId == null) return null;
+
+  const assetType = String(
+    row?.asset_type ?? row?.assetType ?? fallbackAssetType ?? ''
+  ).toLowerCase();
+
+  return {
+    symbol,
+    feedId,
+    assetType,
+    description: row?.description ?? row?.name ?? null,
+    minChannel:
+      row?.min_channel ??
+      row?.minChannel ??
+      row?.minimum_channel ??
+      'fixed_rate@1000ms'
+  };
+}
+
+export async function fetchPythProCatalog({
+  assetTypes = Object.keys(PYTH_PRO_MARKET_CLASSES),
+  fetchImpl = globalThis.fetch,
+  endpoint = 'https://pyth.dourolabs.app/v1/symbols'
+} = {}) {
+  if (typeof fetchImpl !== 'function') {
+    throw new Error('PYTH_CATALOG_FETCH_UNAVAILABLE');
+  }
+
+  const classes = [...new Set(assetTypes.map((item) => String(item).toLowerCase()))]
+    .filter((item) => PYTH_PRO_MARKET_CLASSES[item]);
+
+  const grouped = {};
+  await Promise.all(
+    classes.map(async (assetType) => {
+      const url = new URL(endpoint);
+      url.searchParams.set('asset_type', assetType);
+      const response = await fetchImpl(url.toString(), {
+        headers: { accept: 'application/json' }
+      });
+      if (!response?.ok) {
+        grouped[assetType] = {
+          status: 'UNAVAILABLE',
+          reasonCode: `PYTH_CATALOG_HTTP_${response?.status ?? 'UNKNOWN'}`,
+          feeds: []
+        };
+        return;
+      }
+
+      const body = await response.json();
+      const feeds = catalogRows(body)
+        .map((row) => normalizePythProCatalogRow(row, assetType))
+        .filter(Boolean);
+
+      grouped[assetType] = {
+        status: 'AVAILABLE',
+        feeds
+      };
+    })
+  );
+
+  return grouped;
+}
+
+function symbolScore(symbol, preferences = []) {
+  const upper = String(symbol).toUpperCase();
+  for (let index = 0; index < preferences.length; index += 1) {
+    const token = preferences[index].toUpperCase();
+    if (
+      upper === token ||
+      upper.includes(`.${token}`) ||
+      upper.includes(`.${token}/`) ||
+      upper.includes(token)
+    ) {
+      return index;
+    }
+  }
+  return 10_000;
+}
+
+function shortMarketSymbol(symbol) {
+  const raw = String(symbol ?? '');
+  const tail = raw.includes('.') ? raw.split('.').slice(-1)[0] : raw;
+  return tail.replace(/\/USD$/i, '').replace(/\/EUR$/i, '');
+}
+
+export async function discoverPythProMarkets({
+  apiKey,
+  perClass = 3,
+  assetTypes = Object.keys(PYTH_PRO_MARKET_CLASSES),
+  catalogProvider = fetchPythProCatalog,
+  snapshotProvider = fetchPythProSnapshot
+} = {}) {
+  const catalog = await catalogProvider({ assetTypes });
+  const classes = [];
+
+  for (const assetType of assetTypes) {
+    const definition = PYTH_PRO_MARKET_CLASSES[assetType];
+    if (!definition) continue;
+    const catalogEntry = catalog?.[assetType] ?? {
+      status: 'UNAVAILABLE',
+      feeds: []
+    };
+    const preferences = PYTH_MARKET_DISCOVERY_PREFERENCES[assetType] ?? [];
+    const ranked = [...(catalogEntry.feeds ?? [])].sort((a, b) => {
+      const score = symbolScore(a.symbol, preferences) - symbolScore(b.symbol, preferences);
+      return score || a.symbol.localeCompare(b.symbol);
+    });
+
+    const selected = ranked.slice(0, Math.max(1, Number(perClass) || 1));
+    const feeds = await Promise.all(
+      selected.map(async (feed) => {
+        const snapshot = await snapshotProvider({
+          apiKey,
+          feed: {
+            symbol: feed.symbol,
+            feedId: feed.feedId,
+            exponent: -5,
+            minChannel: feed.minChannel
+          }
+        });
+        const accessible = ['FRESH', 'STALE'].includes(snapshot?.status);
+        const primaryMoneyProof = feed.symbol === 'Equity.US.AAPL/USD';
+
+        return {
+          marketClass: assetType,
+          symbol: feed.symbol,
+          displaySymbol: shortMarketSymbol(feed.symbol),
+          feedId: feed.feedId,
+          minChannel: feed.minChannel,
+          catalogStatus: 'AVAILABLE',
+          entitlementStatus: accessible ? 'ACCESSIBLE' : 'UNAVAILABLE',
+          priceStatus: snapshot?.status ?? 'UNAVAILABLE',
+          price: snapshot?.price ?? null,
+          publishTime: snapshot?.publishTime ?? null,
+          marketSession: snapshot?.marketSession ?? null,
+          reasonCode: snapshot?.reasonCode ?? null,
+          productMode: primaryMoneyProof
+            ? 'PRIMARY_MONEY_PROOF'
+            : 'LEARN_PRACTICE_ONLY',
+          moneyExecutionProven: primaryMoneyProof,
+          authorityEffect: 'NONE'
+        };
+      })
+    );
+
+    classes.push({
+      id: definition.id,
+      label: definition.label,
+      learningAngle: definition.learningAngle,
+      catalogStatus: catalogEntry.status,
+      catalogFeedCount: catalogEntry.feeds?.length ?? 0,
+      accessibleFeedCount: feeds.filter(
+        (feed) => feed.entitlementStatus === 'ACCESSIBLE'
+      ).length,
+      feeds
+    });
+  }
+
+  return {
+    source: 'PYTH_PRO',
+    status: 'AVAILABLE',
+    primaryMoneyAsset: 'AAPL',
+    primaryMoneySymbol: 'Equity.US.AAPL/USD',
+    classes,
+    truthBoundary: {
+      catalogPresenceDoesNotImplyEntitlement: true,
+      entitlementDoesNotImplyMoneyExecution: true,
+      onlyAaplMoneyExecutionProven: true,
+      marketEvidenceAuthorityEffect: 'NONE'
+    }
+  };
+}

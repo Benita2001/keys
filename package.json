@@ -11,7 +11,8 @@
     "proof:prestocks": "node scripts/prestocks-live-proof.mjs",
     "bootstrap:devnet-demo-runtime": "node scripts/bootstrap-devnet-demo-runtime.cjs",
     "proof:devnet-execution-bridge": "node scripts/devnet-execution-smoke.mjs",
-    "proof:tessera": "node scripts/tessera-live-proof.mjs"
+    "proof:tessera": "node scripts/tessera-live-proof.mjs",
+    "proof:pyth-markets": "node scripts/pyth-market-discovery-proof.mjs"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.32.1",

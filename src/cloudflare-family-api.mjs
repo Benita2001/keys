@@ -4,9 +4,33 @@ import {
   PYTH_PRO_EQUITY_FEEDS,
   fetchPythProSnapshot,
   fetchPythProHistory,
+  discoverPythProMarkets,
 } from "./pyth-adapter.mjs";
 
 const FAMILY_NAME = "stocklana-demo-family";
+
+let marketDiscoveryCache = null;
+const MARKET_DISCOVERY_TTL_MS = 5 * 60 * 1000;
+
+async function marketDiscovery(env) {
+  const now = Date.now();
+  if (marketDiscoveryCache && marketDiscoveryCache.expiresAt > now) {
+    return marketDiscoveryCache.value;
+  }
+
+  const apiKey =
+    env?.PYTH_PRO_API_KEY ||
+    (typeof process !== "undefined" ? process.env?.PYTH_PRO_API_KEY : null);
+  const value = await discoverPythProMarkets({
+    apiKey,
+    perClass: 3,
+  });
+  marketDiscoveryCache = {
+    expiresAt: now + MARKET_DISCOVERY_TTL_MS,
+    value,
+  };
+  return value;
+}
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -547,6 +571,15 @@ export async function handleFamilyApi(request, env) {
     ["POST", "PUT", "PATCH"].includes(method)
       ? await request.clone().json().catch(() => ({}))
       : {};
+
+  if (method === "GET" && path === "/api/v0.2/market/discovery") {
+    const discovery = await marketDiscovery(env);
+    return json({
+      contractVersion: "0.2",
+      type: "V0_2_MARKET_DISCOVERY",
+      ...discovery
+    });
+  }
 
   if (method === "GET" && path === "/api/v0.2/market/quotes") {
     const requested = (url.searchParams.get("symbols") || MARKET_UNIVERSE.join(","))
