@@ -14,14 +14,24 @@ import { allAssetSnapshots, boundaryRequests } from "@/services";
 import { useSingleFlight } from "@/hooks/single-flight";
 import { useStore } from "@/state/store";
 
-const DECIDED_COPY: Partial<Record<string, string>> = {
-  REFUSED: "You said not this time.",
-  WIDENED: "You widened the limits.",
-  WIDEN_PENDING_CHAIN: "Widening on Solana… The new limits apply once the transaction confirms.",
-  ALLOW_ONCE_PENDING_CHAIN: "Allowing once on Solana… This finishes when the transaction confirms.",
-  ALLOWED_ONCE: "You allowed this once.",
-  ALLOWED_ONCE_USED: "You allowed this once, and it has been used.",
-};
+function decidedCopy(status: string, keyVersion: number) {
+  switch (status) {
+    case "REFUSED":
+      return `Not this time. Standing Key v${keyVersion} remains.`;
+    case "WIDENED":
+      return `Standing authority changed. Current Key is v${keyVersion}.`;
+    case "WIDEN_PENDING_CHAIN":
+      return "Changing the Key on Solana… The new limits apply once the transaction confirms.";
+    case "ALLOW_ONCE_PENDING_CHAIN":
+      return "Allowing once on Solana… This finishes when the transaction confirms.";
+    case "ALLOWED_ONCE":
+      return `Allowed once. Standing Key v${keyVersion} is unchanged.`;
+    case "ALLOWED_ONCE_USED":
+      return `Allowed once and used. Standing Key v${keyVersion} is unchanged.`;
+    default:
+      return "This request has been decided.";
+  }
+}
 
 export default function RequestDecisionPage() {
   const { id } = useParams<{ id: string }>();
@@ -78,30 +88,30 @@ export default function RequestDecisionPage() {
     setBusy(false);
     setWidenOpen(false);
     setChoice(null);
-    toast(choice === "ALLOW_ONCE" ? "Allowed once" : choice === "WIDEN_MANDATE" ? "Limits widened" : "Request declined");
+    toast(choice === "ALLOW_ONCE" ? `Allowed once · Key v${m.version} unchanged` : choice === "WIDEN_MANDATE" ? "New standing Key saved" : "Not this time");
   });
 
   const options: { id: GuardianDecision; title: string; body: string; icon: React.ReactNode; tone: "green" | "blue" | "navy" }[] = [
     {
+      id: "REFUSE",
+      title: "Not this time",
+      body: `Keep Key v${m.version} exactly where it is.`,
+      icon: <XCircle className="size-5" />,
+      tone: "navy",
+    },
+    {
       id: "ALLOW_ONCE",
       title: "Allow once",
-      body: `${child} can do exactly this, one time. Standing limits stay the same.`,
+      body: `Let this request run once. Standing Key v${m.version} stays unchanged.`,
       icon: <CheckCircle2 className="size-5" />,
       tone: "green",
     },
     {
       id: "WIDEN_MANDATE",
-      title: "Widen limits",
-      body: `Give ${child} more room from now on. You'll confirm the new limits.`,
+      title: "Widen the Key",
+      body: `Create Key v${m.version + 1} with more standing room from now on.`,
       icon: <SlidersHorizontal className="size-5" />,
       tone: "blue",
-    },
-    {
-      id: "REFUSE",
-      title: "Not this time",
-      body: "Keep the current limits. You can add a short note.",
-      icon: <XCircle className="size-5" />,
-      tone: "navy",
     },
   ];
 
@@ -131,7 +141,7 @@ export default function RequestDecisionPage() {
       {decided ? (
         <Card className="mt-4 p-4 text-center">
           <p className="text-[16px] font-extrabold text-navy-strong">
-            {DECIDED_COPY[request.status] ?? "This request has been decided."}
+            {decidedCopy(request.status, m.version)}
           </p>
         </Card>
       ) : stale ? (
@@ -144,6 +154,12 @@ export default function RequestDecisionPage() {
         </Card>
       ) : (
         <>
+          <Card className="mt-4 border-2 border-blue/15 bg-blue-soft p-4">
+            <p className="text-[12px] font-black uppercase tracking-[0.08em] text-blue-strong">Standing Key v{m.version}</p>
+            <p className="mt-1 text-[13.5px] font-semibold text-navy">
+              Choose the relationship to this boundary: keep the Key, allow this request once, or create a new standing Key.
+            </p>
+          </Card>
           <div role="radiogroup" aria-label="Your decision" className="mt-4 space-y-2.5">
             {options.map((o) => (
               <button
@@ -191,7 +207,7 @@ export default function RequestDecisionPage() {
         </>
       )}
 
-      <Modal open={widenOpen && !decided} onClose={() => setWidenOpen(false)} title={`Widen ${child}'s limits`}>
+      <Modal open={widenOpen && !decided} onClose={() => setWidenOpen(false)} title={`Create a wider Key for ${child}`}>
         {!periodRequest ? (
           <div className="mb-3 flex flex-wrap gap-2">
             {widenOptions.map((v) => (
@@ -240,7 +256,7 @@ export default function RequestDecisionPage() {
           </li>
         </ul>
         <p className="mt-3 text-[12.5px] font-semibold text-ink-3">
-          This creates version {m.version + 1} of {child}&apos;s limits. Only you can make this change.
+          This is the only choice on this screen that changes standing authority. It creates Key v{m.version + 1}. Only you can make this change.
         </p>
         {error ? (
           <p role="alert" className="mt-3 rounded-[12px] bg-loss-soft px-3 py-2 text-[13px] font-bold text-loss-text">

@@ -4,7 +4,7 @@ updated_at: "2026-09-24"
 status: V0_2_CRESCO_STATEFUL_DEVNET_FAMILY_INTEGRATION_PASS
 
 mission:
-  candidate: B
+  candidate: KEYS_FAMILY
   stocklana_wedge: "KEYS Family"
   category: family_bounded_autonomy_for_tokenized_stocks
   promise: "Financial independence shouldn't happen all at once."

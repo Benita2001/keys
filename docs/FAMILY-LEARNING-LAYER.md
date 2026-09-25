@@ -11,6 +11,28 @@ KEYS Family keeps learning because tokenized-stock markets are complex and young
 
 Learning helps Maya understand what she is doing. It does not certify maturity and it does not automatically grant capital authority.
 
+## Source-backed reality
+
+Important investing claims must be anchored in a primary or official source whenever one is available.
+
+For the hackathon learning path:
+- stock ownership / issuance / risk / diversification use Investor.gov / SEC material;
+- tokenized-security structure and holder-right distinctions use current SEC material;
+- each sourced lesson shows the organization, source title, link and date checked;
+- current market facts come from KEYS/Pyth only when the backend marks the evidence fresh;
+- sample values remain visibly sample;
+- source-backed education is not personalized investment advice.
+
+Do not cite a source decoratively. The source must support a concrete learning claim or nuance visible to the user.
+
+## Applied learning loop
+
+The preferred pattern is:
+
+`CONCEPT → REALITY CHECK → TRY IN EXPLORE/PRACTICE → BOUNDARY/RECEIPT → REFLECTION`
+
+A lesson should move quickly from explanation to an observable product action. Practice applies the concept with no real capital. Money Mode remains governed only by the Mandate.
+
 ## Learning moments
 
 ### 1. First exposure
@@ -19,7 +41,8 @@ Before Maya uses an unfamiliar asset/action, show a short explanation of:
 - what the instrument is;
 - concentration/diversification;
 - volatility;
-- tokenized-stock representation;
+- tokenized-security representation and actual holder rights;
+- issuer-sponsored versus third-party representation where relevant;
 - market-session / 24-7 differences where relevant.
 
 Target: seconds, not a course.
@@ -95,3 +118,22 @@ A teen may therefore be:
 at the same time.
 
 This is why stages are UX and the Mandate is truth.
+
+
+## Key history as applied learning
+
+Source-backed lessons remain valuable, but the most product-native learning artifact is the Key's own history.
+
+A useful history should make meaningful authority events legible:
+- an in-bounds decision made independently;
+- a boundary hit and its plain-language reason;
+- a private request;
+- an ALLOW_ONCE that was consumed without moving the standing Key;
+- an explicit guardian widen that created a new Key version;
+- a market-evidence refusal that tightened execution without granting authority.
+
+This turns learning into reflection on real decisions rather than a gate. The history is **not** a surveillance feed and **never** becomes a competence score.
+
+Canonical rule:
+
+> **Learning never mints permission.**

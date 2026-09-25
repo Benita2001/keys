@@ -380,7 +380,7 @@ End with:
 
 ### Short
 
-**KEYS is bounded autonomy for family investing. A guardian defines a versioned capital Mandate; a young person can act independently inside it, while Solana refuses actions outside the boundary. Pyth provides load-bearing market truth, and only an authorized guardian can widen standing authority. The Stocklana demo runs on Solana Devnet with a demo SPL token and exposes verifiable transaction receipts without claiming brokerage or real minor securities execution.**
+**Cresco / KEYS is a consumer authority layer for programmable capital. A guardian defines a standing Key; a young person acts independently inside it, asks only at the boundary, and can receive a one-time exception without permanently widening the Key. Solana enforces the demo-capital boundary in the execution path, Pyth provides load-bearing market truth, and only the guardian can increase standing authority. The Stocklana demo uses a Devnet demo token and does not claim brokerage, custody or real minor securities execution.**
 
 ### Longer
 
@@ -390,7 +390,7 @@ A guardian authors a versioned Mandate describing what actions are allowed, the 
 
 Pyth supplies live market evidence to the execution path. It can make an action invalid or too large, but it can never expand human authority. Guardian widening is explicit, versioned and nonce-protected; old authorization becomes stale.
 
-The demo uses Solana Devnet, a demo SPL token, a server-held Devnet demo signer and the current AAPL Pyth proof lane. Cloudflare Durable Objects hold synchronized Family demo state and serialize reservations/idempotency across devices. Contextual learning remains first-class, but learning/XP/P&L never automatically changes limits.
+The demo uses Solana Devnet, a demo SPL token, a server-held Devnet demo signer and the current AAPL Pyth proof lane. Cloudflare Durable Objects hold synchronized Family demo state and serialize reservations/idempotency across devices. Contextual learning remains first-class: core investing claims show primary/official sources and a verification date, then route into Explore/Practice application. Learning/XP/P&L never automatically changes limits.
 
 Tessera is the selected pre-IPO sponsor surface. PreStocks remains integrated as a secondary representation/Practice layer with eligibility fail-closed by default, but is not entered as a bounty while Tessera remains in the submitted build.
 
@@ -406,7 +406,15 @@ The Solana program, Mandate/AssetRule enforcement, on-chain refusal, version/non
 
 ### “Why not just use a database?”
 
-A database can store the family preference, but the product promise is that the capital action is constrained by a versioned authority object whose enforcement and receipt are independently inspectable. Solana is the execution/authority boundary, not an analytics datastore.
+A database can reproduce much of the interface and authorization logic. The difference is where the rule lives. With KEYS, capital placed under the KEYS program-controlled path is constrained in the same execution path that moves the demo asset. The UI can disappear and the boundary still holds. We do not claim that one-time authorization is impossible in Web2; we use Solana so the authority rule is part of asset execution rather than only a promise made by our application backend.
+
+### “What does KEYS bring to Solana?”
+
+Solana already makes assets programmable and provides delegation primitives. KEYS turns that programmability into a human authority model: not approve every trade, not hand over everything, but agree on standing rules and let the person act. Family is the clearest wedge for that new consumer behavior.
+
+### “How is this different from a native Solana allowance?”
+
+A native allowance delegates spend capacity. A KEYS Key is a standing authority object with asset/action scope, limits and market conditions plus a boundary workflow. ALLOW_ONCE handles one approved boundary request without mutating that standing Key. The strengthened execution path binds the exception to the request, mint, Mandate nonce and guardian-approved USD notional; a materially different amount refuses on-chain, and successful use consumes the exception. We do not overclaim a generic canonical hash over every possible future action field.
 
 ### “Why does this need Pyth?”
 
@@ -430,7 +438,7 @@ A Cloudflare Durable Object serializes the family reservation, period spend and 
 
 ### “How does Allow once work?”
 
-It is not a generic bypass. The execution must cite the exact approved request id, match its asset and current nonce, stay at or below the approved amount, and the permission is consumed after successful use. This is now proven on Devnet: grant → one execution → second use REFUSE with `AllowanceAlreadyUsed`.
+It is not a generic bypass and it does not widen standing authority. The execution must cite the approved request id, match its asset/current Mandate nonce and match the guardian-approved USD notional within unavoidable one-base-unit token rounding. A materially different amount refuses before transfer; after one successful use, the permission is consumed and a replay refuses with `AllowanceAlreadyUsed`. Standing Key version remains unchanged by the one-time exception.
 
 ### “Why AAPL?”
 
@@ -465,7 +473,7 @@ Before recording:
 - confirm balance/test funding is sufficient;
 - confirm in-bounds amount;
 - confirm boundary amount;
-- rehearse exact widen value;
+- rehearse the exact ALLOW_ONCE request, retry and replay-refusal sequence;
 - verify Explorer link;
 - keep a backup recording of the canonical proof receipt;
 - do not expose secrets/dashboard environment values.

@@ -8,6 +8,24 @@ A guardian defines an explicit **Mandate**. Inside it, the young person can act 
 
 > **Learn in context. Act freely inside bounds. Ask for more freedom only at the boundary.**
 
+## Why this belongs on Solana
+
+**Solana makes financial assets programmable. Cresco / KEYS makes authority over those assets programmable for humans.**
+
+The consumer idea is not "blockchain parental controls." It is a standing authority model:
+
+- inside the Key, the delegate acts without per-action approval;
+- at the boundary, the guardian can refuse, allow this request once, or create a wider standing Key;
+- a one-time permission can be consumed without rewriting the standing Key;
+- market evidence can restrict execution, but it can never grant more human authority.
+
+A conventional backend could reproduce much of the interface. The reason KEYS belongs on Solana is **where the rule is enforced**: for capital placed under the KEYS program-controlled path, the boundary is checked in the same execution path that moves the demo asset. The UI is not the guard.
+
+This also complements Solana's native delegation/allowance primitives rather than pretending they do not exist. A native allowance delegates spend capacity. KEYS adds a human authority grammar around standing rules, boundary events and non-precedent exceptions.
+
+Current ALLOW_ONCE truth: the permission is bound to the approved request, Mandate, mint/asset, beneficiary, current nonce, expiry and guardian-approved USD notional. The Solana execution path recomputes the Pyth-derived notional and refuses a materially different amount; only unavoidable one-base-unit rounding is tolerated. After one successful use the permission is consumed and replay refuses on-chain. We still do **not** claim a generic canonical hash over every possible future action field.
+
+
 ## Product primitive
 
 The long-term primitive is a versioned, revocable permission envelope over capital:

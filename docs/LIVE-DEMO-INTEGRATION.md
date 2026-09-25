@@ -16,16 +16,16 @@ Frontend:
 ## Demo spine
 
 1. My Key / current limits.
-2. Learn / Practice.
-3. AAPL in-bounds Money action → immediate execution path, no guardian approval.
-4. Larger action → refusal.
-5. Ask for more room → persisted request.
-6. Guardian demo sign-in.
-7. Allow once / widen / refuse.
-8. Widen → actual Devnet Mandate transition and new nonce/version.
-9. Same action → allowed under new bounds.
-10. Old nonce → stale/refuse.
-11. Receipt → Devnet signature + program + version/nonce + Pyth proof.
+2. Source-backed Learn / Practice.
+3. AAPL in-bounds Money action → **ALLOW**, no guardian approval.
+4. Larger action → **REFUSE**.
+5. Ask for more room → persisted exact request.
+6. Guardian demo sign-in → choose **ALLOW_ONCE**.
+7. Exact retry → **ALLOW** with one-time authorization; allowance is consumed.
+8. Reuse the same one-time authorization → **REFUSE / AllowanceAlreadyUsed**.
+9. Receipt → Devnet signature + program + version/nonce + Pyth proof.
+
+Widen remains implemented for a real standing-authority change, but it is secondary to the canonical ALLOW_ONCE demo.
 
 ## Runtime
 

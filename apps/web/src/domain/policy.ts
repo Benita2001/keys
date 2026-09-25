@@ -313,8 +313,8 @@ export function learningContextFor(evaluation: ActionEvaluation): LearningContex
     case "PERIOD_LIMIT_EXCEEDED":
       return {
         kind: "BOUNDARY",
-        title: "Why limits exist",
-        body: "Inside your limits you can act freely. Changing them is a decision your parent makes with you, not something you unlock by learning or winning.",
+        title: "Why this boundary exists",
+        body: "Inside your Key you can act freely. Learning can explain the boundary, but only your parent or guardian can create a wider standing Key.",
         practiceAvailable: true,
       };
     case "MARKET_CONDITION_INVALIDATED":
@@ -322,7 +322,7 @@ export function learningContextFor(evaluation: ActionEvaluation): LearningContex
       return {
         kind: "MARKET_CHANGE",
         title: "Markets move",
-        body: "When the facts change, an old plan doesn't turn into permanent permission.",
+        body: "Market evidence can tighten or stop a decision when facts change. It can never widen your Key or grant more authority.",
         practiceAvailable: true,
       };
     default:

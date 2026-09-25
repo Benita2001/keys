@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Info, LogOut, ShieldCheck, Target, Trophy, UserRound, Users } from "lucide-react";
-import { Avatar, Card, IconCircle, PageHeader, ProgressBar } from "@/components/ui/primitives";
-import { formatAmount, formatNumber } from "@/domain/format";
-import { useLevel } from "@/hooks/data";
+import { Avatar, Card, IconCircle, PageHeader } from "@/components/ui/primitives";
+import { formatAmount } from "@/domain/format";
 import { GOALS } from "@/mocks/family";
 import { useStore } from "@/state/store";
 import { clearBackendSessionToken } from "@/services/keys-backend";
@@ -14,7 +13,6 @@ import { WalletAccountCard } from "@/components/wallet/account-card";
 export default function ProfilePage() {
   const router = useRouter();
   const { state, dispatch } = useStore();
-  const { level, xp, progress, toNext } = useLevel();
   const goal = GOALS.find((g) => g.id === state.profile.goalId);
 
   const rows = [
@@ -23,8 +21,8 @@ export default function ProfilePage() {
       href: "/profile/limits",
       icon: <ShieldCheck className="size-5" />,
       tone: "green" as const,
-      title: "My Money Mode limits",
-      sub: state.mandate.status === "ACTIVE" ? `Up to ${formatAmount(state.mandate.maxActionNotional)} per action` : "Paused",
+      title: "My Key",
+      sub: state.mandate.status === "ACTIVE" ? `Key v${state.mandate.version} · up to ${formatAmount(state.mandate.maxActionNotional)} per action` : "Paused",
     },
     { href: "/onboarding/goal", icon: <Target className="size-5" />, tone: "pink" as const, title: "Saving goal", sub: goal?.label ?? "Choose a goal" },
     {
@@ -45,11 +43,10 @@ export default function ProfilePage() {
         <Avatar size={64} />
         <div className="min-w-0 flex-1">
           <p className="text-[20px] font-black text-navy-strong">{state.profile.childName}</p>
-          <p className="text-[13px] font-extrabold text-blue">
-            Level {level} · <span className="text-ink-2 tabular">{formatNumber(xp)} XP</span>
+          <p className="text-[13px] font-extrabold text-blue">Learning progress is separate from your Key.</p>
+          <p className="mt-1 text-[11.5px] font-bold text-ink-3">
+            Lessons, streaks and results can inform decisions. They never widen authority automatically.
           </p>
-          <ProgressBar value={progress} tone="green" className="mt-2" label="Progress to next level" />
-          <p className="mt-1 text-[11.5px] font-bold text-ink-3">{formatNumber(toNext)} XP to Level {level + 1}</p>
         </div>
       </Card>
 

@@ -1,114 +1,188 @@
 # Demo-First Architecture v0.2
 
-Date: 2026-09-24  
-Title: **The account that can say no**
+Date: 2026-09-25  
+Title: **The key that works until the boundary — once means once**
+
+## Canonical 55-second judge cut
+
+The product proof should land before the infrastructure proof.
+
+### 0:00–0:05 — freedom first
+
+Show **Key vN** and one small in-bounds AAPL demo-capital action.
+
+**ALLOW.** No guardian screen. No celebration ritual.
+
+> Inside the Key, Alex acts on his own.
+
+### 0:05–0:13 — the edge
+
+Try a larger action.
+
+**REFUSE.**
+
+Show the boundary visually and one plain-language reason. Offer **Ask for more room**.
+
+### 0:13–0:24 — the third model
+
+Guardian sees the exact request and three choices:
+
+**Not this time · Allow once · Widen the Key**
+
+Make the distinction explicit:
+- Not this time → Key vN remains.
+- Allow once → one request can cross; Key vN remains.
+- Widen → create standing Key vN+1.
+
+Choose **Allow once**.
+
+### 0:24–0:36 — consume, do not widen
+
+Retry the approved request.
+
+**ALLOW.**
+
+Show:
+- ONE-TIME PERMISSION → USED;
+- **Standing Key vN — unchanged**.
+
+The exception moves. The boundary does not.
+
+### 0:36–0:43 — replay
+
+Reuse the same one-time permission.
+
+Main UI:
+
+> This one-time permission has already been used.
+
+Proof lane:
+
+REFUSE / AllowanceAlreadyUsed
+
+No second execution.
+
+### 0:43–0:55 — why Solana / why Pyth
+
+Open the proof drawer only now.
+
+> The UI is not the guard. The KEYS capital path enforces the boundary.
+
+Show Solana Devnet program/signature and the Pyth-derived market evidence used in the capital path.
+
+> Pyth can restrict an action. It can never widen the Key.
+
 
 ## 2–3 minute transformation
 
-### 0:00–0:25 — Freedom first
+### 0:00–0:20 — The product in one sentence
 
-Maya sees her current key:
+Show **My Key** and one short source-backed learning / Practice cue.
 
-- allowed assets/actions;
-- current per-action bound;
-- expiry / relevant market rule;
-- a small contextual learning cue.
+> Alex can act independently inside family-set limits. Sam steps in only at the boundary.
 
-She performs a small **in-bounds** action.
+Learning is context, not permission homework.
 
-**ALLOW / SUCCESS.**
+### 0:20–0:45 — ALLOW
 
-No guardian approval. No essay.
+Alex performs a small AAPL Money action inside the standing Key.
 
-Message:
+**ALLOW / CONFIRMED DEVNET EXECUTION.**
 
-> Inside her Mandate, Maya is free.
+No guardian approval screen.
 
-### 0:25–0:55 — The boundary
+> Inside the Key, Alex is free to act.
 
-Maya attempts the same kind of action above her standing bound.
+### 0:45–1:10 — REFUSE
 
-The Solana execution path refuses.
+Alex attempts the same kind of action above the standing limit.
+
+The KEYS Solana execution path refuses.
 
 **REFUSE / MANDATE_LIMIT_EXCEEDED.**
 
-Message:
+> The UI did not merely warn him. The capital path could not execute outside the Key.
 
-> The app did not say no. The account could not do it.
+### 1:10–1:35 — Human boundary decision
 
-### 0:55–1:20 — Market truth
+Alex sends a short private request.
 
-A boundary request or precommitted action is attached to a market condition.
+Sam sees:
+- current standing limit;
+- requested amount;
+- exact asset/action;
+- **Allow once / Widen / Not this time**.
 
-Pyth evidence shows the condition is stale/invalid.
+For the canonical demo, Sam chooses **Allow once**.
 
-**REFUSE / MARKET_CONDITION_INVALIDATED** or **MARKET_EVIDENCE_STALE**.
+Standing authority does not widen.
 
-Message:
+### 1:35–1:58 — Exact exception succeeds
 
-> Pyth does not decide whether Maya deserves more authority. It only proves whether the world still matches the condition she committed to.
+Alex retries the exact approved action.
 
-### 1:20–1:55 — Human decision
+**ALLOW_ONCE → ALLOW / CONFIRMED DEVNET EXECUTION.**
 
-Maya asks for more room.
+The authorization is bound to the exact request, asset, amount ceiling and current nonce, then consumed after successful use.
 
-Guardian chooses:
+> Sam approved this boundary crossing, not a permanently bigger Key.
 
-- **Allow once**
-- **Widen Mandate**
-- **Refuse**
+### 1:58–2:18 — Replay is a real failure
 
-A standing widen is explicitly signed.
+Reuse the same one-time authorization.
 
-Mandate version/nonce advances.
+**REFUSE / AllowanceAlreadyUsed.**
 
-### 1:55–2:20 — Same action, new authority
+No second execution.
 
-Maya retries the same action that previously failed.
+> One-time means one-time.
 
-**ALLOW / SUCCESS.**
+This is the canonical negative event in the judge demo.
 
-### 2:20–2:35 — Replay proof
+### 2:18–2:40 — Market truth + receipt
 
-Old authorization material is reused.
+Briefly show:
+- live Pyth evidence used by the AAPL proof lane;
+- Solana Devnet program;
+- transaction receipt / signature;
+- Mandate version/nonce.
 
-**REFUSE / STALE_NONCE.**
-
-Message:
-
-> Machines guard. Humans grant.
+> Pyth can restrict an action. It can never give Alex more authority.
 
 ### Close
 
 **Financial independence shouldn't happen all at once.**
 
+## Why ALLOW_ONCE is the hero
+
+Standing **WIDEN_MANDATE** remains a real supported capability and a useful Q&A/technical path.
+
+It is not the hero because ALLOW_ONCE demonstrates the product primitive more cleanly:
+- the standing boundary remains intact;
+- a human can authorize one request-scoped exception;
+- the permission is consumed;
+- replay fails;
+- the guardian choice still makes growth visible: Widen is the separate action that creates a new standing Key version.
+
+That is harder to mistake for a parental-control UI.
+
 ## Learning in the demo
 
-Learning is visible but not the bottleneck.
+Keep one short beat:
+- source-backed concept;
+- visible source + verification date;
+- immediate Explore/Practice application.
 
-Possible short beat:
-
-- first unfamiliar asset → 10–20 second explanation;
-- boundary refusal → explain the risk/bound;
-- Pyth invalidation → show T0 vs now;
-- review → compare thesis/condition with outcome, P&L separate.
-
-Do not turn the demo into an LMS.
+Do not turn the demo into an LMS. The purpose is to show that the user understands the decision before/around action while authority stays separate.
 
 ## Technical truth
 
-The existing v0.1 backend proves:
+Current v0.2 proves on canonical Solana Devnet:
+- program-controlled bounded demo-token capital actions;
+- in-bounds ALLOW and out-of-bounds REFUSE;
+- exact single-use ALLOW_ONCE and replay refusal;
+- explicit guardian widening + version/nonce lineage as a separate capability;
+- signed on-chain Pyth verification in the capital path;
+- Durable Object state/idempotency around the hosted Family flow.
 
-- guardian-signed authority transition;
-- version/nonce advance;
-- stale replay refusal;
-- authenticated Pyth Pro equity evidence.
-
-The v0.2 build must still prove:
-
-- program-controlled bounded capital action;
-- signed on-chain Pyth verification;
-- permission-matrix Mandate;
-- boundary-only proposal flow.
-
-No real minor securities execution is currently claimed.
+No real minor securities execution, brokerage, custody or mainnet claim is made.

@@ -94,15 +94,15 @@ export function MoneyIntroSheet({ open, onClose }: { open: boolean; onClose: () 
   const { state } = useStore();
   const { mandate, profile } = state;
   return (
-    <BottomSheet open={open} onClose={onClose} title="Money Mode" description="Use family money within limits set by your parent or guardian.">
+    <BottomSheet open={open} onClose={onClose} title="Your Key" description="Standing room to act on your own, with a clear family boundary.">
       {profile.parentLinked ? (
         <>
           <ul className="space-y-3">
-            <IntroRow icon={<CheckCircle2 className="size-5" />} tone="green" title="Inside your limits, just go">
-              Invest up to {formatAmount(mandate.maxActionNotional)} at a time. No need to ask each time.
+            <IntroRow icon={<CheckCircle2 className="size-5" />} tone="green" title="Inside your Key, just go">
+              Act up to {formatAmount(mandate.maxActionNotional)} at a time. In-bounds actions need no parent approval.
             </IntroRow>
-            <IntroRow icon={<SlidersHorizontal className="size-5" />} tone="blue" title="Need more room? Ask">
-              If something is outside your limits, you can send {profile.parentName} a short request.
+            <IntroRow icon={<SlidersHorizontal className="size-5" />} tone="blue" title="At the boundary, ask">
+              {profile.parentName} can say not this time, allow this request once, or create a wider standing Key.
             </IntroRow>
             <IntroRow icon={<Dumbbell className="size-5" />} tone="lavender" title="Practice is always open">
               Try anything first with practice money.
@@ -257,8 +257,11 @@ export function MandateSummaryCard({
   const active = mandate.status === "ACTIVE";
   return (
     <Card className={cn("p-4", className)}>
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <h3 className="text-[16px] font-extrabold text-navy-strong">{who}</h3>
+      <div className="mb-1 flex items-start justify-between gap-2">
+        <div>
+          <h3 className="text-[16px] font-extrabold text-navy-strong">{who}</h3>
+          <p className="mt-0.5 text-[12px] font-extrabold text-blue">Key v{mandate.version} · standing authority</p>
+        </div>
         <span
           className={cn(
             "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-extrabold",
@@ -268,6 +271,15 @@ export function MandateSummaryCard({
           {active ? <CheckCircle2 aria-hidden className="size-3.5" /> : <PauseCircle aria-hidden className="size-3.5" />}
           {active ? "Active" : mandate.status === "PAUSED" ? "Paused" : "Off"}
         </span>
+      </div>
+      <div className="my-3 overflow-hidden rounded-[14px] border-2 border-blue/20 bg-blue-soft p-3">
+        <div className="flex items-center justify-between gap-3 text-[12.5px] font-extrabold">
+          <span className="text-blue-strong">Inside Key v{mandate.version}</span>
+          <span className="text-green-strong">Act on your own</span>
+        </div>
+        <div className="mt-2 border-t border-blue/20 pt-2 text-[12.5px] font-semibold text-ink-2">
+          At the boundary: ask. A one-time permission can cross once without moving this boundary.
+        </div>
       </div>
       <ul className="divide-y divide-line-soft">
         <LimitRow icon={<CircleDollarSign className="size-4" />} label="Per action" value={`Up to ${formatAmount(mandate.maxActionNotional)}`} />
@@ -429,9 +441,9 @@ export function RequestStatusCard({ request, companyName }: { request: BoundaryR
     PENDING_HUMAN_DECISION: { text: "Waiting for your parent", tone: "bg-yellow-soft text-[#8a5a07]" },
     ALLOW_ONCE_PENDING_CHAIN: { text: "Finishing on Solana…", tone: "bg-blue-soft text-blue-strong" },
     WIDEN_PENDING_CHAIN: { text: "Finishing on Solana…", tone: "bg-blue-soft text-blue-strong" },
-    ALLOWED_ONCE: { text: "Allowed once", tone: "bg-green-soft text-green-strong" },
-    ALLOWED_ONCE_USED: { text: "Used", tone: "bg-surface-soft text-ink-2" },
-    WIDENED: { text: "Limits widened", tone: "bg-green-soft text-green-strong" },
+    ALLOWED_ONCE: { text: "One-time ready", tone: "bg-green-soft text-green-strong" },
+    ALLOWED_ONCE_USED: { text: "One-time used", tone: "bg-surface-soft text-ink-2" },
+    WIDENED: { text: "New Key", tone: "bg-green-soft text-green-strong" },
     REFUSED: { text: "Not this time", tone: "bg-surface-soft text-ink-2" },
       }[request.status];
   const body = (
@@ -447,8 +459,10 @@ export function RequestStatusCard({ request, companyName }: { request: BoundaryR
           {stale
             ? "Your limits changed. Check them and try again."
             : request.status === "ALLOWED_ONCE"
-            ? "Tap to invest now"
-            : request.guardianNote
+            ? `One-time permission ready · Key v${request.mandateVersion} stays unchanged`
+            : request.status === "ALLOWED_ONCE_USED"
+              ? "One-time permission used · standing Key stays unchanged"
+              : request.guardianNote
               ? `Note: ${request.guardianNote}`
               : `\u201c${request.reason}\u201d`}
         </p>

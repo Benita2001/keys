@@ -26,7 +26,7 @@ Authenticated Pyth Pro equity evidence with freshness/confidence normalization r
 
 Current proof is off-chain/server-side and uses an entitled live feed.
 
-## Gate 4 — strategy re-open + hostile review — PASS
+## Gate 4 — product-model revision — PASS
 
 Result:
 
@@ -93,7 +93,7 @@ Result:
 
 Frontend/backend contract v0.2 is now frozen and handed to Benita.
 
-## Gate 7 — Family experience integration — ACTIVE / BENITA
+## Gate 7 — Family experience integration — PASS / BENITA + FAADIL
 
 Product experience:
 
@@ -108,11 +108,13 @@ Product experience:
 
 Benita retains frontend ownership.
 
-## Gate 8 — judge-facing proof
+## Gate 8 — judge-facing proof — READY / RECORDING
 
-Target demo spine:
+Canonical demo spine:
 
-`in-bounds SUCCESS → out-of-bounds REFUSE → market condition invalid/stale → human widen → same action SUCCESS → stale replay REFUSE`
+`ALLOW → REFUSE → guardian ALLOW_ONCE → exact ALLOW → replay REFUSE / AllowanceAlreadyUsed`
+
+Pyth/receipt evidence is the proof layer after the human interaction. Standing widening remains supported, but is not the canonical hero path.
 
 Close:
 

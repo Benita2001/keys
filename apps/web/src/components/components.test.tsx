@@ -34,7 +34,7 @@ describe("BoundaryMessage", () => {
 });
 
 describe("ModeSwitch", () => {
-  it("defaults to Practice and opens the Money Mode explainer the first time", async () => {
+  it("defaults to Practice and opens the Key explainer the first time", async () => {
     render(
       <StoreProvider>
         <ModeSwitch />
@@ -43,7 +43,7 @@ describe("ModeSwitch", () => {
     expect(screen.getByRole("radio", { name: "Practice" })).toHaveAttribute("aria-checked", "true");
     await userEvent.click(screen.getByRole("radio", { name: "Money" }));
     expect(screen.getByRole("radio", { name: "Money" })).toHaveAttribute("aria-checked", "true");
-    const dialog = screen.getByRole("dialog", { name: "Money Mode" });
+    const dialog = screen.getByRole("dialog", { name: "Your Key" });
     expect(dialog).toBeInTheDocument();
     expect(dialog.contains(document.activeElement)).toBe(true); // Q011: focus moves into the sheet
     expect(screen.getByText(/Devnet test capital/i)).toBeInTheDocument();

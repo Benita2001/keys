@@ -236,7 +236,8 @@ function reasonFromError(error) {
     'AllowanceMandateMismatch',
     'AllowanceBeneficiaryMismatch',
     'AllowanceMintMismatch',
-    'AllowanceNotionalExceeded'
+    'AllowanceNotionalExceeded',
+    'AllowanceActionMismatch'
   ];
 
   const text = [

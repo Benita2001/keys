@@ -12,9 +12,9 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Cresco — Money skills today", template: "%s · Cresco" },
+  title: { default: "Cresco — Your Key. Your decisions.", template: "%s · Cresco" },
   description:
-    "A fun, safe way for 10–15 year olds to learn about money, companies and investing, with practice first and family-set limits.",
+    "Cresco gives young people standing room to act independently inside a family Key, with one-time boundary exceptions that do not rewrite standing authority.",
   applicationName: "Cresco",
   appleWebApp: { capable: true, title: "Cresco", statusBarStyle: "default" },
 };

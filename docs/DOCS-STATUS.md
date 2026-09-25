@@ -131,5 +131,3 @@ Backend v0.2 build / Solana / Pyth / contract:
 Frontend/product experience:
 
 **Benita**, after/alongside the new v0.2 contract rather than being locked to v0.1 proposal-per-action semantics.
-
-COVENANT remains separate until the final Candidate A vs Candidate B collision.

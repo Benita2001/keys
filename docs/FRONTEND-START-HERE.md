@@ -37,15 +37,16 @@ See:
 ## Experience target
 
 1. My Key
-2. Contextual Learn / Practice
-3. In-bounds action
-4. Boundary refusal
-5. Market evidence/change
-6. Ask for more room
-7. Guardian allow once / widen / refuse
-8. Same action after widen
-9. Stale authorization refusal
-10. Proof/receipt
+2. Source-backed contextual Learn / Practice
+3. In-bounds action → ALLOW
+4. Boundary action → REFUSE
+5. Ask for more room
+6. Guardian chooses ALLOW_ONCE for the canonical demo
+7. Exact retry → ALLOW
+8. Reuse the same one-time permission → REFUSE / AllowanceAlreadyUsed
+9. Proof/receipt with Pyth + Solana evidence
+
+Widen remains a supported standing-authority option, but it is not the hero path.
 
 Do not expose protocol jargon as the main UX.
 

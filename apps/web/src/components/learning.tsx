@@ -14,15 +14,14 @@ import {
   Plus,
   Rocket,
   Scale,
-  Star,
   TrendingUp,
 } from "lucide-react";
 import type { Achievement, Goal, LearningModule, Lesson, ModuleState } from "@/domain/types";
 import { BadgeArt } from "./illustrations/badges";
 import { GoalArt, Target } from "./illustrations/objects";
-import { cn, XPBadge } from "./ui/primitives";
+import { cn } from "./ui/primitives";
 
-export function MissionCard({ title, body, xp, href, done }: { title: string; body: string; xp: number; href: string; done?: boolean }) {
+export function MissionCard({ title, body, href, done }: { title: string; body: string; xp: number; href: string; done?: boolean }) {
   return (
     <Link
       href={href}
@@ -32,7 +31,7 @@ export function MissionCard({ title, body, xp, href, done }: { title: string; bo
       <div className="min-w-0 flex-1">
         <p className="text-[15px] font-extrabold text-navy-strong">{title}</p>
         <p className="mt-0.5 text-[13.5px] font-semibold leading-snug text-ink-2">{body}</p>
-        <p className="mt-1.5">{done ? <span className="text-[13px] font-extrabold text-green-strong">Completed · +{xp} XP</span> : <XPBadge xp={xp} />}</p>
+        <p className="mt-1.5 text-[13px] font-extrabold text-green-strong">{done ? "Completed" : "Learning progress only · never changes your Key"}</p>
       </div>
       <div className="flex flex-col items-end justify-between self-stretch">
         <span aria-hidden className="grid size-7 place-items-center rounded-full bg-yellow text-white">
@@ -117,8 +116,8 @@ export function ModuleRow({
           {module.title}
         </p>
         <p className={cn("mt-0.5 text-[12.5px] font-semibold", current ? "text-white" : "text-ink-2")}>{module.subtitle}</p>
-        <p className={cn("mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-extrabold", current ? "text-white" : "text-orange-text")}>
-          <Star aria-hidden className={cn("size-3", current ? "fill-[#ffe08a] text-[#ffe08a]" : "fill-yellow text-yellow")} /> +{module.xp} XP
+        <p className={cn("mt-0.5 text-[12.5px] font-extrabold", current ? "text-white" : "text-ink-3")}>
+          Learning only · no authority unlock
         </p>
       </div>
       {state === "complete" ? (

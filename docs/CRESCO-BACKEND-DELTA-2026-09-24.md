@@ -268,7 +268,7 @@ $5 action
     ↓
 Cresco → KEYS API
     ↓
-live signed Pyth TSLA evidence
+live signed Pyth AAPL evidence
     ↓
 KEYS Solana devnet program
     ↓
@@ -289,9 +289,17 @@ KEYS program / Mandate boundary
 REFUSE
     ↓
 Ask for more room
+    ↓
+guardian ALLOW_ONCE
+    ↓
+exact retry ALLOW
+    ↓
+reuse same allowance
+    ↓
+REFUSE / AllowanceAlreadyUsed
 ```
 
-Human widening remains the only path that expands standing authority.
+Human widening remains the only path that expands standing authority, but the canonical demo intentionally keeps the standing boundary unchanged and proves an exact one-time exception.
 
 ## Canonical truth sentence
 

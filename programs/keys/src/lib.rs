@@ -423,10 +423,18 @@ pub mod keys {
             ctx.accounts.mint.decimals,
             market.unit_price_micro_usd,
         )?;
-        require!(
-            requested_notional_micro_usd
-                <= ctx.accounts.allowance.max_notional_micro_usd,
-            KeysError::AllowanceNotionalExceeded
+        require_allowance_exact_notional(
+            ctx.accounts.allowance.max_notional_micro_usd,
+            requested_notional_micro_usd,
+            ctx.accounts.mint.decimals,
+            market.unit_price_micro_usd,
+        )?;
+
+        msg!(
+            "ALLOW_ONCE_EXACT_ACTION approved_notional_micro_usd={} actual_notional_micro_usd={} nonce={}",
+            ctx.accounts.allowance.max_notional_micro_usd,
+            requested_notional_micro_usd,
+            expected_nonce
         );
 
         let next_spent_amount = ctx
@@ -1051,6 +1059,44 @@ fn checked_pow10_i128(power: u32) -> Result<i128> {
         .ok_or_else(|| error!(KeysError::Overflow))
 }
 
+fn require_allowance_exact_notional(
+    approved_notional_micro_usd: u64,
+    actual_notional_micro_usd: u64,
+    mint_decimals: u8,
+    unit_price_micro_usd: u64,
+) -> Result<()> {
+    require!(
+        actual_notional_micro_usd <= approved_notional_micro_usd,
+        KeysError::AllowanceNotionalExceeded
+    );
+
+    require!(
+        u32::from(mint_decimals) <= 18,
+        KeysError::PythExponentUnsupported
+    );
+
+    let scale = 10_u128
+        .checked_pow(u32::from(mint_decimals))
+        .ok_or(KeysError::Overflow)?;
+    let price = u128::from(unit_price_micro_usd);
+    let max_rounding_gap = price
+        .checked_add(scale.saturating_sub(1))
+        .ok_or(KeysError::Overflow)?
+        .checked_div(scale)
+        .ok_or(KeysError::Overflow)?
+        .saturating_add(1);
+
+    let shortfall = u128::from(approved_notional_micro_usd)
+        .checked_sub(u128::from(actual_notional_micro_usd))
+        .ok_or(KeysError::AllowanceNotionalExceeded)?;
+
+    require!(
+        shortfall <= max_rounding_gap,
+        KeysError::AllowanceActionMismatch
+    );
+    Ok(())
+}
+
 fn advance_mandate(mandate: &mut Mandate) -> Result<()> {
     mandate.version = mandate
         .version
@@ -1644,6 +1690,8 @@ pub enum KeysError {
     AllowanceMintMismatch,
     #[msg("The requested notional exceeds the one-time allowance.")]
     AllowanceNotionalExceeded,
+    #[msg("The execution does not match the exact one-time notional approved by the guardian.")]
+    AllowanceActionMismatch,
     #[msg("Unexpected Pyth Lazer program id.")]
     InvalidPythProgram,
     #[msg("Unexpected Pyth Lazer storage account.")]
@@ -1719,6 +1767,37 @@ mod tests {
                 .checked_add(amount)
                 .map(|next| next <= max_period)
                 .unwrap_or(false)
+    }
+
+    #[test]
+    fn exact_allowance_rejects_materially_smaller_action() {
+        assert!(require_allowance_exact_notional(
+            12_000_000,
+            12_000_000,
+            6,
+            250_000_000
+        )
+        .is_ok());
+
+        assert!(require_allowance_exact_notional(
+            12_000_000,
+            11_000_000,
+            6,
+            250_000_000
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn exact_allowance_accepts_only_rounding_dust() {
+        // At $250/token with 6 decimals, one base unit is $0.00025 = 250 micro-USD.
+        assert!(require_allowance_exact_notional(
+            12_000_000,
+            11_999_750,
+            6,
+            250_000_000
+        )
+        .is_ok());
     }
 
     #[test]

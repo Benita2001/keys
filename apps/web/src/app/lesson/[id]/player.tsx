@@ -1,6 +1,7 @@
 "use client";
 
-import { Lock, Sparkles } from "lucide-react";
+import { ArrowRight, ExternalLink, Lock, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { LessonIllustration } from "@/components/illustrations/scenes";
 import { LessonProgress, ModuleIcon, QuizOption } from "@/components/learning";
@@ -120,7 +121,34 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
         </div>
 
         {step.kind === "concept" ? (
-          <p className="mt-5 text-[17px] font-semibold leading-relaxed text-navy">{step.body}</p>
+          <>
+            <p className="mt-5 text-[17px] font-semibold leading-relaxed text-navy">{step.body}</p>
+            {step.realityCheck ? (
+              <div className="mt-4 rounded-[18px] border border-blue/15 bg-blue-soft px-4 py-3.5">
+                <p className="text-[12px] font-black uppercase tracking-[0.08em] text-blue-strong">Reality check</p>
+                <p className="mt-1.5 text-[13.5px] font-semibold leading-relaxed text-navy">{step.realityCheck}</p>
+                {step.source ? (
+                  <>
+                    <a href={step.source.url} target="_blank" rel="noreferrer" className="mt-2.5 inline-flex items-center gap-1.5 text-[12.5px] font-extrabold text-blue hover:underline">
+                      {step.source.organization} · {step.source.title}
+                      <ExternalLink aria-hidden className="size-3.5" />
+                      <span className="sr-only">opens in a new tab</span>
+                    </a>
+                    <p className="mt-1 text-[11.5px] font-bold text-ink-3">Checked <time dateTime={step.source.verifiedAt}>{step.source.verifiedAt}</time></p>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
+            {step.apply ? (
+              <Link href={step.apply.href} className="mt-4 flex items-center gap-3 rounded-[18px] border border-line-soft bg-surface p-4 transition-transform active:scale-[0.99]">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12px] font-black uppercase tracking-[0.08em] text-green-strong">Try it in Cresco</p>
+                  <p className="mt-1 text-[13.5px] font-semibold leading-relaxed text-ink-2">{step.apply.body}</p>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1 text-[12.5px] font-extrabold text-blue">{step.apply.label}<ArrowRight aria-hidden className="size-4" /></span>
+              </Link>
+            ) : null}
+          </>
         ) : (
           <>
             <p className="mt-4 text-[15px] font-semibold leading-relaxed text-ink-2">{step.prompt}</p>

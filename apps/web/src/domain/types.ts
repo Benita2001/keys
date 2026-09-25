@@ -165,6 +165,10 @@ export type ReasonCode =
   | "INVALID_AMOUNT"
   | "MANDATE_LIMIT_EXCEEDED"
   | "PERIOD_LIMIT_EXCEEDED"
+  /** On-chain one-time permission exists but the attempted action differs from the approved notional. */
+  | "AllowanceActionMismatch"
+  /** The exact one-time permission was already consumed on-chain. */
+  | "AllowanceAlreadyUsed"
   /** Frontend-side balance check; not part of the backend policy facade. */
   | "INSUFFICIENT_BALANCE"
   | "ASSET_UNAVAILABLE"
@@ -288,6 +292,20 @@ export type ExecutionResult = {
 /* Learning                                                            */
 /* ------------------------------------------------------------------ */
 
+export type LearningSource = {
+  organization: string;
+  title: string;
+  url: string;
+  /** ISO date when the learning claim was last checked against the source. */
+  verifiedAt: string;
+};
+
+export type LearningApplication = {
+  label: string;
+  href: string;
+  body: string;
+};
+
 export type IllustrationKey =
   | "piggy"
   | "storefront"
@@ -305,6 +323,9 @@ export type LessonStep =
       body: string;
       illustration: IllustrationKey;
       caption?: string;
+      realityCheck?: string;
+      source?: LearningSource;
+      apply?: LearningApplication;
     }
   | {
       kind: "quiz";

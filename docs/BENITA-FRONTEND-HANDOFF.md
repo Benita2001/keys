@@ -124,17 +124,16 @@ AAPL is the current proven Money/Pyth lane. TSLA remains historical valid proof.
 ## Judge-facing order
 
 1. **My Key** — current freedom/bounds.
-2. **Learn / Practice** — contextual, short, age-respectful.
-3. **In-bounds action** — immediate, no guardian approval.
-4. **Boundary refusal**.
-5. **Pyth market condition / evidence**.
-6. **Ask for more room**.
-7. **Guardian decision** — allow once / widen / refuse.
-8. **Same action after widen** — success.
-9. **Stale authorization** — old nonce refuses.
-10. **Proof drawer / receipt** — Devnet signature, program, version/nonce, Pyth evidence.
+2. **Source-backed Learn / Practice** — short, applied, age-respectful.
+3. **In-bounds action** — immediate ALLOW, no guardian approval.
+4. **Boundary action** — REFUSE.
+5. **Ask for more room** — exact private request.
+6. **Guardian decision** — choose **Allow once** for the canonical demo.
+7. **Exact retry** — ALLOW using the nonce-bound one-time authorization.
+8. **Replay the same authorization** — REFUSE / `AllowanceAlreadyUsed`.
+9. **Proof drawer / receipt** — Devnet signature, program, version/nonce, Pyth evidence.
 
-The hero is the child’s understandable freedom. Solana and Pyth prove it; they should not dominate the first screen.
+Widen remains supported as a standing-authority capability and Q&A path, but ALLOW_ONCE + replay refusal is the canonical hero. The hero is the child’s understandable freedom; Solana and Pyth prove it without dominating the first screen.
 
 ## Production-only items — do not block the hackathon
 
@@ -196,3 +195,19 @@ Canonical proof: `36115570744`
 Hosted proof: `36115973480`  
 Web: `36115749327`  
 WebKit/iPhone: `36115749387`.
+
+
+## Locked visual grammar — September 25
+
+These are product rules for the submission UI, not optional decoration:
+
+1. **Make the Key a visible object.** Show Key vN and the current standing boundary in plain language.
+2. **Inside = quiet.** In-bounds success should feel immediate and independent; no guardian approval ceremony.
+3. **Boundary = loud.** A refusal should visibly mark the edge, explain which rule fired, and offer adjust / practice / ask.
+4. **Move the exception, not the boundary.** ALLOW_ONCE should appear as a temporary permission that becomes USED; the standing Key remains visually unchanged.
+5. **Guardian choice must show the third model:** Not this time · Allow once · Widen the Key.
+6. **Growth is explicit, never earned automatically.** Widen creates Key vN+1; lessons, XP, P&L and AI never do.
+7. **One consumer brand in the opening experience.** Cresco is the screen-level identity; KEYS appears in technical/proof context, not as competing hero branding.
+8. **Practice and Key money must be visually unmistakable.** Practice = virtual money. Money = Devnet demo capital under the Key.
+9. **Proof is secondary.** Solana/Pyth/nonce/signature details live in the proof drawer after the human interaction is understood.
+10. **Motion must have a job.** Use motion to explain continuity: boundary stays fixed, one-time permission appears, crosses once, becomes used, disappears.
