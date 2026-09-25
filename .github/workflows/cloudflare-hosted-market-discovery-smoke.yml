@@ -1,0 +1,66 @@
+name: cloudflare-hosted-market-discovery-smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/pyth-adapter.mjs'
+      - 'src/cloudflare-family-api.mjs'
+      - 'apps/web/src/services/keys-backend.ts'
+      - 'apps/web/src/app/(child)/explore/page.tsx'
+      - '.github/workflows/cloudflare-hosted-market-discovery-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  hosted-market-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      KEYS_API_URL: https://keys-api-stocklana.faadil-casecraft.workers.dev
+    steps:
+      - name: Verify hosted Pyth market discovery without mutating Family state
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 24); do
+            status=$(curl --silent --show-error --output /tmp/markets.json --write-out '%{http_code}' \
+              "$KEYS_API_URL/api/v0.2/market/discovery" || true)
+            if [ "$status" = "200" ] && node -e '
+              const fs = require("fs");
+              const x = JSON.parse(fs.readFileSync("/tmp/markets.json","utf8"));
+              const groups = new Map((x.classes || []).map(g => [g.id, g]));
+              const feeds = (x.classes || []).flatMap(g => g.feeds || []);
+              const accessible = feeds.filter(f => f.entitlementStatus === "ACCESSIBLE");
+              const aapl = accessible.find(f => f.symbol === "Equity.US.AAPL/USD");
+              const required = ["equity","crypto","fx","metal","commodity"];
+              const ok =
+                x.type === "V0_2_MARKET_DISCOVERY" &&
+                x.primaryMoneyAsset === "AAPL" &&
+                x.truthBoundary?.catalogPresenceDoesNotImplyEntitlement === true &&
+                x.truthBoundary?.entitlementDoesNotImplyMoneyExecution === true &&
+                x.truthBoundary?.onlyAaplMoneyExecutionProven === true &&
+                required.every(id => (groups.get(id)?.accessibleFeedCount || 0) > 0) &&
+                aapl?.productMode === "PRIMARY_MONEY_PROOF" &&
+                aapl?.moneyExecutionProven === true &&
+                accessible
+                  .filter(f => f.symbol !== "Equity.US.AAPL/USD")
+                  .every(f =>
+                    f.productMode === "LEARN_PRACTICE_ONLY" &&
+                    f.moneyExecutionProven === false &&
+                    f.authorityEffect === "NONE"
+                  );
+              process.exit(ok ? 0 : 1);
+            '; then
+              cat /tmp/markets.json
+              echo "CLOUDFLARE_HOSTED_PYTH_MARKET_DISCOVERY=PASS"
+              exit 0
+            fi
+            echo "Waiting for hosted market discovery (attempt $attempt/24, status=$status)..."
+            cat /tmp/markets.json 2>/dev/null || true
+            sleep 10
+          done
+          echo "CLOUDFLARE_HOSTED_PYTH_MARKET_DISCOVERY=FAIL"
+          exit 1
