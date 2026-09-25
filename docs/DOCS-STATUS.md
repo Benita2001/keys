@@ -1,7 +1,7 @@
 # KEYS — Documentation Status
 
 Date: 2026-09-24  
-Status: **CANONICAL DOCS SYNCHRONIZED TO STATEFUL DEVNET FAMILY INTEGRATION**
+Status: **CANONICAL DOCS SYNCHRONIZED — ALL CURRENT HACKATHON TECHNICAL GATES PASS**
 
 ## Current canonical truth
 
@@ -21,21 +21,23 @@ Status: **CANONICAL DOCS SYNCHRONIZED TO STATEFUL DEVNET FAMILY INTEGRATION**
 - Pyth-derived USD/notional enforcement: **PASS — devnet**
 - precommitted max-price refusal: **PASS — devnet**
 - frontend/backend contract v0.2: **FROZEN**
-- Cloudflare stateful Family API: **IMPLEMENTED / LIVE DEPLOYMENT TARGET**
+- Cloudflare stateful Family API: **LIVE / STATEFUL BUILD DEPLOYED**
 - Durable Object Family state + cross-device sync: **IMPLEMENTED**
 - server-owned Mandate evaluation: **IMPLEMENTED**
 - role-scoped child/guardian demo sessions: **IMPLEMENTED**
 - guardian Mandate transitions: **IMPLEMENTED ON SOLANA DEVNET**
 - persistent boundary requests / decisions: **IMPLEMENTED**
-- exact single-use ALLOW_ONCE: **IMPLEMENTED**
+- exact single-use ALLOW_ONCE: **PASS — DEPLOYED + PROVEN ON DEVNET; reuse REFUSE / AllowanceAlreadyUsed**
 - durable idempotency / anti-double-spend reservations: **IMPLEMENTED**
 - test funding: **IMPLEMENTED — NO REAL PAYMENT**
 - learning + Money portfolio sync: **IMPLEMENTED**
 - market quote API: **IMPLEMENTED / FAIL-CLOSED**
-- market history provider: **NOT CONNECTED / NO FABRICATION**
-- iPhone WebKit QA: **PASS — run 36054614070**
-- current Node/API CI: **PASS — run 36054828960**
+- market history provider: **PASS — AUTHENTICATED PYTH PRO AAPL HISTORY HOSTED; fail-closed otherwise**
+- iPhone WebKit QA: **PASS — run 36057960806**
+- current Node/API CI: **PASS — run 36082140540**
 - Cloudflare Worker dry-run: **PASS — run 36054015677**
+- hosted state/history/concurrency smoke: **PASS — run 36066208304**
+- final ALLOW_ONCE Devnet proof: **PASS — upgrade run 36079506597; bridge run 36082140600**
 - real minor securities execution: **OUT OF SCOPE**
 - frontend owner: **Benita**
 - backend v0.2 owner: **Faadil**
@@ -79,7 +81,7 @@ Canonical live Pyth proof feed:
 | `docs/FRONTEND-START-HERE.md` | Benita transition guide | CURRENT |
 | `docs/BENITA-FRONTEND-HANDOFF.md` | ownership/handoff | CURRENT |
 | `state/CURRENT.yaml` | machine-readable current truth | CURRENT |
-| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v13 |
+| `state/HANDOVER.yaml` | cross-conversation handoff | CURRENT v18 |
 
 ## v0.1 evidence remains evidence
 
@@ -101,6 +103,9 @@ Now additionally proven on canonical devnet:
 - signed live Pyth verification inside the Solana capital path;
 - Pyth-derived USD/notional enforcement;
 - precommitted max-price refusal.
+- exact ALLOW_ONCE grant/consume/reuse refusal on canonical devnet;
+- authenticated AAPL Pyth Pro History via the hosted Cloudflare API;
+- multi-asset Family budget serialization via hosted Durable Object concurrency proof.
 
 Production-only / intentionally not claimed:
 
