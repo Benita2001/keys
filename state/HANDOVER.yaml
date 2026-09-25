@@ -98,7 +98,7 @@ canonical_truth:
     hosted_stateful_smoke: PASS
     hosted_stateful_smoke_run: "https://github.com/Faadil1/keys/actions/runs/36066208304"
     devnet_allow_once_program_upgrade: BLOCKED_EXTERNAL_DEVNET_FUNDING
-    devnet_allow_once_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/36070676319"
+    devnet_allow_once_upgrade_run: "https://github.com/Faadil1/keys/actions/runs/36079506597"
     devnet_allow_once_required_lamports: 2371812520
     devnet_allow_once_available_lamports: 1948895627
     devnet_allow_once_shortfall_lamports: 422916893
