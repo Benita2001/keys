@@ -15,10 +15,10 @@ import {
   RequestStatusCard,
 } from "@/components/mode";
 import { ErrorState } from "@/components/ui/feedback";
-import { Avatar, Card, ProgressBar, SectionHeader, StreakBadge, TextLink } from "@/components/ui/primitives";
-import { formatAmount, formatNumber } from "@/domain/format";
+import { Avatar, Card, SectionHeader, StreakBadge, TextLink } from "@/components/ui/primitives";
+import { formatAmount } from "@/domain/format";
 import { remainingThisPeriod } from "@/domain/policy";
-import { useLevel, useModuleStates, usePortfolio } from "@/hooks/data";
+import { useModuleStates, usePortfolio } from "@/hooks/data";
 import { ACHIEVEMENTS, GOALS } from "@/mocks/family";
 import { LESSONS, MISSION, MODULES, lessonById, moduleById } from "@/mocks/learning";
 import { allAssetSnapshots } from "@/services";
@@ -26,7 +26,6 @@ import { useStore } from "@/state/store";
 
 export default function HomePage() {
   const { state } = useStore();
-  const { level, xp, progress } = useLevel();
   const { assets, view } = usePortfolio(state.mode);
   const modules = useModuleStates();
 
@@ -68,12 +67,8 @@ export default function HomePage() {
           <h1 className="text-[23px] font-black leading-tight tracking-[-0.01em] text-navy-strong">
             Hey {state.profile.childName} <span aria-hidden>👋</span>
           </h1>
-          <Link href="/profile/wins" className="mt-1 block" aria-label={`Level ${level}, ${formatNumber(xp)} XP. See your wins.`}>
-            <span className="flex items-center justify-between text-[12.5px] font-extrabold">
-              <span className="text-blue">Level {level}</span>
-              <span className="text-ink-2 tabular">{formatNumber(xp)} XP</span>
-            </span>
-            <ProgressBar value={progress} className="mt-1" height={6} />
+          <Link href="/learn" className="mt-1 block text-[12.5px] font-extrabold text-blue" aria-label="Learning progress. Separate from your Key.">
+            Learning progress · separate from your Key
           </Link>
         </div>
         <StreakBadge days={state.streakDays} />
@@ -123,14 +118,14 @@ export default function HomePage() {
           {state.mode === "money" ? (
             <Card className="p-5">
               <p className="flex items-center gap-2 text-[15px] font-extrabold text-navy-strong">
-                <ShieldCheck aria-hidden className="size-5 text-green" /> My limits
+                <ShieldCheck aria-hidden className="size-5 text-green" /> My Key
               </p>
               <p className="mt-2 text-[14px] font-semibold text-ink-2">
-                Up to {formatAmount(state.mandate.maxActionNotional)} per action, {formatAmount(remainingThisPeriod(state.mandate))} left{" "}
-                {state.mandate.periodLabel}. Inside these limits, you don&apos;t need to ask.
+                Key v{state.mandate.version} · up to {formatAmount(state.mandate.maxActionNotional)} per action, {formatAmount(remainingThisPeriod(state.mandate))} left{" "}
+                {state.mandate.periodLabel}. Inside your Key, you act on your own.
               </p>
               <TextLink href="/profile/limits" className="mt-3 inline-block">
-                See my limits
+                See my Key
               </TextLink>
             </Card>
           ) : null}
