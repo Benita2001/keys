@@ -214,12 +214,20 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
           {mode === "practice"
             ? "Added to your Practice Portfolio"
             : phase.allowedOnce
-              ? `Done. ${state.profile.parentName} allowed this once.`
-              : "Done. Inside your limits."}
+              ? "Done once. Your Key didn't change."
+              : "Done. No parent approval needed."}
         </h1>
         <p className="mt-2 max-w-[34ch] text-[15px] font-semibold text-ink-2">
           {formatAmount(amount)} in {asset.companyName} · about {formatShares(shares)} shares at a {asset.dataStatus === "live" ? "live" : "sample"} price of {formatUsd(asset.price)}.
         </p>
+        {mode === "money" && phase.allowedOnce ? (
+          <div className="mt-4 w-full rounded-[16px] border-2 border-green/25 bg-green-soft px-4 py-3 text-left">
+            <p className="text-[12px] font-black uppercase tracking-[0.08em] text-green-strong">One-time permission → USED</p>
+            <p className="mt-1 text-[13.5px] font-semibold text-navy">
+              This boundary crossing was consumed. Standing Key v{mandate.version} is still the same.
+            </p>
+          </div>
+        ) : null}
         {mode === "money" ? (
           <ExecutionProofNote
             className="mt-4"
@@ -299,7 +307,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
         </span>
         <h1 className="mt-5 text-[26px] font-black text-navy-strong">Request sent</h1>
         <p className="mt-2 max-w-[32ch] text-[15px] font-semibold text-ink-2">
-          {state.profile.parentName} can allow it once, change your limits, or say not this time. You&apos;ll see the answer on Home.
+          {state.profile.parentName} can say not this time, allow this request once, or create a wider standing Key. You&apos;ll see the answer on Home.
         </p>
         <div className="mt-auto w-full space-y-3 pb-[calc(16px+env(safe-area-inset-bottom))] pt-8">
           <ActionButton href={`/invest/${asset.ticker}?mode=practice&amount=${amount}`} arrow>
@@ -342,7 +350,7 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
           {allowOnce ? (
             <div className="mt-3 flex items-start gap-2 rounded-[14px] bg-green-soft px-3.5 py-3 text-[13.5px] font-bold text-green-strong">
               <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0" />
-              {state.profile.parentName} allowed {formatAmount(allowOnce.requestedNotional)} in {asset.companyName} once.
+              {state.profile.parentName} allowed this request once. Standing Key v{mandate.version} stays unchanged.
             </div>
           ) : null}
 
@@ -390,8 +398,8 @@ function Flow({ asset, mode, initialAmount }: { asset: MarketAsset; mode: Mode; 
             {mode === "money" ? (
               <p className="mt-2 flex items-start gap-2 text-[13px] font-semibold text-ink-2">
                 <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0 text-green" />
-                Up to {formatAmount(mandate.maxActionNotional)} per action · {formatAmount(remainingThisPeriod(mandate))} left{" "}
-                {mandate.periodLabel}. Inside these limits, you don&apos;t need to ask.
+                Key v{mandate.version} · up to {formatAmount(mandate.maxActionNotional)} per action · {formatAmount(remainingThisPeriod(mandate))} left{" "}
+                {mandate.periodLabel}. Inside this Key, you act on your own.
               </p>
             ) : null}
           </div>

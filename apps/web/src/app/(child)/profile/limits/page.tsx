@@ -16,21 +16,34 @@ export default function MyLimitsPage() {
 
   return (
     <div className="animate-rise mx-auto max-w-[720px]">
-      <PageHeader title="My limits" subtitle={`Set by ${state.profile.parentName}. Inside them, you decide.`} back="/profile" />
+      <PageHeader title="My Key" subtitle={`Key v${mandate.version} · set with ${state.profile.parentName}. Inside it, you decide.`} back="/profile" />
       <div className="mt-4">
         {!state.profile.parentLinked ? (
           <MoneyModeUnavailable reason="parent" />
         ) : (
           <>
-            <MandateSummaryCard mandate={mandate} who="Money Mode" />
+            <MandateSummaryCard mandate={mandate} who="Standing Key" />
             <Card className="mt-4 p-4">
-              <p className="text-[15px] font-extrabold text-navy-strong">How it works</p>
+              <p className="text-[15px] font-extrabold text-navy-strong">How your freedom works</p>
               <ul className="mt-2 space-y-2 text-[14px] font-semibold text-ink-2">
-                <li>Inside your limits, you can invest right away. No need to ask.</li>
-                <li>If something is outside them, you&apos;ll see why, and you can adjust, practice, or ask for more room.</li>
-                <li>Only {state.profile.parentName} can change your limits. Lessons, XP and results never change them on their own.</li>
+                <li><strong>Inside:</strong> act right away. No parent approval is needed.</li>
+                <li><strong>At the boundary:</strong> adjust, practice, or ask for more room.</li>
+                <li><strong>Learning never mints permission:</strong> lessons, scores and results can inform a conversation, but only {state.profile.parentName} can create a wider standing Key.</li>
               </ul>
               <DemoMoneyTag className="mt-3" />
+            </Card>
+            <Card className="mt-4 p-4">
+              <p className="text-[15px] font-extrabold text-navy-strong">How independence grows</p>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-[13px] font-semibold">
+                <div className="rounded-[14px] bg-green-soft p-3 text-green-strong">
+                  <p className="font-extrabold">Allow once</p>
+                  <p className="mt-1">One boundary crossing. Key v{mandate.version} stays the same.</p>
+                </div>
+                <div className="rounded-[14px] bg-blue-soft p-3 text-blue-strong">
+                  <p className="font-extrabold">Widen the Key</p>
+                  <p className="mt-1">A guardian creates Key v{mandate.version + 1} with more standing room.</p>
+                </div>
+              </div>
             </Card>
 
             <section className="mt-5">
@@ -57,7 +70,7 @@ export default function MyLimitsPage() {
             ) : null}
 
             <p className="mt-5 rounded-[16px] bg-blue-soft px-4 py-3 text-[13.5px] font-semibold text-blue-strong">
-              Finished a few lessons? You can ask {state.profile.parentName} to review your limits together.
+              Need a different boundary? Ask when you reach it. Learning and performance can improve the conversation, but they never change your Key automatically.
             </p>
           </>
         )}

@@ -380,7 +380,7 @@ End with:
 
 ### Short
 
-**KEYS is bounded autonomy for family investing. A guardian defines a versioned capital Mandate; a young person can act independently inside it, while Solana refuses actions outside the boundary. Pyth provides load-bearing market truth, and only an authorized guardian can widen standing authority. The Stocklana demo runs on Solana Devnet with a demo SPL token and exposes verifiable transaction receipts without claiming brokerage or real minor securities execution.**
+**Cresco / KEYS is a consumer authority layer for programmable capital. A guardian defines a standing Key; a young person acts independently inside it, asks only at the boundary, and can receive a one-time exception without permanently widening the Key. Solana enforces the demo-capital boundary in the execution path, Pyth provides load-bearing market truth, and only the guardian can increase standing authority. The Stocklana demo uses a Devnet demo token and does not claim brokerage, custody or real minor securities execution.**
 
 ### Longer
 
@@ -406,7 +406,15 @@ The Solana program, Mandate/AssetRule enforcement, on-chain refusal, version/non
 
 ### “Why not just use a database?”
 
-A database can store the family preference, but the product promise is that the capital action is constrained by a versioned authority object whose enforcement and receipt are independently inspectable. Solana is the execution/authority boundary, not an analytics datastore.
+A database can reproduce much of the interface and authorization logic. The difference is where the rule lives. With KEYS, capital placed under the KEYS program-controlled path is constrained in the same execution path that moves the demo asset. The UI can disappear and the boundary still holds. We do not claim that one-time authorization is impossible in Web2; we use Solana so the authority rule is part of asset execution rather than only a promise made by our application backend.
+
+### “What does KEYS bring to Solana?”
+
+Solana already makes assets programmable and provides delegation primitives. KEYS turns that programmability into a human authority model: not approve every trade, not hand over everything, but agree on standing rules and let the person act. Family is the clearest wedge for that new consumer behavior.
+
+### “How is this different from a native Solana allowance?”
+
+A native allowance delegates spend capacity. A KEYS Key is a standing authority object with asset/action scope, limits and market conditions plus a boundary workflow. ALLOW_ONCE handles one approved boundary request without mutating that standing Key. The current deployed permission is request/mint/nonce/ceiling bound and single-use; we do not overclaim a full canonical action-parameter hash.
 
 ### “Why does this need Pyth?”
 
@@ -430,7 +438,7 @@ A Cloudflare Durable Object serializes the family reservation, period spend and 
 
 ### “How does Allow once work?”
 
-It is not a generic bypass. The execution must cite the exact approved request id, match its asset and current nonce, stay at or below the approved amount, and the permission is consumed after successful use. This is now proven on Devnet: grant → one execution → second use REFUSE with `AllowanceAlreadyUsed`.
+It is not a generic bypass and it does not widen standing authority. The execution must cite the approved request id, match its asset/current Mandate nonce, stay at or below the approved ceiling, and the permission is consumed after successful use. This is proven on Devnet: grant → one execution → second use REFUSE with `AllowanceAlreadyUsed`. Standing Key version remains unchanged by the one-time exception.
 
 ### “Why AAPL?”
 

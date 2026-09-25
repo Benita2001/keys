@@ -118,3 +118,22 @@ A teen may therefore be:
 at the same time.
 
 This is why stages are UX and the Mandate is truth.
+
+
+## Key history as applied learning
+
+Source-backed lessons remain valuable, but the most product-native learning artifact is the Key's own history.
+
+A useful history should make meaningful authority events legible:
+- an in-bounds decision made independently;
+- a boundary hit and its plain-language reason;
+- a private request;
+- an ALLOW_ONCE that was consumed without moving the standing Key;
+- an explicit guardian widen that created a new Key version;
+- a market-evidence refusal that tightened execution without granting authority.
+
+This turns learning into reflection on real decisions rather than a gate. The history is **not** a surveillance feed and **never** becomes a competence score.
+
+Canonical rule:
+
+> **Learning never mints permission.**

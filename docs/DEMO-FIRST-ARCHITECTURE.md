@@ -3,6 +3,76 @@
 Date: 2026-09-25  
 Title: **The key that works until the boundary — once means once**
 
+## Canonical 55-second judge cut
+
+The product proof should land before the infrastructure proof.
+
+### 0:00–0:05 — freedom first
+
+Show **Key vN** and one small in-bounds AAPL demo-capital action.
+
+**ALLOW.** No guardian screen. No celebration ritual.
+
+> Inside the Key, Alex acts on his own.
+
+### 0:05–0:13 — the edge
+
+Try a larger action.
+
+**REFUSE.**
+
+Show the boundary visually and one plain-language reason. Offer **Ask for more room**.
+
+### 0:13–0:24 — the third model
+
+Guardian sees the exact request and three choices:
+
+**Not this time · Allow once · Widen the Key**
+
+Make the distinction explicit:
+- Not this time → Key vN remains.
+- Allow once → one request can cross; Key vN remains.
+- Widen → create standing Key vN+1.
+
+Choose **Allow once**.
+
+### 0:24–0:36 — consume, do not widen
+
+Retry the approved request.
+
+**ALLOW.**
+
+Show:
+- ONE-TIME PERMISSION → USED;
+- **Standing Key vN — unchanged**.
+
+The exception moves. The boundary does not.
+
+### 0:36–0:43 — replay
+
+Reuse the same one-time permission.
+
+Main UI:
+
+> This one-time permission has already been used.
+
+Proof lane:
+
+REFUSE / AllowanceAlreadyUsed
+
+No second execution.
+
+### 0:43–0:55 — why Solana / why Pyth
+
+Open the proof drawer only now.
+
+> The UI is not the guard. The KEYS capital path enforces the boundary.
+
+Show Solana Devnet program/signature and the Pyth-derived market evidence used in the capital path.
+
+> Pyth can restrict an action. It can never widen the Key.
+
+
 ## 2–3 minute transformation
 
 ### 0:00–0:20 — The product in one sentence
@@ -89,9 +159,10 @@ Standing **WIDEN_MANDATE** remains a real supported capability and a useful Q&A/
 
 It is not the hero because ALLOW_ONCE demonstrates the product primitive more cleanly:
 - the standing boundary remains intact;
-- a human can authorize one exact exception;
+- a human can authorize one request-scoped exception;
 - the permission is consumed;
-- replay fails.
+- replay fails;
+- the guardian choice still makes growth visible: Widen is the separate action that creates a new standing Key version.
 
 That is harder to mistake for a parental-control UI.
 

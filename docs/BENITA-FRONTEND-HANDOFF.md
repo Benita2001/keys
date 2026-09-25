@@ -195,3 +195,19 @@ Canonical proof: `36115570744`
 Hosted proof: `36115973480`  
 Web: `36115749327`  
 WebKit/iPhone: `36115749387`.
+
+
+## Locked visual grammar — September 25
+
+These are product rules for the submission UI, not optional decoration:
+
+1. **Make the Key a visible object.** Show Key vN and the current standing boundary in plain language.
+2. **Inside = quiet.** In-bounds success should feel immediate and independent; no guardian approval ceremony.
+3. **Boundary = loud.** A refusal should visibly mark the edge, explain which rule fired, and offer adjust / practice / ask.
+4. **Move the exception, not the boundary.** ALLOW_ONCE should appear as a temporary permission that becomes USED; the standing Key remains visually unchanged.
+5. **Guardian choice must show the third model:** Not this time · Allow once · Widen the Key.
+6. **Growth is explicit, never earned automatically.** Widen creates Key vN+1; lessons, XP, P&L and AI never do.
+7. **One consumer brand in the opening experience.** Cresco is the screen-level identity; KEYS appears in technical/proof context, not as competing hero branding.
+8. **Practice and Key money must be visually unmistakable.** Practice = virtual money. Money = Devnet demo capital under the Key.
+9. **Proof is secondary.** Solana/Pyth/nonce/signature details live in the proof drawer after the human interaction is understood.
+10. **Motion must have a job.** Use motion to explain continuity: boundary stays fixed, one-time permission appears, crosses once, becomes used, disappears.
