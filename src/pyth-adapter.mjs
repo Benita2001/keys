@@ -535,12 +535,19 @@ export const PYTH_PRO_MARKET_CLASSES = Object.freeze({
 });
 
 const PYTH_MARKET_DISCOVERY_PREFERENCES = Object.freeze({
-  equity: ['AAPL', 'NVDA', 'MSFT', 'SPY', 'QQQ', 'TSLA'],
-  crypto: ['BTC', 'ETH', 'SOL'],
-  fx: ['EUR/USD', 'USD/JPY', 'GBP/USD'],
-  metal: ['XAU', 'XAG', 'GOLD', 'SILVER'],
-  rates: ['US10', 'US2', '10Y', '2Y'],
-  commodity: ['WTI', 'BRENT', 'NGD', 'USOIL', 'NATURAL']
+  equity: [
+    'Equity.US.AAPL/USD',
+    'Equity.US.NVDA/USD',
+    'Equity.US.MSFT/USD',
+    'Equity.US.SPY/USD',
+    'Equity.US.QQQ/USD',
+    'Equity.US.TSLA/USD'
+  ],
+  crypto: ['Crypto.BTC/USD', 'Crypto.ETH/USD', 'Crypto.SOL/USD'],
+  fx: ['FX.EUR/USD', 'FX.USD/JPY', 'FX.GBP/USD'],
+  metal: ['Metal.XAU/USD', 'Metal.XAG/USD'],
+  rates: ['Rates.US10Y/USD', 'Rates.US2Y/USD'],
+  commodity: ['Commodities.WTI/USD', 'Commodities.BRENT/USD', 'Commodities.NGD/USD']
 });
 
 function catalogRows(body) {
@@ -634,13 +641,7 @@ export async function fetchPythProCatalog({
 function symbolScore(symbol, preferences = []) {
   const upper = String(symbol).toUpperCase();
   for (let index = 0; index < preferences.length; index += 1) {
-    const token = preferences[index].toUpperCase();
-    if (
-      upper === token ||
-      upper.includes(`.${token}`) ||
-      upper.includes(`.${token}/`) ||
-      upper.includes(token)
-    ) {
+    if (upper === String(preferences[index]).toUpperCase()) {
       return index;
     }
   }
